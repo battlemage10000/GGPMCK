@@ -1,0 +1,87 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; The Monty Hall problem as a game,
+;;; with the game host modelled by the random role
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(role random)
+
+   (   role candidate   )
+
+;;; Initial state
+
+(init (closed 1))
+(init (closed 2))
+(init (closed 3))
+(init (step 1))
+
+;;; Moves by the game host
+
+(<= (legal random (hide_car ?d))
+   (true (step 1))
+   (true (closed ?d)))
+(<= (legal random (open_door ?d))
+   (true (step 2))
+   (true (closed ?d))
+   (not (true (car ?d)))
+   (not (true (chosen ?d))))
+(<= (legal random noop)
+   (true (step 3)))
+
+;;; Moves by the candidate
+
+(<= (legal candidate (choose ?d))
+   (true (step 1))
+   (true (closed ?d)))
+(<= (legal candidate noop)
+   (true (step 2)))
+(<= (legal candidate switch)
+   (true (step 3)))
+(<= (legal candidate noop)
+   (true (step 3)))
+
+;;; Candidate sees which door is opened,
+;;; and finally where the car is hidden
+
+(<= (sees candidate ?d)
+   (does random (open_door ?d)))
+(<= (sees candidate ?d)
+   (true (step 3))
+   (true (car ?d)))
+
+;;; Position update
+
+(<= (next (car ?d))
+   (does random (hide_car ?d)))
+(<= (next (car ?d))
+   (true (car ?d)))
+(<= (next (closed ?d))
+   (true (closed ?d))
+   (not (does random (open_door ?d))))
+(<= (next (chosen ?d))
+   (does candidate (choose ?d)))
+(<= (next (chosen ?d))
+   (true (chosen ?d))
+   (not (does candidate switch)))
+(<= (next (chosen ?d))
+   (does candidate switch)
+   (true (closed ?d))
+   (not (true (chosen ?d))))
+
+(<= (next (step 2))
+   (true (step 1)))
+(<= (next (step 3))
+   (true (step 2)))
+(<= (next (step 4))
+   (true (step 3)))
+
+;;; Termination and goal values
+
+(<= terminal
+   (true (step 4)))
+
+(<= (goal candidate 100)
+   (true (chosen ?d))
+   (true (car ?d)))
+(<= (goal candidate 0)
+   (true (chosen ?d))
+   (not (true (car ?d))))

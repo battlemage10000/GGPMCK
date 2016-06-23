@@ -1,0 +1,9 @@
+;Some random texts which should not be interpreted as valid GDL
+
+;thingsies
+;; other thingies
+
+; commented clause
+; (init thing) 
+
+;Expected value is to return an empty list of tokens

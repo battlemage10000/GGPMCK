@@ -1,0 +1,7 @@
+; Valid minimal Game Description to test the tokenizer
+; Should be able to skip comments
+
+; empty clause
+()
+
+(init) ; unary clause with comment after

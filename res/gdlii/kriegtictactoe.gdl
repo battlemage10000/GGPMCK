@@ -1,0 +1,136 @@
+(role xplayer)
+(role oplayer)
+
+(init (cell 1 1 b))
+(init (cell 1 2 b))
+(init (cell 1 3 b))
+(init (cell 2 1 b))
+(init (cell 2 2 b))
+(init (cell 2 3 b))
+(init (cell 3 1 b))
+(init (cell 3 2 b))
+(init (cell 3 3 b))
+(init (control xplayer))
+
+(<= (legal ?p (mark ?m ?n))
+   (true (control ?p))
+   (true (cell ?m ?n ?c))
+   (not (true (tried ?p ?m ?n))))
+
+(<= (legal xplayer noop)
+   (true (control oplayer)))
+
+(<= (legal oplayer noop)
+   (true (control xplayer)))
+
+(<= validmove
+   (does ?p (mark ?m ?n))
+   (true (cell ?m ?n b)))
+
+(<= (next (cell ?m ?n ?c))
+   (true (cell ?m ?n ?c))
+   (not validmove))
+
+(<= (next (cell ?m ?n ?c))
+   (true (cell ?m ?n ?c))
+   validmove
+   (does ?p (mark ?u ?v))
+   (distinct ?m ?u))
+
+(<= (next (cell ?m ?n ?c))
+   (true (cell ?m ?n ?c))
+   validmove
+   (does ?p (mark ?u ?v))
+   (distinct ?n ?v))
+
+(<= (next (cell ?m ?n x))
+   validmove
+   (does xplayer (mark ?m ?n)))
+
+(<= (next (cell ?m ?n o))
+   validmove
+   (does oplayer (mark ?m ?n)))
+
+(<= (next (tried ?p ?m ?n))
+   (does ?p (mark ?m ?n))
+   (not validmove))
+
+(<= (next (tried ?p ?m ?n))
+   (true (tried ?p ?m ?n))
+   (not validmove))
+
+(<= (next (control ?p))
+   (true (control ?p))
+   (not validmove))
+
+(<= (next (control xplayer))
+   (true (control oplayer))
+   validmove)
+
+(<= (next (control oplayer))
+   (true (control xplayer))
+   validmove)
+
+(<= (sees ?p yourmove)
+   (not validmove)
+   (true (control ?p)))
+
+(<= (sees xplayer yourmove)
+   validmove
+   (true (control oplayer)))
+
+(<= (sees oplayer yourmove)
+   validmove
+   (true (control xplayer)))
+
+(<= terminal
+   (line x))
+
+(<= terminal
+   (line o))
+
+(<= terminal
+   (not open))
+
+(<= (line ?c)
+   (true (cell ?m 1 ?c))
+   (true (cell ?m 2 ?c))
+   (true (cell ?m 3 ?c)))
+
+(<= (line ?c)
+   (true (cell 1 ?n ?c))
+   (true (cell 2 ?n ?c))
+   (true (cell 3 ?n ?c)))
+
+(<= (line ?c)
+   (true (cell 1 1 ?c))
+   (true (cell 2 2 ?c))
+   (true (cell 3 3 ?c)))
+
+(<= (line ?c)
+   (true (cell 1 3 ?c))
+   (true (cell 2 2 ?c))
+   (true (cell 3 1 ?c)))
+
+(<= open
+   (true (cell ?m ?n b)))
+
+(<= (goal xplayer 100)
+   (line x))
+  
+(<= (goal xplayer 50)
+   (not (line x))
+   (not (line o)))
+  
+(<= (goal xplayer 0)
+   (line o))
+
+(<= (goal oplayer 100)
+   (line o))
+  
+(<= (goal oplayer 50)
+   (not (line x))
+   (not (line o)))
+  
+(<= (goal oplayer 0)
+   (line x))
