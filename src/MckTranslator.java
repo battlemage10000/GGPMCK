@@ -530,11 +530,17 @@ public class MckTranslator {
 	
 	public static void main(String[] args) throws IOException{
 		final String defaultGamePath = "gdlii/MontyHall.gdl";
+		String gamePath;
+		if(args.length > 0) {
+			gamePath = args[0];
+		}else{
+			gamePath = defaultGamePath;
+		}
 		
 		FileReader reader = null;
 		try {
 			//reader = new FileReader(defaultGamePath);
-			List<String> tokens = tokenizer(defaultGamePath);
+			List<String> tokens = tokenizer(gamePath);
 
 			ParseTreeNode root = expandParseTree(tokens);
 

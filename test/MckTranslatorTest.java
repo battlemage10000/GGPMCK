@@ -38,4 +38,13 @@ public class MckTranslatorTest {
 			e.printStackTrace();
 		}
 	}
+	
+	@Test
+	public void loadMainMethod() {
+		try{
+			MckTranslator.main(new String[]{emptyGdlUri});
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
