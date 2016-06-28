@@ -24,6 +24,7 @@ public class MckTranslator {
 			switch (character) {
 			case '(':
 			case ')':
+				// parenthesis
 				if (sb.length() > 0 && !comment) {
 					tokens.add(sb.toString());
 				}
@@ -33,6 +34,8 @@ public class MckTranslator {
 				sb = new StringBuilder();
 				break;
 			case ' ':
+			case '\t':
+				// whitespace
 				if (sb.length() > 0 && !comment) {
 					tokens.add(sb.toString());
 				}
@@ -40,14 +43,17 @@ public class MckTranslator {
 				break;
 			case '\n':
 			case '\r':
+				// new line (ends comments)
 				comment = false;
 				sb = new StringBuilder();
 				break;
 			case ';':
+				// comment
 				comment = true;
 				sb.append((char) character);
 				break;
 			default:
+				// all other characters
 				sb.append((char) character);
 				break;
 			}
@@ -60,7 +66,7 @@ public class MckTranslator {
 	 * 
 	 */
 	public static List<String> tokenizer(String filePath) throws IOException, URISyntaxException {
-		return tokenizer(new FileReader(new File(new URI(filePath))));
+		return tokenizer(new FileReader(new File(filePath)));
 	}
 
 	/**
@@ -523,7 +529,7 @@ public class MckTranslator {
 	}
 	
 	public static void main(String[] args) throws IOException{
-		final String defaultGamePath = "file:/Users/vedantds/Dropbox/Masters/MCK/MckTranslator/res/gdlii/MontyHall.gdl";
+		final String defaultGamePath = "gdlii/MontyHall.gdl";
 		
 		FileReader reader = null;
 		try {

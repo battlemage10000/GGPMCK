@@ -8,4 +8,12 @@ public class DependencyGraphTest {
 		DependencyGraph graph = new DependencyGraph();
 		assertEquals(graph.verticies.isEmpty(), true);
 	}
+	
+	@Test
+	public void graphTest(){
+		DependencyGraph graph = new DependencyGraph();
+		
+		//graph.add();
+		
+	}
 }

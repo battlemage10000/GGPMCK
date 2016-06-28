@@ -5,3 +5,7 @@
 ()
 
 (init) ; unary clause with comment after
+
+( the 
+; commented ) ( clause
+clause )

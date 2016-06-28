@@ -8,8 +8,8 @@ import java.net.URISyntaxException;
 
 public class MckTranslatorTest {
 	
-	String emptyGdlUri = "file:/Users/vedantds/Dropbox/Masters/MCK/MckTranslator/test/gdlii/empty.gdl";
-	String testGdlUri = "file:/Users/vedantds/Dropbox/Masters/MCK/MckTranslator/test/gdlii/testGame.gdl";
+	String emptyGdlUri = "test/gdlii/empty.gdl";
+	String testGdlUri = "test/gdlii/testGame.gdl";
 	
 	@Test
 	public void loadEmptyGameDescription() {
@@ -29,7 +29,7 @@ public class MckTranslatorTest {
 			List<String> tokens = MckTranslator.tokenizer(testGdlUri);
 			assertEquals(tokens.isEmpty(), false);
 			
-			List<String> expectedList = Arrays.asList("(",")","(","init",")");
+			List<String> expectedList = Arrays.asList("(",")","(","init",")","(","the","clause",")");
 			assertEquals(tokens, expectedList);
 			
 		}catch(URISyntaxException e) {
