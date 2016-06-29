@@ -537,7 +537,7 @@ public class MckTranslator {
 			gamePath = defaultGamePath;
 		}
 		
-		FileReader reader = null;
+		//FileReader reader = null;
 		try {
 			//reader = new FileReader(defaultGamePath);
 			List<String> tokens = tokenizer(gamePath);
@@ -552,10 +552,10 @@ public class MckTranslator {
 			e.printStackTrace();
 		}catch(IOException e) { 
 			e.printStackTrace();
-		}finally {
-			if (reader != null) {
-				reader.close();
-			}
+		//}finally {
+			//if (reader != null) {
+			//	reader.close();
+			//}
 		}
 	}
 

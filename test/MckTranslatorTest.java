@@ -8,13 +8,14 @@ import java.net.URISyntaxException;
 
 public class MckTranslatorTest {
 	
-	String emptyGdlUri = "test/gdlii/empty.gdl";
-	String testGdlUri = "test/gdlii/testGame.gdl";
+	String emptyGdlPath = "test/gdlii/empty.gdl";
+	String testGdlPath = "test/gdlii/testGame.gdl";
+	String dependencyTestGdlPath = "test/gdlii/dependencyTestGame.gdl";
 	
 	@Test
 	public void loadEmptyGameDescription() {
 		try{
-			List<String> tokens = MckTranslator.tokenizer(emptyGdlUri);
+			List<String> tokens = MckTranslator.tokenizer(emptyGdlPath);
 			assertEquals(tokens.isEmpty(), true);
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
@@ -26,7 +27,7 @@ public class MckTranslatorTest {
 	@Test
 	public void loadUnformatedValidGameDescription() {
 		try{
-			List<String> tokens = MckTranslator.tokenizer(testGdlUri);
+			List<String> tokens = MckTranslator.tokenizer(testGdlPath);
 			assertEquals(tokens.isEmpty(), false);
 			
 			List<String> expectedList = Arrays.asList("(",")","(","init",")","(","the","clause",")");
@@ -40,9 +41,28 @@ public class MckTranslatorTest {
 	}
 	
 	@Test
-	public void loadMainMethod() {
+	public void validDepencencyGraphGeneration() {
 		try{
-			MckTranslator.main(new String[]{emptyGdlUri});
+			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
+			
+			for(String token : tokens)System.out.print(token+", ");
+			
+			MckTranslator.ParseTreeNode root = MckTranslator.expandParseTree(tokens);
+			
+			System.out.println(root.toString());
+			
+			DependencyGraph graph = MckTranslator.constructDependencyGraph(root);
+			graph.printGraph();
+			
+			for(Vertex vertex : graph.verticies){
+				System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
+				//assertEquals(vertex.getDomain().isEmpty(), false);
+			}
+			
+			//root = MckTranslator.groundClauses(root);
+			
+		}catch(URISyntaxException e) {
+			e.printStackTrace();
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
