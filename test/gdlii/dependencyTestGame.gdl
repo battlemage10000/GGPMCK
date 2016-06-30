@@ -3,7 +3,6 @@
 (role player1)
 (role player2)
 
-
 (<= (legal ?player (choose_hand ?player ?hand)))
 
 (<= (win player1) (choose_hand player1 rock) (choose_hand player scissors))

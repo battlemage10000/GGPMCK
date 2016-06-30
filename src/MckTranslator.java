@@ -135,7 +135,7 @@ public class MckTranslator {
 		DependencyGraph graph = constructDependencyGraph(root);
 		graph.printGraph();
 		
-		for(Vertex vertex : graph.verticies){
+		for(DependencyGraph.Vertex vertex : graph.verticies){
 			System.out.println("Domain of "+vertex.toString());
 			for(String atom : vertex.getDomain()){
 				System.out.println(atom);
@@ -215,16 +215,23 @@ public class MckTranslator {
 	 * @return
 	 */
 	public static DependencyGraph constructDependencyGraph(ParseTreeNode root) {
+		// Initialize empty graph
 		DependencyGraph graph = new DependencyGraph();
-
+		
+		
+		// Initialize queue and add all the branches of the root node
 		Queue<ParseTreeNode> queue = new LinkedList<ParseTreeNode>();
 		queue.addAll(root.children);
-		Map<String, Vertex> variableToVertexMap = new HashMap<String, Vertex>();
+		// Initialize a map that is used to link different times a variable is called in a clause
+		Map<String, DependencyGraph.Vertex> variableToVertexMap = new HashMap<String, DependencyGraph.Vertex>();
 
 		while (!queue.isEmpty()) {
-			ParseTreeNode node = queue.remove();
-
+			ParseTreeNode node = queue.remove(); // Get next node in queue
+			
+			// TODO: Fix issue where some domains aren't followed properly
+			
 			switch(node.type){
+				// Variables first instance added to variableToVertexMap which is then retrieved every time variable is called again
 			case VARIABLE:
 				if(variableToVertexMap.containsKey(node.atom) && variableToVertexMap.get(node.atom) != null){
 					variableToVertexMap.get(node.atom).addNeighbor(graph.getVertex(node.parent.atom, node.parent.children.indexOf(node)+1));
@@ -234,7 +241,9 @@ public class MckTranslator {
 					}	
 					variableToVertexMap.put(node.atom, graph.getVertex(node.parent.atom, node.parent.children.indexOf(node)+1));
 				}
-				break;	
+				break;
+				
+				// Non-Variables{Formula, Head, Constant} add node as depencency of parent
 			case FORMULA:
 			case HEAD:
 			case CONSTANT:
@@ -248,10 +257,12 @@ public class MckTranslator {
 					graph.getVertex(node.parent.atom, node.parent.children.indexOf(node) + 1)
 						.addNeighbor(graph.getVertex(node.atom, 0));
 				}
+				
+				// Root or Clause do nothing
 			case ROOT:
 			case CLAUSE:
 			}
-			queue.addAll(node.children);
+			queue.addAll(node.children); // Add branches of node to queue
 		}
 
 		return graph;

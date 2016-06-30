@@ -67,20 +67,20 @@ public class DependencyGraph {
 			}
 		}
 	}
-}
+
 
 class Vertex {
 	private List<Edge> neighborhood;
 	private String atom;
 	private int arity;
-	private Set<String> domain;
+	//private Set<String> domain;
 	boolean visited;
 
 	Vertex(String atom, int arity) {
 		this.atom = atom;
 		this.arity = arity;
 		this.neighborhood = new ArrayList<Edge>();
-		this.domain = new HashSet<String>();
+		//this.domain = new HashSet<String>();
 		this.visited = false;
 	}
 
@@ -109,16 +109,27 @@ class Vertex {
 	
 	public Set<String> getDomain(){
 		Set<String> domain = new HashSet<String>();
-		if(neighborhood.isEmpty()){
-			domain.clear();
-			domain.add(atom);
-			return domain;
-		}
+		//if(neighborhood.isEmpty()){
+		//	domain.clear();
+		//	domain.add(atom);
+		//	return domain;
+		//}
 		for(Edge edge : neighborhood){
+			// Recursive method which uses the boolean variable visited to counter cycles in graph
 			if(!visited){
-				edge.getToVertex().visited = true;
-				domain.addAll(edge.getToVertex().getDomain());
-				edge.getToVertex().visited = false;
+				visited = true;
+				Set<String> neighborDomain = edge.getToVertex().getDomain();
+				if(edge.getToVertex().getArity() == 0){
+					Vertex para1 = new Vertex(edge.getToVertex().getAtom(), 1);
+					if(verticies.contains(para1)){
+						domain.addAll(para1.getDomain());
+					}else{
+						domain.add(edge.getToVertex().getAtom());
+					}
+				}else{
+					domain.addAll(neighborDomain);
+				}
+				visited = false;
 			}
 		}
 		return domain;
@@ -169,4 +180,5 @@ class Edge {
 	public String toString() {
 		return from.toString() + "-" + to.toString();
 	}
+}
 }

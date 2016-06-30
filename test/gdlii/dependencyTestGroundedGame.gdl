@@ -1,0 +1,32 @@
+; game used to test dependency graph
+
+(role player1)
+(role player2)
+
+(<= (legal player1 (choose_hand player1 rock)))
+(<= (legal player1 (choose_hand player1 paper)))
+(<= (legal player1 (choose_hand player1 scissors)))
+(<= (legal player2 (choose_hand player2 rock)))
+(<= (legal player2 (choose_hand player2 paper)))
+(<= (legal player2 (choose_hand player2 scissors)))
+
+(<= (win player1) (choose_hand player1 rock) (choose_hand player2 scissors))
+(<= (win player1) (choose_hand player1 paper) (choose_hand player2 rock))
+(<= (win player1) (choose_hand player1 scissors) (choose_hand player2 paper))
+(<= (win player2) (choose_hand player2 rock) (choose_hand player1 scissors))
+(<= (win player2) (choose_hand player2 paper) (choose_hand player1 rock))
+(<= (win player2) (choose_hand player2 scissors) (choose_hand player1 paper))
+
+(<= (draw player1) (choose_hand player1 rock) (choose_hand player2 rock))
+(<= (draw player1) (choose_hand player1 paper) (choose_hand player2 paper))
+(<= (draw player1) (choose_hand player1 scissors) (choose_hand player2 scissors))
+(<= (draw player2) (choose_hand player1 rock) (choose_hand player2 rock))
+(<= (draw player2) (choose_hand player1 paper) (choose_hand player2 paper))
+(<= (draw player2) (choose_hand player1 scissors) (choose_hand player2 scissors))
+
+(<= (goal player1 100) (win player1))
+(<= (goal player1 50) (draw player1))
+(<= (goal player1 0) (not (win player1)) (not (draw player1)))
+(<= (goal player2 100) (win player2))
+(<= (goal player2 50) (draw player2))
+(<= (goal player2 0) (not (win player2)) (not (draw player2)))

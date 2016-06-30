@@ -54,16 +54,18 @@ public class MckTranslatorTest {
 			DependencyGraph graph = MckTranslator.constructDependencyGraph(root);
 			graph.printGraph();
 			
-			for(Vertex vertex : graph.verticies){
-				System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
-				//assertEquals(vertex.getDomain().isEmpty(), false);
+			for(DependencyGraph.Vertex vertex : graph.verticies){
+				if(vertex.getArity() > 0){
+					System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
+				}
 			}
-			
 			//root = MckTranslator.groundClauses(root);
 			
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
+			e.printStackTrace();
+		}catch(Exception e){
 			e.printStackTrace();
 		}
 	}
