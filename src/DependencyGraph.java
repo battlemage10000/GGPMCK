@@ -73,15 +73,15 @@ class Vertex {
 	private List<Edge> neighborhood;
 	private String atom;
 	private int arity;
-	//private Set<String> domain;
 	boolean visited;
+	private List<Vertex> parameters;
 
 	Vertex(String atom, int arity) {
 		this.atom = atom;
 		this.arity = arity;
 		this.neighborhood = new ArrayList<Edge>();
-		//this.domain = new HashSet<String>();
 		this.visited = false;
+		this.parameters = new ArrayList<Vertex>();
 	}
 
 	public List<Edge> getNeighborhood() {
@@ -107,23 +107,21 @@ class Vertex {
 		return this.arity;
 	}
 	
+	/**
+	 * Returns the domain of the vertex
+	 */
 	public Set<String> getDomain(){
 		Set<String> domain = new HashSet<String>();
-		//if(neighborhood.isEmpty()){
-		//	domain.clear();
-		//	domain.add(atom);
-		//	return domain;
-		//}
 		for(Edge edge : neighborhood){
 			// Recursive method which uses the boolean variable visited to counter cycles in graph
 			if(!visited){
 				visited = true;
 				Set<String> neighborDomain = edge.getToVertex().getDomain();
-				if(edge.getToVertex().getArity() == 0){
+				if(edge.getToVertex().getArity() == 0) {
 					Vertex para1 = new Vertex(edge.getToVertex().getAtom(), 1);
-					if(verticies.contains(para1)){
-						domain.addAll(para1.getDomain());
-					}else{
+					if(!parameters.isEmpty()){
+						for(Vertex param : parameters)domain.addAll(param.getDomain());
+					} else {
 						domain.add(edge.getToVertex().getAtom());
 					}
 				}else{

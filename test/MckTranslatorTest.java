@@ -10,7 +10,7 @@ public class MckTranslatorTest {
 	
 	String emptyGdlPath = "test/gdlii/empty.gdl";
 	String testGdlPath = "test/gdlii/testGame.gdl";
-	String dependencyTestGdlPath = "test/gdlii/dependencyTestGame.gdl";
+	String dependencyTestGdlPath = "test/gdlii/dependencyTestGroundedGame.gdl";
 	
 	@Test
 	public void loadEmptyGameDescription() {
@@ -45,19 +45,15 @@ public class MckTranslatorTest {
 		try{
 			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
 			
-			for(String token : tokens)System.out.print(token+", ");
-			
 			MckTranslator.ParseTreeNode root = MckTranslator.expandParseTree(tokens);
 			
-			System.out.println(root.toString());
-			
 			DependencyGraph graph = MckTranslator.constructDependencyGraph(root);
-			graph.printGraph();
+			//graph.printGraph();
 			
 			for(DependencyGraph.Vertex vertex : graph.verticies){
-				if(vertex.getArity() > 0){
+				//if(vertex.getArity() > 0){
 					System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
-				}
+				//}
 			}
 			//root = MckTranslator.groundClauses(root);
 			

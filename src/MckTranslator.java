@@ -231,6 +231,7 @@ public class MckTranslator {
 			// TODO: Fix issue where some domains aren't followed properly
 			
 			switch(node.type){
+			
 				// Variables first instance added to variableToVertexMap which is then retrieved every time variable is called again
 			case VARIABLE:
 				if(variableToVertexMap.containsKey(node.atom) && variableToVertexMap.get(node.atom) != null){
