@@ -1,0 +1,5 @@
+
+This project is a java based translator from GDL(Game Description Language) to MCK(Model Checking of Knowledge)
+
+To run, first make sure you have java and ant installed then from the root folder type
+ ant compile
