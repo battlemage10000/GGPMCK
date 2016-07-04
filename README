@@ -3,3 +3,9 @@ This project is a java based translator from GDL(Game Description Language) to M
 
 To run, first make sure you have java and ant installed then from the root folder type
  ant compile
+ cd build
+ java MckTranslator path/to/file.gdl
+ 
+If you run the unit tests
+ ant test
+then a test mck file is saved in build-test/mck-translation.mck
