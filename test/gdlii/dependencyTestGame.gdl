@@ -1,15 +1,16 @@
 ; game used to test dependency graph
 
-(role player1)
-(role player2)
+(role red)
+(role blue)
 
-(<= (legal ?player (choose_hand ?player ?hand)))
+(<= (legal red (choose_hand red ?hand)))
+(<= (legal blue (choose_hand blue ?hand)))
 
-(<= (win player1) (choose_hand player1 rock) (choose_hand player scissors))
-(<= (win player1) (choose_hand player1 paper) (choose_hand player rock))
-(<= (win player1) (choose_hand player1 scissors) (choose_hand player paper))
+(<= (win red) (choose_hand red rock) (choose_hand player scissors))
+(<= (win red) (choose_hand red paper) (choose_hand player rock))
+(<= (win red) (choose_hand red scissors) (choose_hand player paper))
 
-(<= (draw ?player) (choose_hand player1 ?hand) (choose_hand player2 ?hand))
+(<= (draw ?player) (choose_hand red ?hand) (choose_hand blue ?hand))
 
 (<= (goal ?player 100) (win ?player))
 (<= (goal ?player 50) (draw ?player))

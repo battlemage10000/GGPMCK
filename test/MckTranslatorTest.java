@@ -52,7 +52,7 @@ public class MckTranslatorTest {
 			
 			for(DependencyGraph.Vertex vertex : graph.verticies){
 				//if(vertex.getArity() > 0){
-					System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
+					//System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
 				//}
 			}
 			//root = MckTranslator.groundClauses(root);
@@ -60,6 +60,27 @@ public class MckTranslatorTest {
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
 		}catch(IOException e) {
+			e.printStackTrace();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void mckTranslatorGdlTestAndSave(){
+		try{
+			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
+			
+			MckTranslator.ParseTreeNode root = MckTranslator.expandParseTree(tokens);
+			
+			String mck = MckTranslator.toMck(root);
+			
+			MckTranslator.saveFile(mck, "build-test/mck-translation.mck");
+			
+			System.out.println(mck);
+		}catch(URISyntaxException e) {
+			e.printStackTrace();
+		}catch(IOException e){
 			e.printStackTrace();
 		}catch(Exception e){
 			e.printStackTrace();

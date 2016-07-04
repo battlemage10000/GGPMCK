@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
  */
 public class MckTranslator {
 
+	public static String GDL_ROLE = "role";
 	// Old string manipulation constants for use with String.split()
 	public static int STRING_HEAD = 0, STRING_BODY = 1, STRING_TAIL = 2;
 
@@ -296,30 +297,97 @@ public class MckTranslator {
 		return newNode;
 	}
 
+	public static List<String> findRolesForMck(ParseTreeNode root){
+		ArrayList<String> roles = new ArrayList<String>();
+		for(ParseTreeNode child : root.children){
+			if(child.atom.equals(GDL_ROLE)){
+				roles.add(child.children.get(0).atom);
+			}
+		}
+		return roles;
+	}
+
+	public static List<String> findBoolVarsForMck(ParseTreeNode root){
+		ArrayList<String> boolVars = new ArrayList<String>();
+		
+		Queue<ParseTreeNode> childrenQueue = new LinkedList<ParseTreeNode>();
+		childrenQueue.addAll(root.children);
+		
+		while(!childrenQueue.isEmpty()){
+			ParseTreeNode node = childrenQueue.remove();
+			
+			switch(node.atom){
+			case "<=":
+				childrenQueue.addAll(node.children);
+				break;
+			case "legal":
+				String move = node.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
+				boolVars.add(move);
+				boolVars.add(move + "_old");
+				//Is this line needed?
+				//boolVars.add("legal_" + node.children.get(0).atom + "_" + move);
+				boolVars.add("did_" + node.children.get(0).atom + "_" + move);
+				break;
+			}
+		}
+		
+		return boolVars;
+	}
+
 	/**
 	 * TODO: takes a parse tree and returns MCK equivalent
+	 * Take 
 	 */
 	public static String toMck(ParseTreeNode root) {
+		
+		List<String> roles = findRolesForMck(root);
+		List<String> boolVars = findBoolVarsForMck(root);
+		
 		StringBuilder sb = new StringBuilder();
 		// Construct MCK version
 		sb.append(System.lineSeparator());
 		sb.append("-- Environment Variables");
+		for(String boolVar : boolVars){
+			sb.append(System.lineSeparator());
+			sb.append(boolVar + ": Bool");
+		}
 		sb.append(System.lineSeparator());
 		sb.append("-- Environment Initial Conditions");
 		sb.append(System.lineSeparator());
 		sb.append("-- Agent bindings");
-		List<String> roles = new ArrayList<String>();
 		for (String role : roles) {
 			sb.append(System.lineSeparator());
-			sb.append("agent " + role + " \"" + role + "\"");
+			sb.append("agent " + role + " \"" + role + "\" ()");
 		}
 		sb.append(System.lineSeparator());
 		sb.append("-- Specification");
 		sb.append(System.lineSeparator());
 		sb.append("-- Protocol Declarations");
+		for(String role : roles){
+			sb.append(System.lineSeparator());
+			sb.append("protocol \""+role+"\" (" + ")");
+		}
 		sb.append(System.lineSeparator());
 
 		return sb.toString();
+	}
+	
+	/**
+	 * Save's string to file. Default file is "MckTranslator.txt"
+	 */
+	public static void saveFile(String text, String filename){
+		if(filename == null || filename == ""){
+			filename = "MckTranslator.txt";
+		}
+		
+		try(FileWriter writer = new FileWriter(filename)){
+			writer.write(text);
+			
+			writer.flush();
+			writer.close();
+		}catch(IOException e){
+			e.printStackTrace();
+		}
 	}
 
 	/**
