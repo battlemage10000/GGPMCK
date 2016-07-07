@@ -345,6 +345,10 @@ public class MckTranslator {
 				boolVars.add("legal_" + node.children.get(0).atom + "_" + move);
 				boolVars.add("did_" + node.children.get(0).atom + "_" + move);
 				break;
+			case "sees":
+				move = node.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
+				boolVars.add("sees_" + node.children.get(0).atom + "_" + move);
+				break;
 			}
 		}
 		
@@ -363,7 +367,10 @@ public class MckTranslator {
 		
 		StringBuilder sb = new StringBuilder();
 		// Construct MCK version
+		sb.append("-- MCK file generated using MckTranslator from a GGP game description");
 		sb.append(System.lineSeparator());
+		sb.append(System.lineSeparator());
+		
 		sb.append("-- Environment Variables");
 		for(String boolVar : boolVars){
 			sb.append(System.lineSeparator());
@@ -371,70 +378,96 @@ public class MckTranslator {
 		}
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
+		
 		sb.append("-- Environment Initial Conditions");
 		sb.append(System.lineSeparator());
+		sb.append("init_cond = ");
+		for(String var : boolVars){
+			sb.append(System.lineSeparator());
+			sb.append(var + "==False /\\ ");
+		}
+		sb.delete(sb.length() - 4, sb.length());
 		sb.append(System.lineSeparator());
+		sb.append(System.lineSeparator());
+		
 		sb.append("-- Agent bindings");
 		for (String role : roles) {
 			sb.append(System.lineSeparator());
-			sb.append("agent " + role + " \"" + role + "\" (");
-			for(String legal : legals){
-				if(legal.contains("legal_"+role+"_")){
-					sb.append(legal+", ");
+			sb.append("agent Player_" + role + " \"" + role + "\" (");
+			for(String var : boolVars){
+				if(var.contains("_"+role+"_")){
+					sb.append(System.lineSeparator());
+					sb.append(var + ", ");
 				}
 			}
+			sb.delete(sb.length() - 2, sb.length());
+			sb.append(System.lineSeparator());
 			sb.append(")");
 		}
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
+		
 		sb.append("-- Specification");
 		sb.append(System.lineSeparator());
 		sb.append("spec_spr = AG(");
 		for(String legal : legals){
 			for(String role : roles){
-				if(true){
-					sb.append(" /\\ ");
-				}
-				sb.append("(" + legal + " => Knows " + role + " " + legal + ")");
+				sb.append("(" + legal + " => Knows Player_" + role + " " + legal + ")");
+				sb.append(" /\\ ");
 			}
 		}
+		sb.delete(sb.length() - 4, sb.length());
 		sb.append(")");
 		sb.append(System.lineSeparator());
-		sb.append("spec_spr = AF (");
+		//sb.append("spec_spr = AF (");
 		//for(){
 		
 		//}
-		sb.append(")");
+		//sb.append(")");
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
+		
 		sb.append("-- Protocol Declarations");
 		for(String role : roles){
 			sb.append(System.lineSeparator());
 			sb.append("protocol \""+role+"\" (");
-			for(String legal : legals){
-				if(legal.contains("legal_"+role+"_")){
-					sb.append(legal+", ");
+			for(String var : boolVars){
+				if(var.contains("_"+role+"_")){
+					sb.append(System.lineSeparator()+"  ");
+					if(var.contains("legal")){
+						sb.append(var + ": Bool, ");
+					}else{
+						sb.append(var + ": observable Bool, ");
+					}
 				}
 			}
-			sb.append(")");
+			sb.delete(sb.length() - 2, sb.length());
+			sb.append(System.lineSeparator() + ")");
+			
+			sb.append(System.lineSeparator() + "begin");
+			sb.append(System.lineSeparator() + "  " +"do ");
+			sb.append(System.lineSeparator() + "  ");
+			for(String var : boolVars){
+				if(var.contains("legal_" + role + "_")){
+					sb.append(var + " -> <<Move_" + var.substring(7 + role.length(), var.length()) + ">>");
+					sb.append(System.lineSeparator() + "  [] ");
+				}
+			}
+			sb.delete(sb.length() - 6, sb.length());
+			sb.append(System.lineSeparator() + "  " + "od");
+			sb.append(System.lineSeparator() + "end");
+			sb.append(System.lineSeparator());
 		}
-		sb.append(System.lineSeparator());
-		sb.append(System.lineSeparator());
-
+		
 		return sb.toString();
 	}
 	
 	/**
-	 * Save's string to file. Default file is "MckTranslator.txt"
+	 * Save string to file. Catches IOException if any.
 	 */
 	public static void saveFile(String text, String filename){
-		if(filename == null || filename == ""){
-			filename = "MckTranslator.txt";
-		}
-		
 		try(FileWriter writer = new FileWriter(filename)){
 			writer.write(text);
-			
 			writer.flush();
 			writer.close();
 		}catch(IOException e){
