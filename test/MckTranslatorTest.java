@@ -45,7 +45,7 @@ public class MckTranslatorTest {
 		try{
 			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
 			
-			MckTranslator.ParseTreeNode root = MckTranslator.expandParseTree(tokens);
+			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			DependencyGraph graph = MckTranslator.constructDependencyGraph(root);
 			//graph.printGraph();
@@ -71,7 +71,7 @@ public class MckTranslatorTest {
 		try{
 			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
 			
-			MckTranslator.ParseTreeNode root = MckTranslator.expandParseTree(tokens);
+			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			String mck = MckTranslator.toMck(root);
 			

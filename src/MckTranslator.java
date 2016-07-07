@@ -71,13 +71,13 @@ public class MckTranslator {
 	}
 
 	/**
-	 * Takes tokens and produces a parse tree returns ParseTreeNode root of tree
+	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
-	public static ParseTreeNode expandParseTree(List<String> tokens) {
-		ParseTreeNode root = new ParseTreeNode("", null);
+	public static ParseNode expandParseTree(List<String> tokens) {
+		ParseNode root = new ParseNode("", null);
 		root.type = GdlType.ROOT;
 
-		ParseTreeNode parent = root;
+		ParseNode parent = root;
 		boolean functionName = false;
 		boolean openBracket = false;
 		boolean scopedVariable = false;
@@ -95,7 +95,7 @@ public class MckTranslator {
 				}
 				break;
 			case "<=":
-				ParseTreeNode newNode = new ParseTreeNode(token, parent, GdlType.CLAUSE);
+				ParseNode newNode = new ParseNode(token, parent, GdlType.CLAUSE);
 				parent.children.add(newNode);
 				if (openBracket) {
 					parent = newNode;
@@ -103,7 +103,7 @@ public class MckTranslator {
 				}
 				break;
 			default:
-				newNode = new ParseTreeNode(token, parent, GdlType.CONSTANT);
+				newNode = new ParseNode(token, parent, GdlType.CONSTANT);
 				if (parent.type == GdlType.CLAUSE && parent.children.isEmpty()) {
 					newNode.type = GdlType.HEAD;
 				} else if(parent.type == GdlType.CONSTANT){
@@ -130,32 +130,36 @@ public class MckTranslator {
 	 * Change sentences with variables to grounded equivalent. Takes root of
 	 * parse tree and returns root of grounded tree
 	 */
-	public static ParseTreeNode groundClauses(ParseTreeNode root) {
+	public static ParseNode groundClauses(ParseNode root) {
 
 		// Construct domain dependency map
 		DependencyGraph graph = constructDependencyGraph(root);
-		graph.printGraph();
+		//graph.printGraph();
 		
+		// TODO: replace variables with domain(grounding)
+		
+		/*
 		for(DependencyGraph.Vertex vertex : graph.verticies){
 			System.out.println("Domain of "+vertex.toString());
 			for(String atom : vertex.getDomain()){
 				System.out.println(atom);
 			}
 		}
+		*/
 		
 		/*
 		 * // Find all the domains Map<String, List<Set<String>>> arityMap = new
 		 * HashMap<String, List<Set<String>>>();
 		 * 
-		 * // Add all clauses to queue Queue<ParseTreeNode> queue = new
-		 * LinkedList<ParseTreeNode>(); queue.addAll(root.children);
+		 * // Add all clauses to queue Queue<ParseNode> queue = new
+		 * LinkedList<ParseNode>(); queue.addAll(root.children);
 		 * 
-		 * while (!queue.isEmpty()) { ParseTreeNode sentence = queue.remove();
+		 * while (!queue.isEmpty()) { ParseNode sentence = queue.remove();
 		 * 
 		 * String functionName = sentence.atom; List<Set<String>> parameters =
 		 * arityMap.get(functionName); if (parameters == null) { parameters =
 		 * new ArrayList<Set<String>>(); arityMap.put(functionName, parameters);
-		 * } for (int i = 0; i < sentence.children.size(); i++) { ParseTreeNode
+		 * } for (int i = 0; i < sentence.children.size(); i++) { ParseNode
 		 * child = sentence.children.get(i);
 		 * 
 		 * Set<String> domain = null; if (i > parameters.size() - 1) { domain =
@@ -175,11 +179,11 @@ public class MckTranslator {
 		 */
 
 		/*
-		 * // Find which clauses have variables in them ParseTreeNode
-		 * clausesWithVariables = new ParseTreeNode("", null); for
-		 * (ParseTreeNode node : root.children) { queue = new
-		 * LinkedList<ParseTreeNode>(); queue.add(node); boolean varFound =
-		 * false; while (!queue.isEmpty() && !varFound) { ParseTreeNode child =
+		 * // Find which clauses have variables in them ParseNode
+		 * clausesWithVariables = new ParseNode("", null); for
+		 * (ParseNode node : root.children) { queue = new
+		 * LinkedList<ParseNode>(); queue.add(node); boolean varFound =
+		 * false; while (!queue.isEmpty() && !varFound) { ParseNode child =
 		 * queue.remove(); if (child.type == GdlType.VARIABLE) { node.parent =
 		 * clausesWithVariables; clausesWithVariables.children.add(node);
 		 * varFound = true; } else { queue.addAll(child.children); } } }
@@ -194,10 +198,10 @@ public class MckTranslator {
 		 * // ground clauses with variables Set<String> variables =
 		 * extractVariables(clausesWithVariables.toString()); for (String var :
 		 * variables) { System.out.println("Variable: " + var); for
-		 * (ParseTreeNode node : clausesWithVariables.children) { ParseTreeNode
+		 * (ParseNode node : clausesWithVariables.children) { ParseNode
 		 * newNode = groundedCopyOfSubTree(node, var, "200"); newNode.parent =
 		 * root; root.children.add(newNode); } } //queue = new
-		 * LinkedList<ParseTreeNode>();
+		 * LinkedList<ParseNode>();
 		 * //queue.addAll(clausesWithVariables.children); //while
 		 * (!queue.isEmpty()) { //
 		 * root.children.add(groundedCopyOfSubTree(queue.remove(), "?d",
@@ -215,19 +219,19 @@ public class MckTranslator {
 	 * @param root
 	 * @return
 	 */
-	public static DependencyGraph constructDependencyGraph(ParseTreeNode root) {
+	public static DependencyGraph constructDependencyGraph(ParseNode root) {
 		// Initialize empty graph
 		DependencyGraph graph = new DependencyGraph();
 		
 		
 		// Initialize queue and add all the branches of the root node
-		Queue<ParseTreeNode> queue = new LinkedList<ParseTreeNode>();
+		Queue<ParseNode> queue = new LinkedList<ParseNode>();
 		queue.addAll(root.children);
 		// Initialize a map that is used to link different times a variable is called in a clause
 		Map<String, DependencyGraph.Vertex> variableToVertexMap = new HashMap<String, DependencyGraph.Vertex>();
 
 		while (!queue.isEmpty()) {
-			ParseTreeNode node = queue.remove(); // Get next node in queue
+			ParseNode node = queue.remove(); // Get next node in queue
 			
 			// TODO: Fix issue where some domains aren't followed properly
 			
@@ -279,8 +283,8 @@ public class MckTranslator {
 	 * @param constant
 	 * @return groundedRoot
 	 */
-	public static ParseTreeNode groundedCopyOfSubTree(ParseTreeNode oldNode, String variable, String constant) {
-		ParseTreeNode newNode = new ParseTreeNode();
+	public static ParseNode groundedCopyOfSubTree(ParseNode oldNode, String variable, String constant) {
+		ParseNode newNode = new ParseNode();
 		if (!oldNode.distinct(variable)) {
 			newNode.atom = constant;
 			newNode.type = GdlType.FORMULA;
@@ -289,17 +293,17 @@ public class MckTranslator {
 			newNode.type = oldNode.type;
 		}
 
-		for (ParseTreeNode oldChild : oldNode.children) {
-			ParseTreeNode newChild = groundedCopyOfSubTree(oldChild, variable, constant);
+		for (ParseNode oldChild : oldNode.children) {
+			ParseNode newChild = groundedCopyOfSubTree(oldChild, variable, constant);
 			newChild.parent = newNode;
 			newNode.children.add(newChild);
 		}
 		return newNode;
 	}
 
-	public static List<String> findRolesForMck(ParseTreeNode root){
+	public static List<String> findRolesForMck(ParseNode root){
 		ArrayList<String> roles = new ArrayList<String>();
-		for(ParseTreeNode child : root.children){
+		for(ParseNode child : root.children){
 			if(child.atom.equals(GDL_ROLE)){
 				roles.add(child.children.get(0).atom);
 			}
@@ -307,14 +311,28 @@ public class MckTranslator {
 		return roles;
 	}
 
-	public static List<String> findBoolVarsForMck(ParseTreeNode root){
+	public static List<String> findLegalsForMck(ParseNode root){
+		ArrayList<String> legals = new ArrayList<String>();
+		
+		for(ParseNode node : root.children){
+			if(node.atom.equals("<=")){
+				ParseNode child = node.children.get(0);
+				if(child.atom.equals("legal")){
+					legals.add("legal_"+child.children.get(0).atom+"_"+child.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_"));
+				}
+			}
+		}
+		return legals;
+	}
+
+	public static List<String> findBoolVarsForMck(ParseNode root){
 		ArrayList<String> boolVars = new ArrayList<String>();
 		
-		Queue<ParseTreeNode> childrenQueue = new LinkedList<ParseTreeNode>();
+		Queue<ParseNode> childrenQueue = new LinkedList<ParseNode>();
 		childrenQueue.addAll(root.children);
 		
 		while(!childrenQueue.isEmpty()){
-			ParseTreeNode node = childrenQueue.remove();
+			ParseNode node = childrenQueue.remove();
 			
 			switch(node.atom){
 			case "<=":
@@ -324,8 +342,7 @@ public class MckTranslator {
 				String move = node.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
 				boolVars.add(move);
 				boolVars.add(move + "_old");
-				//Is this line needed?
-				//boolVars.add("legal_" + node.children.get(0).atom + "_" + move);
+				boolVars.add("legal_" + node.children.get(0).atom + "_" + move);
 				boolVars.add("did_" + node.children.get(0).atom + "_" + move);
 				break;
 			}
@@ -338,9 +355,10 @@ public class MckTranslator {
 	 * TODO: takes a parse tree and returns MCK equivalent
 	 * Take 
 	 */
-	public static String toMck(ParseTreeNode root) {
+	public static String toMck(ParseNode root) {
 		
 		List<String> roles = findRolesForMck(root);
+		List<String> legals = findLegalsForMck(root);
 		List<String> boolVars = findBoolVarsForMck(root);
 		
 		StringBuilder sb = new StringBuilder();
@@ -352,21 +370,55 @@ public class MckTranslator {
 			sb.append(boolVar + ": Bool");
 		}
 		sb.append(System.lineSeparator());
+		sb.append(System.lineSeparator());
 		sb.append("-- Environment Initial Conditions");
+		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
 		sb.append("-- Agent bindings");
 		for (String role : roles) {
 			sb.append(System.lineSeparator());
-			sb.append("agent " + role + " \"" + role + "\" ()");
+			sb.append("agent " + role + " \"" + role + "\" (");
+			for(String legal : legals){
+				if(legal.contains("legal_"+role+"_")){
+					sb.append(legal+", ");
+				}
+			}
+			sb.append(")");
 		}
 		sb.append(System.lineSeparator());
+		sb.append(System.lineSeparator());
 		sb.append("-- Specification");
+		sb.append(System.lineSeparator());
+		sb.append("spec_spr = AG(");
+		for(String legal : legals){
+			for(String role : roles){
+				if(true){
+					sb.append(" /\\ ");
+				}
+				sb.append("(" + legal + " => Knows " + role + " " + legal + ")");
+			}
+		}
+		sb.append(")");
+		sb.append(System.lineSeparator());
+		sb.append("spec_spr = AF (");
+		//for(){
+		
+		//}
+		sb.append(")");
+		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
 		sb.append("-- Protocol Declarations");
 		for(String role : roles){
 			sb.append(System.lineSeparator());
-			sb.append("protocol \""+role+"\" (" + ")");
+			sb.append("protocol \""+role+"\" (");
+			for(String legal : legals){
+				if(legal.contains("legal_"+role+"_")){
+					sb.append(legal+", ");
+				}
+			}
+			sb.append(")");
 		}
+		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
 
 		return sb.toString();
@@ -503,32 +555,32 @@ public class MckTranslator {
 
 	/**
 	 * I will write recursive method that will fill the children of a
-	 * ParseTreeNode
+	 * ParseNode
 	 * 
 	 * @deprecated
 	 * @param parent
 	 * @param gdl
 	 * @return
 	 */
-	private static ParseTreeNode expandParseTree(ParseTreeNode parent, String string) {
-		System.out.println(string);
+	private static ParseNode expandParseTree(ParseNode parent, String string) {
+		//System.out.println(string);
 		String[] splitString = string.trim().split("\\(| |\\)", 2);
-		ParseTreeNode ParseTreeNode = null;
+		ParseNode ParseNode = null;
 
 		if (splitString[0] != "") {
-			ParseTreeNode = new ParseTreeNode(splitString[0], parent);
+			ParseNode = new ParseNode(splitString[0], parent);
 		} else {
-			ParseTreeNode = parent;
+			ParseNode = parent;
 		}
-		// ParseTreeNode.parent = parent;
-		// ParseTreeNode.atom = splitString[0];
+		// ParseNode.parent = parent;
+		// ParseNode.atom = splitString[0];
 
-		System.out.println(ParseTreeNode.atom);
+		//System.out.println(ParseNode.atom);
 
 		if (splitString.length > 1) {
 			splitString = findNextBracket(splitString[STRING_BODY]);
 		} else {
-			// return ParseTreeNode;
+			// return ParseNode;
 		}
 
 		while (splitString.length > 1) {
@@ -536,12 +588,12 @@ public class MckTranslator {
 				String[] constants = splitString[STRING_HEAD].trim().split(" ");
 				for (String constant : constants) {
 					if (constant != "") {
-						ParseTreeNode.children.add(new ParseTreeNode(constant, ParseTreeNode));
+						ParseNode.children.add(new ParseNode(constant, ParseNode));
 					}
 				}
 			}
 
-			ParseTreeNode.children.add(expandParseTree(ParseTreeNode, splitString[STRING_BODY]));
+			ParseNode.children.add(expandParseTree(ParseNode, splitString[STRING_BODY]));
 			splitString = findNextBracket(splitString[STRING_TAIL]);
 		}
 
@@ -549,11 +601,11 @@ public class MckTranslator {
 			String[] constants = splitString[STRING_HEAD].trim().split(" ");
 			for (String constant : constants) {
 				if (constant != "") {
-					ParseTreeNode.children.add(new ParseTreeNode(constant, ParseTreeNode));
+					ParseNode.children.add(new ParseNode(constant, ParseNode));
 				}
 			}
 		}
-		return ParseTreeNode;
+		return ParseNode;
 	}
 
 	/**
@@ -562,10 +614,10 @@ public class MckTranslator {
 	 * @param root
 	 * @param indent
 	 */
-	public static void printParseTree(ParseTreeNode root, String indent) {
+	public static void printParseTree(ParseNode root, String indent) {
 		System.out.println(indent + root.atom);
 		if (!root.children.isEmpty()) {
-			for (ParseTreeNode child : root.children) {
+			for (ParseNode child : root.children) {
 				printParseTree(child, indent + " -");
 			}
 		}
@@ -577,7 +629,7 @@ public class MckTranslator {
 	 * @param root
 	 * @param indent
 	 */
-	public static void printParseTreeTypes(ParseTreeNode root, String indent) {
+	public static void printParseTreeTypes(ParseNode root, String indent) {
 		switch (root.type) {
 		case ROOT:
 			System.out.println(indent + "ROOT");
@@ -602,7 +654,7 @@ public class MckTranslator {
 		}
 
 		if (!root.children.isEmpty()) {
-			for (ParseTreeNode child : root.children) {
+			for (ParseNode child : root.children) {
 				printParseTreeTypes(child, indent + " -");
 			}
 		}
@@ -617,17 +669,15 @@ public class MckTranslator {
 			gamePath = defaultGamePath;
 		}
 		
-		//FileReader reader = null;
 		try {
-			//reader = new FileReader(defaultGamePath);
 			List<String> tokens = tokenizer(gamePath);
 
-			ParseTreeNode root = expandParseTree(tokens);
+			ParseNode root = expandParseTree(tokens);
 
 			root = groundClauses(root);
-
-			// System.out.println(root.toString());
-			//printParseTreeTypes(root, "=");
+			
+			System.out.println(toMck(root));
+			
 		} catch(URISyntaxException e) { 
 			e.printStackTrace();
 		}catch(IOException e) { 
@@ -643,30 +693,30 @@ public class MckTranslator {
 		ROOT, CLAUSE, HEAD, FORMULA, VARIABLE, CONSTANT
 	}
 
-	static class ParseTreeNode {
+	static class ParseNode {
 		GdlType type;
 		String atom;
-		ParseTreeNode parent;
-		List<ParseTreeNode> children;
+		ParseNode parent;
+		List<ParseNode> children;
 
-		ParseTreeNode() {
+		ParseNode() {
 			atom = "";
 			parent = null;
-			children = new ArrayList<ParseTreeNode>();
+			children = new ArrayList<ParseNode>();
 			type = GdlType.ROOT;
 		}
 
-		ParseTreeNode(String atom, ParseTreeNode parent) {
+		ParseNode(String atom, ParseNode parent) {
 			this.atom = atom;
 			this.parent = parent;
-			this.children = new ArrayList<ParseTreeNode>();
+			this.children = new ArrayList<ParseNode>();
 			this.type = GdlType.ROOT;
 		}
 
-		ParseTreeNode(String atom, ParseTreeNode parent, GdlType type) {
+		ParseNode(String atom, ParseNode parent, GdlType type) {
 			this.atom = atom;
 			this.parent = parent;
-			this.children = new ArrayList<ParseTreeNode>();
+			this.children = new ArrayList<ParseNode>();
 			this.type = type;
 		}
 
@@ -674,7 +724,7 @@ public class MckTranslator {
 			return !this.atom.equals(atom);
 		}
 
-		public boolean distinct(ParseTreeNode node) {
+		public boolean distinct(ParseNode node) {
 			return !this.atom.equals(node.atom);
 		}
 
@@ -695,7 +745,7 @@ public class MckTranslator {
 			}
 			sb.append(atom);
 
-			for (ParseTreeNode child : children) {
+			for (ParseNode child : children) {
 				sb.append(" " + child.toString());
 			}
 
