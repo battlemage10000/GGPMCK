@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 public class MckTranslator {
 
 	public static String GDL_ROLE = "role";
+	public static String GDL_LEGAL = "legal";
 	// Old string manipulation constants for use with String.split()
 	public static int STRING_HEAD = 0, STRING_BODY = 1, STRING_TAIL = 2;
 
@@ -54,7 +55,7 @@ public class MckTranslator {
 				sb.append((char) character);
 				break;
 			default:
-				// all other characters
+				// all other characters, usually part of atoms
 				sb.append((char) character);
 				break;
 			}
@@ -64,7 +65,7 @@ public class MckTranslator {
 	}
 	
 	/**
-	 * 
+	 * Overloaded method which just asks for filePath as opposed to File object
 	 */
 	public static List<String> tokenizer(String filePath) throws IOException, URISyntaxException {
 		return tokenizer(new FileReader(new File(filePath)));
@@ -74,8 +75,7 @@ public class MckTranslator {
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
 	public static ParseNode expandParseTree(List<String> tokens) {
-		ParseNode root = new ParseNode("", null);
-		root.type = GdlType.ROOT;
+		ParseNode root = new ParseNode("", null, GdlType.ROOT);
 
 		ParseNode parent = root;
 		boolean functionName = false;
@@ -419,12 +419,6 @@ public class MckTranslator {
 		sb.delete(sb.length() - 4, sb.length());
 		sb.append(")");
 		sb.append(System.lineSeparator());
-		//sb.append("spec_spr = AF (");
-		//for(){
-		
-		//}
-		//sb.append(")");
-		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
 		
 		sb.append("-- Protocol Declarations");
@@ -463,7 +457,7 @@ public class MckTranslator {
 	}
 	
 	/**
-	 * Save string to file. Catches IOException if any.
+	 * Save string to file.
 	 */
 	public static void saveFile(String text, String filename){
 		try(FileWriter writer = new FileWriter(filename)){
@@ -555,7 +549,7 @@ public class MckTranslator {
 	 * @return splitString : String[] { before, middle, after } or "" if no
 	 *         brackets
 	 */
-	public static String[] findNextBracket(String string) {
+	/*public static String[] findNextBracket(String string) {
 		int level;
 		String[] splitString = string.split("\\(", 2);// find first cut
 		if (splitString.length > 1) {
@@ -584,18 +578,17 @@ public class MckTranslator {
 		}
 
 		return new String[] { before.trim(), sb.toString().trim(), splitString[STRING_BODY].trim() };
-	}
+	}*/
 
 	/**
-	 * I will write recursive method that will fill the children of a
-	 * ParseNode
+	 * A recursive method that will expand the children of a ParseNode
 	 * 
 	 * @deprecated
 	 * @param parent
 	 * @param gdl
 	 * @return
 	 */
-	private static ParseNode expandParseTree(ParseNode parent, String string) {
+	/*private static ParseNode expandParseTree(ParseNode parent, String string) {
 		//System.out.println(string);
 		String[] splitString = string.trim().split("\\(| |\\)", 2);
 		ParseNode ParseNode = null;
@@ -639,7 +632,7 @@ public class MckTranslator {
 			}
 		}
 		return ParseNode;
-	}
+	}*/
 
 	/**
 	 * Print the atoms of the nodes of the tree
@@ -693,6 +686,11 @@ public class MckTranslator {
 		}
 	}
 	
+	/**
+	 * Can be used from the command line by moving to the build directory and using
+	 *     java MckTranslator path/to/game.gdl
+	 * which will save output to path/to/game.gdl.mck
+	 */
 	public static void main(String[] args) throws IOException{
 		final String defaultGamePath = "gdlii/MontyHall.gdl";
 		String gamePath;
@@ -704,28 +702,27 @@ public class MckTranslator {
 		
 		try {
 			List<String> tokens = tokenizer(gamePath);
-
 			ParseNode root = expandParseTree(tokens);
-
 			root = groundClauses(root);
 			
-			System.out.println(toMck(root));
-			
+			String translation = toMck(root);
+			saveFile(translation, gamePath + ".mck");
 		} catch(URISyntaxException e) { 
 			e.printStackTrace();
 		}catch(IOException e) { 
 			e.printStackTrace();
-		//}finally {
-			//if (reader != null) {
-			//	reader.close();
-			//}
 		}
 	}
-
+	
+	// TODO: add hierarchy to types
 	public enum GdlType {
 		ROOT, CLAUSE, HEAD, FORMULA, VARIABLE, CONSTANT
 	}
-
+	
+	/** 
+	 * Inner class that represents one node in the parse tree
+	 * where the children for a formula are a list of parameters
+	 */
 	static class ParseNode {
 		GdlType type;
 		String atom;
@@ -733,17 +730,13 @@ public class MckTranslator {
 		List<ParseNode> children;
 
 		ParseNode() {
-			atom = "";
-			parent = null;
-			children = new ArrayList<ParseNode>();
-			type = GdlType.ROOT;
+			this("", null, GdlType.ROOT);
+			this.children = new ArrayList<ParseNode>();
 		}
 
 		ParseNode(String atom, ParseNode parent) {
-			this.atom = atom;
-			this.parent = parent;
+			this(atom, parent, GdlType.ROOT);
 			this.children = new ArrayList<ParseNode>();
-			this.type = GdlType.ROOT;
 		}
 
 		ParseNode(String atom, ParseNode parent, GdlType type) {
@@ -759,15 +752,6 @@ public class MckTranslator {
 
 		public boolean distinct(ParseNode node) {
 			return !this.atom.equals(node.atom);
-		}
-
-		@Deprecated
-		public int arity() {
-			if (parent != null && parent.children.contains(this)) {
-				return parent.children.indexOf(this);
-			} else {
-				return -1;
-			}
 		}
 
 		@Override
