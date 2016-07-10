@@ -1,5 +1,7 @@
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import MckTranslator.MckTranslator;
+import MckTranslator.DependencyGraph;
 import java.util.List;
 import java.util.Arrays;
 import java.io.File;

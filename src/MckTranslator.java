@@ -1,3 +1,5 @@
+package MckTranslator;
+
 import java.io.*;
 import java.util.*;
 import java.net.URI;
@@ -723,7 +725,7 @@ public class MckTranslator {
 	 * Inner class that represents one node in the parse tree
 	 * where the children for a formula are a list of parameters
 	 */
-	static class ParseNode {
+	public static class ParseNode {
 		GdlType type;
 		String atom;
 		ParseNode parent;

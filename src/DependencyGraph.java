@@ -1,3 +1,4 @@
+package MckTranslator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -72,7 +73,7 @@ public class DependencyGraph {
 	}
 
 
-class Vertex {
+public class Vertex {
 	private List<Edge> neighborhood;
 	private String atom;
 	private int arity;
@@ -150,7 +151,7 @@ class Vertex {
 	}
 }
 
-class Edge {
+public class Edge {
 	private Vertex from, to;
 
 	Edge(Vertex from, Vertex to) {
