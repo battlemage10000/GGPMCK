@@ -1,4 +1,4 @@
-package MckTranslator;
+package MckTranslator.graph;
 
 public class Edge {
 	private Vertex from, to;

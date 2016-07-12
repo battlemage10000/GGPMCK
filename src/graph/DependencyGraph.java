@@ -1,4 +1,4 @@
-package MckTranslator;
+package MckTranslator.graph;
 
 import java.util.ArrayList;
 import java.util.HashSet;

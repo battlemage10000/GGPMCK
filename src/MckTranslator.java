@@ -106,9 +106,10 @@ public class MckTranslator {
 				break;
 			default:
 				newNode = new ParseNode(token, parent, GdlType.CONSTANT);
-				if (parent.type == GdlType.CLAUSE && parent.children.isEmpty()) {
-					newNode.type = GdlType.HEAD;
-				} else if(parent.type == GdlType.CONSTANT){
+				//if (parent.type == GdlType.CLAUSE && parent.children.isEmpty()) {
+					//newNode.type = GdlType.HEAD;
+				//} else 
+				if(parent.type == GdlType.CONSTANT){
 					parent.type = GdlType.FORMULA;
 				}
 					
@@ -230,7 +231,7 @@ public class MckTranslator {
 		Queue<ParseNode> queue = new LinkedList<ParseNode>();
 		queue.addAll(root.children);
 		// Initialize a map that is used to link different times a variable is called in a clause
-		Map<String, DependencyGraph.Vertex> variableToVertexMap = new HashMap<String, DependencyGraph.Vertex>();
+		Map<String, Vertex> variableToVertexMap = new HashMap<String, Vertex>();
 
 		while (!queue.isEmpty()) {
 			ParseNode node = queue.remove(); // Get next node in queue
@@ -474,6 +475,7 @@ public class MckTranslator {
 	/**
 	 * Extracts a set of Strings which represent the vocabulary of the GDL
 	 * 
+	 * @deprecated
 	 * @param gdl
 	 * @return vocabulary
 	 */
@@ -490,6 +492,7 @@ public class MckTranslator {
 	/**
 	 * Extract a set of relations in the GDL
 	 * 
+	 * @deprecated
 	 * @param gdl
 	 * @return relationsSet
 	 */
@@ -719,6 +722,7 @@ public class MckTranslator {
 	// TODO: add hierarchy to types
 	public enum GdlType {
 		ROOT, CLAUSE, HEAD, FORMULA, VARIABLE, CONSTANT
+		
 	}
 	
 	/** 
@@ -755,7 +759,23 @@ public class MckTranslator {
 		public boolean distinct(ParseNode node) {
 			return !this.atom.equals(node.atom);
 		}
-
+		
+		public GdlType getType(){
+			return type;
+		}
+		
+		public String getAtom(){
+			return atom;
+		}
+		
+		public ParseNode getParent(){
+			return parent;
+		}
+		
+		public List<ParseNode> getChildren(){
+			return children;
+		}
+		
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();

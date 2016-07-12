@@ -41,6 +41,7 @@
 		<javac srcdir="${test}" destdir="${test.build}" includeantruntime="false">
 			<classpath>
 				<pathelement location="${lib}/junit-4.12.jar" />
+				<pathelement location="${lib}/hamcrest-core-1.3.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</javac>

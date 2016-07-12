@@ -1,6 +1,6 @@
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
-import MckTranslator.DependencyGraph;
+import MckTranslator.graph.DependencyGraph;
 
 public class DependencyGraphTest {
 
