@@ -359,6 +359,27 @@ public class MckTranslator {
 		
 		return boolVars;
 	}
+	
+	public static Map<String, List<String>> findMovesForMck(ParseNode root){
+		Map<String, List<String>> roleToMoveMap = new HashMap<String, List<String>>();
+		
+		for(ParseNode clause : root.getChildren()){
+			if(clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals("legal")){
+				ParseNode legal = clause.getChildren().get(0);
+				String role = legal.getChildren().get(0).toString();
+				String move = legal.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
+				
+				if(!roleToMoveMap.containsKey(role)){
+					roleToMoveMap.put(role, new ArrayList<String>());
+				}
+				
+				if(!roleToMoveMap.get(role).contains(move)){
+					roleToMoveMap.get(role).add(move);
+				}
+			}
+		}
+		return roleToMoveMap;
+	}
 
 	/**
 	 * TODO: takes a parse tree and returns MCK equivalent
@@ -367,6 +388,7 @@ public class MckTranslator {
 	public static String toMck(ParseNode root) {
 		
 		List<String> roles = findRolesForMck(root);
+		Map<String, List<String>> roleToMoveMap = findMovesForMck(root);
 		List<String> legals = findLegalsForMck(root);
 		List<String> boolVars = findBoolVarsForMck(root);
 		
@@ -393,7 +415,7 @@ public class MckTranslator {
 		sb.append(System.lineSeparator());
 		
 		sb.append(System.lineSeparator() + "-- Agent bindings");
-		for (String role : roles) {
+		for (String role : roleToMoveMap.keySet()) {
 			sb.append(System.lineSeparator() + "agent Player_" + role + " \"" + role + "\" (");
 			for(String var : boolVars){
 				if(var.contains("_"+role+"_")){
@@ -407,9 +429,13 @@ public class MckTranslator {
 		sb.append(System.lineSeparator() + "transitions");
 		sb.append(System.lineSeparator() + "begin");
 		
-		sb.append(System.lineSeparator() + "if Player_red.Move_red_hand_rock -> did_red_red_hand_rock:=True");
-		sb.append(System.lineSeparator() + "[] otherwise -> did_red_red_hand_rock := False");
-		sb.append(System.lineSeparator() + "fi;");
+		for(String role : roleToMoveMap.keySet()){
+			for(String move : roleToMoveMap.get(role)){
+				sb.append(System.lineSeparator() + "if Player_" + role + ".Move_" + move + " -> did_" + role + "_" + move + " := True");
+				sb.append(System.lineSeparator() + "[] otherwise -> did_" + role + "_" + move + " := False");
+				sb.append(System.lineSeparator() + "fi;");
+			}
+		}
 		
 		sb.append(System.lineSeparator() + "end");
 		sb.append(System.lineSeparator());
@@ -429,17 +455,11 @@ public class MckTranslator {
 		sb.append(System.lineSeparator());
 		
 		sb.append(System.lineSeparator() + "-- Protocol Declarations");
-		for(String role : roles){
+		for(String role : roleToMoveMap.keySet()){
 			sb.append(System.lineSeparator() + "protocol \""+role+"\" (");
-			for(String var : boolVars){
-				if(var.contains("_"+role+"_")){
-					sb.append(System.lineSeparator()+"  ");
-					if(var.contains("legal")){
-						sb.append(var + ": Bool, ");
-					}else{
-						sb.append(var + ": observable Bool, ");
-					}
-				}
+			for(String move : roleToMoveMap.get(role)){
+				sb.append(System.lineSeparator()+"  legal_" + role + "_" + move + ": Bool, ");
+				sb.append(System.lineSeparator()+"  did_" + role + "_" + move + ": observable Bool, ");
 			}
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append(System.lineSeparator() + ")");
@@ -447,11 +467,9 @@ public class MckTranslator {
 			sb.append(System.lineSeparator() + "begin");
 			sb.append(System.lineSeparator() + "  do");
 			sb.append(System.lineSeparator() + "  ");
-			for(String var : boolVars){
-				if(var.contains("legal_" + role + "_")){
-					sb.append(var + " -> <<Move_" + var.substring(7 + role.length(), var.length()) + ">>");
+			for(String move : roleToMoveMap.get(role)){
+					sb.append("legal_" + role + "_" + move + " -> <<Move_" + move + ">>");
 					sb.append(System.lineSeparator() + "  [] ");
-				}
 			}
 			sb.delete(sb.length() - 6, sb.length());
 			sb.append(System.lineSeparator() + "  od");
