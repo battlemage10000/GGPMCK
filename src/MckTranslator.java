@@ -1,9 +1,11 @@
-package MckTranslator;
+package translator;
 
 import java.io.*;
 import java.util.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import translator.graph.DependencyGraph;
+import translator.graph.Vertex;
 
 /**
  * Translates GDL-II in infix notation to MCK
@@ -116,7 +118,7 @@ public class MckTranslator {
 				if (newNode.atom.charAt(0) == '?') {
 					newNode.type = GdlType.VARIABLE;
 					scopedVariable = true;
-					newNode.atom = "?"+scopeNumber+"__"+newNode.atom.substring(1);
+					newNode.atom = newNode.atom + "__" + scopeNumber;
 				}
 				parent.children.add(newNode);
 				if (openBracket) {
@@ -224,7 +226,7 @@ public class MckTranslator {
 	 */
 	public static DependencyGraph constructDependencyGraph(ParseNode root) {
 		// Initialize empty graph
-		DependencyGraph graph = new DependencyGraph();
+		DependencyGraph<Arguments> graph = new DependencyGraph<Arguments>();
 		
 		
 		// Initialize queue and add all the branches of the root node
@@ -243,12 +245,12 @@ public class MckTranslator {
 				// Variables first instance added to variableToVertexMap which is then retrieved every time variable is called again
 			case VARIABLE:
 				if(variableToVertexMap.containsKey(node.atom) && variableToVertexMap.get(node.atom) != null){
-					variableToVertexMap.get(node.atom).addNeighbor(graph.getVertex(node.parent.atom, node.parent.children.indexOf(node)+1));
+					variableToVertexMap.get(node.atom).addNeighbor(graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
 				}else {
-					if(!graph.hasVertex(node.parent.atom, node.parent.children.indexOf(node)+1)){
-						graph.addVertex(node.parent.atom, node.parent.children.indexOf(node)+1);
+					if(!graph.hasVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)))){
+						graph.addVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
 					}	
-					variableToVertexMap.put(node.atom, graph.getVertex(node.parent.atom, node.parent.children.indexOf(node)+1));
+					variableToVertexMap.put(node.atom, graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
 				}
 				break;
 				
@@ -256,15 +258,15 @@ public class MckTranslator {
 			case FORMULA:
 			case HEAD:
 			case CONSTANT:
-				if (!graph.hasVertex(node.atom, 0)) {
-					graph.addVertex(node.atom, 0);
+				if (!graph.hasVertex(new Vertex<Arguments>(new Arguments(node.atom, 0)))) {
+					graph.addVertex(new Vertex<Arguments>(new Arguments(node.atom, 0)));
 				}
-				if (node.parent.type != GdlType.CLAUSE && !graph.hasVertex(node.parent.atom, node.parent.children.indexOf(node) + 1)) {
-					graph.addVertex(node.parent.atom, node.parent.children.indexOf(node) + 1);
+				if (node.parent.type != GdlType.CLAUSE && !graph.hasVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node) + 1)))) {
+					graph.addVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node) + 1)));
 				}
 				if(node.parent.type != GdlType.CLAUSE){
-					graph.getVertex(node.parent.atom, node.parent.children.indexOf(node) + 1)
-						.addNeighbor(graph.getVertex(node.atom, 0));
+					graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node) + 1))
+						.addNeighbor(graph.getVertex(new Arguments(node.atom, 0)));
 				}
 				
 				// Root or Clause do nothing
@@ -372,41 +374,44 @@ public class MckTranslator {
 		// Construct MCK version
 		sb.append("-- MCK file generated using MckTranslator from a GGP game description");
 		sb.append(System.lineSeparator());
-		sb.append(System.lineSeparator());
 		
-		sb.append("-- Environment Variables");
+		sb.append(System.lineSeparator() + "-- Environment Variables");
 		for(String boolVar : boolVars){
 			sb.append(System.lineSeparator());
 			sb.append(boolVar + ": Bool");
 		}
 		sb.append(System.lineSeparator());
-		sb.append(System.lineSeparator());
 		
-		sb.append("-- Environment Initial Conditions");
-		sb.append(System.lineSeparator());
-		sb.append("init_cond = ");
+		
+		sb.append(System.lineSeparator() + "-- Environment Initial Conditions");
+		sb.append(System.lineSeparator() + "init_cond = ");
 		for(String var : boolVars){
 			sb.append(System.lineSeparator());
 			sb.append(var + "==False /\\ ");
 		}
 		sb.delete(sb.length() - 4, sb.length());
 		sb.append(System.lineSeparator());
-		sb.append(System.lineSeparator());
 		
-		sb.append("-- Agent bindings");
+		sb.append(System.lineSeparator() + "-- Agent bindings");
 		for (String role : roles) {
-			sb.append(System.lineSeparator());
-			sb.append("agent Player_" + role + " \"" + role + "\" (");
+			sb.append(System.lineSeparator() + "agent Player_" + role + " \"" + role + "\" (");
 			for(String var : boolVars){
 				if(var.contains("_"+role+"_")){
-					sb.append(System.lineSeparator());
-					sb.append(var + ", ");
+					sb.append(System.lineSeparator() + var + ", ");
 				}
 			}
 			sb.delete(sb.length() - 2, sb.length());
-			sb.append(System.lineSeparator());
-			sb.append(")");
+			sb.append(System.lineSeparator() + ")");
 		}
+		sb.append(System.lineSeparator());
+		sb.append(System.lineSeparator() + "transitions");
+		sb.append(System.lineSeparator() + "begin");
+		
+		sb.append(System.lineSeparator() + "if Player_red.Move_red_hand_rock -> did_red_red_hand_rock:=True");
+		sb.append(System.lineSeparator() + "[] otherwise -> did_red_red_hand_rock := False");
+		sb.append(System.lineSeparator() + "fi;");
+		
+		sb.append(System.lineSeparator() + "end");
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
 		
@@ -422,12 +427,10 @@ public class MckTranslator {
 		sb.delete(sb.length() - 4, sb.length());
 		sb.append(")");
 		sb.append(System.lineSeparator());
-		sb.append(System.lineSeparator());
 		
-		sb.append("-- Protocol Declarations");
+		sb.append(System.lineSeparator() + "-- Protocol Declarations");
 		for(String role : roles){
-			sb.append(System.lineSeparator());
-			sb.append("protocol \""+role+"\" (");
+			sb.append(System.lineSeparator() + "protocol \""+role+"\" (");
 			for(String var : boolVars){
 				if(var.contains("_"+role+"_")){
 					sb.append(System.lineSeparator()+"  ");
@@ -442,7 +445,7 @@ public class MckTranslator {
 			sb.append(System.lineSeparator() + ")");
 			
 			sb.append(System.lineSeparator() + "begin");
-			sb.append(System.lineSeparator() + "  " +"do ");
+			sb.append(System.lineSeparator() + "  do");
 			sb.append(System.lineSeparator() + "  ");
 			for(String var : boolVars){
 				if(var.contains("legal_" + role + "_")){
@@ -451,7 +454,7 @@ public class MckTranslator {
 				}
 			}
 			sb.delete(sb.length() - 6, sb.length());
-			sb.append(System.lineSeparator() + "  " + "od");
+			sb.append(System.lineSeparator() + "  od");
 			sb.append(System.lineSeparator() + "end");
 			sb.append(System.lineSeparator());
 		}
@@ -696,7 +699,7 @@ public class MckTranslator {
 	 *     java MckTranslator path/to/game.gdl
 	 * which will save output to path/to/game.gdl.mck
 	 */
-	public static void main(String[] args) throws IOException{
+	public static void main(String[] args){
 		final String defaultGamePath = "gdlii/MontyHall.gdl";
 		String gamePath;
 		if(args.length > 0) {

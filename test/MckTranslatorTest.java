@@ -2,9 +2,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
-import MckTranslator.MckTranslator;
-import MckTranslator.graph.DependencyGraph;
-import MckTranslator.graph.Vertex;
+import translator.MckTranslator;
+import translator.graph.DependencyGraph;
+import translator.graph.Vertex;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Queue;
@@ -87,7 +87,7 @@ public class MckTranslatorTest {
 		}
 	}
 	
-	//@Test
+	@Test
 	public void validDepencencyGraphGeneration() {
 		try{
 			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
@@ -95,10 +95,10 @@ public class MckTranslatorTest {
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			DependencyGraph graph = MckTranslator.constructDependencyGraph(root);
-			//graph.printGraph();
+			graph.printGraph();
 			
-			for(Vertex vertex : graph.verticies){
-				//if(vertex.getArity() > 0){
+			for(Object vertex : graph.verticies){
+				//if(((Vertex<Arguments>) vertex).getData().getArity() > 0){
 					//System.out.println("Parameter " + vertex.toString() + " has domain: " + vertex.getDomain());
 				//}
 			}
@@ -128,7 +128,7 @@ public class MckTranslatorTest {
 			
 			MckTranslator.saveFile(mck, "build-test/mck-translation.mck");
 			
-			//System.out.println(mck);
+			System.out.println(mck);
 			
 		}catch(URISyntaxException e) {
 			e.printStackTrace();

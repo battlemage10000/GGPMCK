@@ -1,9 +1,9 @@
-package MckTranslator.graph;
+package translator.graph;
 
 public class Edge {
 	private Vertex from, to;
 
-	Edge(Vertex from, Vertex to) {
+	public Edge(Vertex from, Vertex to) {
 		this.from = from;
 		this.to = to;
 	}

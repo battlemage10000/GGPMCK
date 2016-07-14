@@ -22,7 +22,9 @@
 	</target>
 	
 	<target name="compile" depends="init" description="compiles the source code">
-		<javac srcdir="${src}" destdir="${build}" includeantruntime="false" />
+		<javac srcdir="${src}" destdir="${build}" includeantruntime="false" >
+			<compilerarg value="-Xlint:unchecked" />
+		</javac>
 		<copy todir="${build}">
 			<fileset dir="${res}" />
 		</copy>
@@ -69,7 +71,7 @@
 	
 	<!-- Javadocs -->
 	<target name="docs">
-		<javadoc packagenames="MckTranslator" sourcepath="${src}" destdir="${docs}" />
+		<javadoc packagenames="translator" sourcepath="${src}" destdir="${docs}" />
 	</target>
 	
 	<target name="clean-docs">
