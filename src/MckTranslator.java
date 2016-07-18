@@ -12,10 +12,11 @@ import translator.graph.Vertex;
  */
 public class MckTranslator {
 
-	public static String GDL_ROLE = "role";
-	public static String GDL_LEGAL = "legal";
+	public static final String GDL_ROLE = "role";
+	public static final String GDL_LEGAL = "legal";
+	public static final String GDL_SEES = "sees";
 	// Old string manipulation constants for use with String.split()
-	public static int STRING_HEAD = 0, STRING_BODY = 1, STRING_TAIL = 2;
+	//public static int STRING_HEAD = 0, STRING_BODY = 1, STRING_TAIL = 2;
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
@@ -305,7 +306,8 @@ public class MckTranslator {
 		}
 		return newNode;
 	}
-
+	
+	@Deprecated
 	public static List<String> findRolesForMck(ParseNode root){
 		ArrayList<String> roles = new ArrayList<String>();
 		for(ParseNode child : root.children){
@@ -315,15 +317,16 @@ public class MckTranslator {
 		}
 		return roles;
 	}
-
+	
+	@Deprecated
 	public static List<String> findLegalsForMck(ParseNode root){
 		ArrayList<String> legals = new ArrayList<String>();
 		
 		for(ParseNode node : root.children){
 			if(node.atom.equals("<=")){
 				ParseNode child = node.children.get(0);
-				if(child.atom.equals("legal")){
-					legals.add("legal_"+child.children.get(0).atom+"_"+child.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_"));
+				if(child.atom.equals(GDL_LEGAL)){
+					legals.add("legal_" + child.children.get(0).atom + "_" + child.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_"));
 				}
 			}
 		}
@@ -343,14 +346,14 @@ public class MckTranslator {
 			case "<=":
 				childrenQueue.addAll(node.children);
 				break;
-			case "legal":
+			case GDL_LEGAL:
 				String move = node.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
 				boolVars.add(move);
 				boolVars.add(move + "_old");
 				boolVars.add("legal_" + node.children.get(0).atom + "_" + move);
 				boolVars.add("did_" + node.children.get(0).atom + "_" + move);
 				break;
-			case "sees":
+			case GDL_SEES:
 				move = node.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
 				boolVars.add("sees_" + node.children.get(0).atom + "_" + move);
 				break;
@@ -364,7 +367,7 @@ public class MckTranslator {
 		Map<String, List<String>> roleToMoveMap = new HashMap<String, List<String>>();
 		
 		for(ParseNode clause : root.getChildren()){
-			if(clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals("legal")){
+			if(clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GDL_LEGAL)){
 				ParseNode legal = clause.getChildren().get(0);
 				String role = legal.getChildren().get(0).toString();
 				String move = legal.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
@@ -740,7 +743,7 @@ public class MckTranslator {
 		}
 	}
 	
-	// TODO: add hierarchy to types
+	// TODO: get rid of head keyword
 	public enum GdlType {
 		ROOT, CLAUSE, HEAD, FORMULA, VARIABLE, CONSTANT
 		
