@@ -8,40 +8,24 @@ import java.util.HashSet;
 public class Vertex<T> {
 	private T data;
 	private boolean visited;
-	private List<Edge> neighborhood;
-	
-	// Getting rid of these
-	private String atom;
-	private int arity;
-	private List<Vertex<T>> parameters;
+	private List<Edge<T>> neighborhood;
 	
 	public Vertex(T data) {
 		this.data = data;
-		this.atom="";
-		this.arity=0;
-		this.visited=false;
-		this.neighborhood=new ArrayList<Edge>();
-		this.parameters=new ArrayList<Vertex<T>>();
-	}
-	
-	/*Vertex(String atom, int arity) {
-		this.atom = atom;
-		this.arity = arity;
-		this.neighborhood = new ArrayList<Edge>();
 		this.visited = false;
-		this.parameters = new ArrayList<Vertex<T>>();
-	}*/
+		this.neighborhood = new ArrayList<Edge<T>>();
+	}
 	
 	public T getData(){
 		return data;
 	}
 
-	public List<Edge> getNeighborhood() {
+	public List<Edge<T>> getNeighborhood() {
 		return this.neighborhood;
 	}
 
-	public Edge addNeighbor(Vertex<T> neighbor) {
-		Edge newEdge = new Edge(this, neighbor);
+	public Edge<T> addNeighbor(Vertex<T> neighbor) {
+		Edge<T> newEdge = new Edge<T>(this, neighbor);
 		if (neighbor == null) {
 			return null;
 		}
@@ -50,17 +34,11 @@ public class Vertex<T> {
 		}
 		return newEdge;
 	}
-
-	/*public String getAtom() {
-		return this.atom;
-	}
-
-	public int getArity() {
-		return this.arity;
-	}*/
 	
 	/**
 	 * Returns the domain of the vertex
+	 * TODO: This code should be moved somewhere else and is only here for implementation reference
+	 * @Deprecated
 	 */
 	/*public Set<String> getDomain(){
 		Set<String> domain = new HashSet<String>();

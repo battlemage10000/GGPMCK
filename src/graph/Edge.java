@@ -1,18 +1,18 @@
 package translator.graph;
 
-public class Edge {
-	private Vertex from, to;
+public class Edge<T> {
+	private Vertex<T> from, to;
 
-	public Edge(Vertex from, Vertex to) {
+	public Edge(Vertex<T> from, Vertex<T> to) {
 		this.from = from;
 		this.to = to;
 	}
 
-	public Vertex getFromVertex() {
+	public Vertex<T> getFromVertex() {
 		return this.from;
 	}
 
-	public Vertex getToVertex() {
+	public Vertex<T> getToVertex() {
 		return this.to;
 	}
 

@@ -225,7 +225,7 @@ public class MckTranslator {
 	 * @param root
 	 * @return
 	 */
-	public static DependencyGraph constructDependencyGraph(ParseNode root) {
+	public static DependencyGraph<Arguments> constructDependencyGraph(ParseNode root) {
 		// Initialize empty graph
 		DependencyGraph<Arguments> graph = new DependencyGraph<Arguments>();
 		

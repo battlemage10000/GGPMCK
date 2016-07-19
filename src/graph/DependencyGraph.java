@@ -26,6 +26,10 @@ public class DependencyGraph<T> {
 		}
 	}*/
 	
+	public List<Vertex<T>> getVerticies(){
+		return verticies;
+	}
+	
 	public Vertex<T> getVertex(T data) {
 		Vertex<T> newVertex = new Vertex<T>(data);
 		if(verticies.contains(newVertex)){
@@ -60,9 +64,9 @@ public class DependencyGraph<T> {
 	@Deprecated
 	// Reads edge1 depends on edge2
 	public boolean addEdge(Vertex<T> from, Vertex<T> to) {
-		Edge newEdge = new Edge(to, from);
+		Edge<T> newEdge = new Edge<T>(to, from);
 		if (!to.getNeighborhood().contains(newEdge)) {
-			return to.getNeighborhood().add(new Edge(to, from));
+			return to.getNeighborhood().add(new Edge<T>(to, from));
 		} else {
 			return false;
 		}
@@ -72,8 +76,8 @@ public class DependencyGraph<T> {
 
 		for (Vertex<T> vertex : verticies) {
 			System.out.println("From vertex " + vertex.toString());
-			for (Object edge : vertex.getNeighborhood()) {
-				System.out.println(((Edge)edge).getToVertex().toString());
+			for (Edge<T> edge : vertex.getNeighborhood()) {
+				System.out.println(edge.getToVertex().toString());
 			}
 			System.out.println();
 		}
