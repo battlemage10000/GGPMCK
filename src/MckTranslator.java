@@ -142,6 +142,11 @@ public class MckTranslator {
 		DependencyGraph graph = constructDependencyGraph(root);
 		//graph.printGraph();
 		
+		
+		for(ParseNode clause : root.getChildren()){
+			
+		}
+		
 		// TODO: replace variables with domain(grounding)
 		
 		/*
@@ -288,6 +293,7 @@ public class MckTranslator {
 	 * @param variable
 	 * @param constant
 	 * @return groundedRoot
+	 * @Deprecated
 	 */
 	public static ParseNode groundedCopyOfSubTree(ParseNode oldNode, String variable, String constant) {
 		ParseNode newNode = new ParseNode();
@@ -305,6 +311,18 @@ public class MckTranslator {
 			newNode.children.add(newChild);
 		}
 		return newNode;
+	}
+	
+	
+	public static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap){
+		StringBuilder groundedClauses = new StringBuilder();
+		
+		String clause = gdlClause;
+		for(String variable : vertexToDomainMap.keySet()){
+			clause = clause.replace(variable, vertexToDomainMap.get(variable).get(0));
+		}
+		
+		return groundedClauses.toString();
 	}
 	
 	@Deprecated
