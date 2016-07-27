@@ -26,7 +26,7 @@ public class MckTranslatorTest {
 	@Test
 	public void loadEmptyGameDescription() {
 		try{
-			List<String> tokens = MckTranslator.tokenizer(emptyGdlPath);
+			List<String> tokens = MckTranslator.tokenizeFile(emptyGdlPath);
 			assertThat(tokens.isEmpty(), is(true));
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
@@ -38,7 +38,7 @@ public class MckTranslatorTest {
 	@Test
 	public void loadUnformatedValidTokens() {
 		try{
-			List<String> tokens = MckTranslator.tokenizer(testGdlPath);
+			List<String> tokens = MckTranslator.tokenizeFile(testGdlPath);
 			assertThat(tokens.isEmpty(), is(false));
 			
 			assertThat(tokens, is(Arrays.asList("(",")","(","init",")","(","the","clause",")")));
@@ -54,7 +54,7 @@ public class MckTranslatorTest {
 	@Test
 	public void loadGameAndConstructParseTree(){
 		try{
-			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
+			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
@@ -90,10 +90,10 @@ public class MckTranslatorTest {
 		}
 	}
 	
-	//@Test
+	@Test
 	public void validDepencencyGraphGeneration() {
 		try{
-			List<String> tokens = MckTranslator.tokenizer(dependencyTestGdlPath);
+			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
@@ -159,16 +159,16 @@ public class MckTranslatorTest {
 		return domain;
 	}
 	
-	@Test
+	//@Test
 	public void mckTranslatorGdlTestAndSave(){
 		try{
-			List<String> tokens = MckTranslator.tokenizer(groundedDependencyTestGdlPath);
+			List<String> tokens = MckTranslator.tokenizeFile(groundedDependencyTestGdlPath);
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			MckTranslator.saveFile(root.toString(), "build-test/testGameAfterParse.gdl");
 			// Check that tokenizer, expandParseTree, ParseNode.toString and saveFile are doing their job
-			assertThat(tokens, is(MckTranslator.tokenizer("build-test/testGameAfterParse.gdl")));
+			assertThat(tokens, is(MckTranslator.tokenizeFile("build-test/testGameAfterParse.gdl")));
 			
 			String mck = MckTranslator.toMck(root);
 			

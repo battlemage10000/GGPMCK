@@ -15,13 +15,14 @@ public class MckTranslator {
 	public static final String GDL_ROLE = "role";
 	public static final String GDL_LEGAL = "legal";
 	public static final String GDL_SEES = "sees";
+	public static final String GDL_CLAUSE = "<=";
 	// Old string manipulation constants for use with String.split()
 	//public static int STRING_HEAD = 0, STRING_BODY = 1, STRING_TAIL = 2;
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
 	 */
-	public static List<String> tokenizer(FileReader file) throws IOException {
+	public static List<String> tokenizer(Reader file) throws IOException {
 		List<String> tokens = new ArrayList<String>();
 
 		StringBuilder sb = new StringBuilder();
@@ -72,10 +73,15 @@ public class MckTranslator {
 	/**
 	 * Overloaded method which just asks for filePath as opposed to File object
 	 */
-	public static List<String> tokenizer(String filePath) throws IOException, URISyntaxException {
+	public static List<String> tokenizeFile(String filePath) throws IOException, URISyntaxException {
 		return tokenizer(new FileReader(new File(filePath)));
 	}
-
+	
+	
+	public static List<String> tokenizeGdl(String gdl) throws IOException {
+		return tokenizer(new StringReader(gdl));
+	}
+	
 	/**
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
@@ -99,7 +105,7 @@ public class MckTranslator {
 					scopeNumber++;
 				}
 				break;
-			case "<=":
+			case GDL_CLAUSE:
 				ParseNode newNode = new ParseNode(token, parent, GdlType.CLAUSE);
 				parent.children.add(newNode);
 				if (openBracket) {
@@ -748,7 +754,7 @@ public class MckTranslator {
 		}
 		
 		try {
-			List<String> tokens = tokenizer(gamePath);
+			List<String> tokens = tokenizeFile(gamePath);
 			ParseNode root = expandParseTree(tokens);
 			root = groundClauses(root);
 			
