@@ -73,13 +73,11 @@ public class DependencyGraph<T> {
 	}
 
 	public void printGraph() {
-
 		for (Vertex<T> vertex : verticies) {
-			System.out.println("From vertex " + vertex.toString());
+			System.out.println("Vertex: " + vertex.toString());
 			for (Edge<T> edge : vertex.getNeighborhood()) {
-				System.out.println(edge.getToVertex().toString());
+				System.out.println("  Neighbour: " + edge.getToVertex().toString());
 			}
-			System.out.println();
 		}
 	}
 }

@@ -76,9 +76,8 @@ public class Vertex<T> {
 		while(!queue.isEmpty()){
 			Edge<T> edge = queue.remove();
 			
-			if(domain.contains(edge.getToVertex())){
-			
-			} else {
+			if(!domain.contains(edge.getToVertex())){
+				queue.addAll(edge.getToVertex().getNeighborhood());
 				domain.add(edge.getToVertex());
 			}
 		}
