@@ -38,12 +38,12 @@
 
 
 ; assign points after termination
-(<= (goal red 100) (true terminal) (true (win red)))
-(<= (goal blue 100) (true terminal) (true (win blue)))
-(<= (goal red 50) (true terminal) (true (draw)))
-(<= (goal blue 50) (true terminal) (true (draw)))
-(<= (goal red 0) (true terminal) (true (not (win blue))))
-(<= (goal blue 0) (true terminal) (true (not (win red))))
+(<= (goal red 100) (true (win red)))
+(<= (goal blue 100) (true (win blue)))
+(<= (goal red 50) (true (draw)))
+(<= (goal blue 50) (true (draw)))
+(<= (goal red 0) (true (not (win blue))))
+(<= (goal blue 0) (true (not (win red))))
 
 ;(role red)
 ;(role blue)
