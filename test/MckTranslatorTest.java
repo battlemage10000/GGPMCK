@@ -166,7 +166,7 @@ public class MckTranslatorTest {
 		return domain;
 	}
 	
-	@Test
+	//@Test
 	public void mckTranslatorGdlTestAndSave(){
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(groundedDependencyTestGdlPath);
@@ -199,7 +199,7 @@ public class MckTranslatorTest {
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
-			MckTranslator.printParseTreeTypes(root, "");
+			//MckTranslator.printParseTreeTypes(root, "");
 			
 			String lparse = MckTranslator.toLparse(root);
 			System.out.println(lparse);

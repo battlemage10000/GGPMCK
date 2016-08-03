@@ -739,8 +739,8 @@ public class MckTranslator {
 	public static String toLparse(ParseNode root){
 		StringBuilder lparse = new StringBuilder();
 		
-		lparse.append("{d_true(V1):d_base(V1)}.\n");
-		lparse.append("1={d_does(V2, V3):d_input(V2, V3)} :- d_role(V2).\n");
+		lparse.append("{true(V1):base(V1)}.\n");
+		lparse.append("1={does(V2, V3):input(V2, V3)} :- role(V2).\n");
 		
 		lparse.append(root.toLparse());
 		
