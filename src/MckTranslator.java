@@ -14,6 +14,10 @@ public class MckTranslator {
 
 	public static final String GDL_ROLE = "role";
 	public static final String GDL_LEGAL = "legal";
+	public static final String GDL_DOES = "does";
+	public static final String GDL_INIT = "init";
+	public static final String GDL_TRUE = "true";
+	public static final String GDL_NEXT = "next";
 	public static final String GDL_SEES = "sees";
 	public static final String GDL_CLAUSE = "<=";
 	// Old string manipulation constants for use with String.split()
@@ -146,11 +150,40 @@ public class MckTranslator {
 
 		// Construct domain dependency map
 		DependencyGraph graph = constructDependencyGraph(root);
-		//graph.printGraph();
 		
+		ParseNode groundedRoot = new ParseNode();
 		
 		for(ParseNode clause : root.getChildren()){
-			
+			if(clause.getType() == GdlType.CLAUSE && clause.toString().contains("?")){
+				Map<String, List<String>> vertexToDomainMapForClause = new HashMap<String, List<String>>();
+				
+				Queue<ParseNode> headList = new LinkedList<ParseNode>();
+				headList.add(clause.getChildren().get(0));
+				while(!headList.isEmpty()){
+					ParseNode headNode = headList.remove();
+					
+					if(headNode.type == GdlType.VARIABLE){
+						Vertex<Arguments> parameter = graph.getVertex(new Arguments(headNode.getParent().getAtom(), headNode.getParent().getChildren().indexOf(headNode)));
+						List<String> domainList = new ArrayList<String>();
+						for(Vertex<Arguments> vertex : parameter.getDomain()){
+							domainList.add(vertex.getData().getAtom());
+						}
+						if(!domainList.isEmpty())
+							vertexToDomainMapForClause.put(headNode.getAtom(), domainList);
+					}
+					
+					headList.addAll(headNode.getChildren());
+				}
+				try{
+					// Huge oneliner
+					// TODO: make this line more readable
+					groundedRoot.getChildren().addAll(expandParseTree(tokenizeGdl(groundClause(clause.toString(), vertexToDomainMapForClause))).getChildren());
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+			}else{
+				groundedRoot.getChildren().add(clause);
+			}
 		}
 		
 		// TODO: replace variables with domain(grounding)
@@ -228,7 +261,7 @@ public class MckTranslator {
 		 * 
 		 */
 
-		return root;
+		return groundedRoot;
 	}
 
 	/**
@@ -257,12 +290,17 @@ public class MckTranslator {
 				// Variables first instance added to variableToVertexMap which is then retrieved every time variable is called again
 			case VARIABLE:
 				if(variableToVertexMap.containsKey(node.atom) && variableToVertexMap.get(node.atom) != null){
+					// if map has atom then add an edge from map to new node
 					variableToVertexMap.get(node.atom).addNeighbor(graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
 				}else {
+					// if map doesn't have atom then check if new node exists then add new node to map
 					if(!graph.hasVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)))){
+						// add new node if doesn't exist
 						graph.addVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
-					}	
-					variableToVertexMap.put(node.atom, graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
+					}
+					if(node.getParent().getChildren().indexOf(node) == 0){
+						variableToVertexMap.put(node.atom, graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
+					}
 				}
 				break;
 				
@@ -319,14 +357,23 @@ public class MckTranslator {
 		return newNode;
 	}
 	
-	
+	/**
+	 * 
+	 * @return string with grounded clause which can be expanded into parse tree of clause
+	 */
 	public static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap){
 		StringBuilder groundedClauses = new StringBuilder();
 		
-		String clause = gdlClause;
-		for(String variable : vertexToDomainMap.keySet()){
-			clause = clause.replace(variable, vertexToDomainMap.get(variable).get(0));
-		}
+		//TODO: find out how to iterate over all values of all lists
+		
+			String clause = gdlClause;	
+			for(String variable : vertexToDomainMap.keySet()){
+				if(vertexToDomainMap.get(variable) != null && clause.contains(variable)){
+					clause = clause.replace(variable, vertexToDomainMap.get(variable).get(0));
+				}
+			}
+			groundedClauses.append(clause);
+		
 		
 		return groundedClauses.toString();
 	}
@@ -356,7 +403,7 @@ public class MckTranslator {
 		}
 		return legals;
 	}
-
+	
 	public static List<String> findBoolVarsForMck(ParseNode root){
 		ArrayList<String> boolVars = new ArrayList<String>();
 		
@@ -410,7 +457,6 @@ public class MckTranslator {
 
 	/**
 	 * TODO: takes a parse tree and returns MCK equivalent
-	 * Take 
 	 */
 	public static String toMck(ParseNode root) {
 		
@@ -688,6 +734,20 @@ public class MckTranslator {
 	}*/
 
 	/**
+	 * 
+	 */
+	public static String toLparse(ParseNode root){
+		StringBuilder lparse = new StringBuilder();
+		
+		lparse.append("{d_true(V1):d_base(V1)}.\n");
+		lparse.append("1={d_does(V2, V3):d_input(V2, V3)} :- d_role(V2).\n");
+		
+		lparse.append(root.toLparse());
+		
+		return lparse.toString();
+	}
+
+	/**
 	 * Print the atoms of the nodes of the tree
 	 * 
 	 * @param root
@@ -805,7 +865,7 @@ public class MckTranslator {
 		}
 
 		public boolean distinct(ParseNode node) {
-			return !this.atom.equals(node.atom);
+			return !this.atom.equals(node.getAtom());
 		}
 		
 		public GdlType getType(){
@@ -822,6 +882,62 @@ public class MckTranslator {
 		
 		public List<ParseNode> getChildren(){
 			return children;
+		}
+		
+		public String toLparse(){
+			StringBuilder lparse = new StringBuilder();
+			
+			switch(type){
+			case ROOT:
+				for(ParseNode clause : children){
+					lparse.append(clause.toLparse());
+				}
+				break;
+			case CLAUSE:
+				lparse.append(children.get(0).toLparse());//head
+				if(children.size() > 1){
+					lparse.append(" :- ");
+					for(int i=1; i < children.size() - 1; i++){
+						lparse.append(children.get(i).toLparse());
+						lparse.append(", ");
+					}
+					lparse.append(children.get(children.size() - 1).toLparse());	
+				}
+				lparse.append(".\n");
+				break;
+			case FORMULA:
+				//base and inputs
+				if(getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)){
+					lparse.append("input(");
+				}else if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)){
+					lparse.append("base(");
+				}else if(getAtom().equals("not")){
+					lparse.append("t1(");
+				}else{
+					lparse.append(getAtom()+"(");
+				}
+				//Parameters
+				for(int i=0; i < children.size() - 1; i++){
+					lparse.append(children.get(i).toLparse());
+					lparse.append(", ");
+				}
+				lparse.append(children.get(children.size() - 1).toLparse());
+				lparse.append(")");
+				
+				//Facts
+				if(getParent().getType() == GdlType.ROOT){
+					lparse.append(".\n");
+				}
+				break;
+			case VARIABLE:
+				lparse.append(getAtom().replace("?", "V"));
+				break;
+			default:
+				lparse.append(getAtom());
+				break;
+			}
+			
+			return lparse.toString();
 		}
 		
 		@Override

@@ -90,7 +90,8 @@ public class MckTranslatorTest {
 		}
 	}
 	
-	@Test
+	
+	//@Test
 	public void validDepencencyGraphGeneration() {
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
@@ -101,17 +102,17 @@ public class MckTranslatorTest {
 			graph.printGraph();
 			
 			
-			for(Vertex<Arguments> vertex : graph.getVerticies()){
+			//for(Vertex<Arguments> vertex : graph.getVerticies()){
 				
-				System.out.println("Vertex: " + vertex.toString());
+			//	System.out.println("Vertex: " + vertex.toString());
 				
-				for(Vertex<Arguments> domainVertex : vertex.getDomain()){
+			//	for(Vertex<Arguments> domainVertex : vertex.getDomain()){
 					
-					System.out.println("  Element: " + domainVertex.toString());
+			//		System.out.println("  Element: " + domainVertex.toString());
 					
-				}
+			//	}
 			
-			}
+			//}
 			
 			//for(Vertex<Arguments> vertex : graph.getVerticies()){
 			//	Arguments data = vertex.getData();
@@ -122,7 +123,12 @@ public class MckTranslatorTest {
 			//		}
 			//	}
 			//}
-			//root = MckTranslator.groundClauses(root);
+			root = MckTranslator.groundClauses(root);
+			
+			//System.out.println(root.toString());
+			MckTranslator.printParseTree(root, "");
+			
+			//System.out.println(MckTranslator.toMck(root));
 			
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
@@ -133,6 +139,7 @@ public class MckTranslatorTest {
 		}
 	}
 	
+	@Deprecated
 	private List<String> getDomain(Vertex<Arguments> vertex){
 		List<String> domain = new ArrayList<String>();
 		List<Vertex<Arguments>> visited = new LinkedList<Vertex<Arguments>>();
@@ -159,7 +166,7 @@ public class MckTranslatorTest {
 		return domain;
 	}
 	
-	//@Test
+	@Test
 	public void mckTranslatorGdlTestAndSave(){
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(groundedDependencyTestGdlPath);
@@ -168,7 +175,7 @@ public class MckTranslatorTest {
 			
 			MckTranslator.saveFile(root.toString(), "build-test/testGameAfterParse.gdl");
 			// Check that tokenizer, expandParseTree, ParseNode.toString and saveFile are doing their job
-			assertThat(tokens, is(MckTranslator.tokenizeFile("build-test/testGameAfterParse.gdl")));
+			//assertThat(tokens, is(MckTranslator.tokenizeFile("build-test/testGameAfterParse.gdl")));
 			
 			String mck = MckTranslator.toMck(root);
 			
@@ -181,6 +188,26 @@ public class MckTranslatorTest {
 		}catch(IOException e){
 			e.printStackTrace();
 		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void printParseTreeAsLparse(){
+		try{
+			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
+			
+			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
+			
+			MckTranslator.printParseTreeTypes(root, "");
+			
+			String lparse = MckTranslator.toLparse(root);
+			System.out.println(lparse);
+			
+			MckTranslator.saveFile(lparse, "build-test/ungrounded.lp");
+		}catch(URISyntaxException e){
+			e.printStackTrace();
+		}catch(IOException e){
 			e.printStackTrace();
 		}
 	}

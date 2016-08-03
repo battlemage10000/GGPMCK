@@ -13,11 +13,14 @@
 (<= (legal blue (choose_hand rock)))
 (<= (legal blue (choose_hand paper)))
 (<= (legal blue (choose_hand scissors)))
+;(<= (legal ?player (choose_hand rock)) (role ?player))
+;(<= (legal ?player (choose_hand paper)) (role ?player))
+;(<= (legal ?player (choose_hand scissors)) (role ?player))
 
 
 ; state transitions
-(<= (next (round 2)) (true (round 1)) (true (draw)))
-(<= (next (round 3)) (true (round 2)) (true (draw)))
+(<= (next (round 2)) (true (round 1)) draw)
+(<= (next (round 3)) (true (round 2)) draw)
 
 ;(<= (draw) (does red (choose_hand rock)) (does blue (choose_hand rock)))
 ;(<= (draw) (does red (choose_hand paper)) (does blue (choose_hand paper)))
