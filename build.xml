@@ -5,46 +5,43 @@
 	
 	
 	<!-- Properties -->
-	<property name="src" location="src" />
-	<property name="build" location="build" />
-	<property name="dist" location="dist" />
-	<property name="res" location="res" />
-	<property name="lib" location="lib" />
-	<property name="test" location="test" />
-	<property name="test.build" location="build-test" />
-	<property name="docs" location="doc" />
+	<property name="main.class" location="translator.MckTranslator" />
+	<property name="packages" location="translator" />
+	<property name="source.dir" location="src" />
+	<property name="build.dir" location="build" />
+	<property name="resource.dir" location="res" />
+	<property name="library.dir" location="lib" />
+	<property name="test.source.dir" location="test" />
+	<property name="test.build.dir" location="build-test" />
+	<property name="documents.dir" location="doc" />
+	<property name="deploy.dir" location="deploy" />
 	
 	
 	<!-- Compile Java -->
-	<target name="init">
+	<target name="compile" description="compiles the source code">
 		<tstamp />
-		<mkdir dir="${build}" />
-	</target>
-	
-	<target name="compile" depends="init" description="compiles the source code">
-		<javac srcdir="${src}" destdir="${build}" includeantruntime="false" >
+		<mkdir dir="${build.dir}" />
+		<javac srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false" >
 			<compilerarg value="-Xlint:unchecked" />
 		</javac>
-		<copy todir="${build}">
-			<fileset dir="${res}" />
+		<copy todir="${build.dir}">
+			<fileset dir="${resource.dir}" />
 		</copy>
 	</target>
 	
 	
 	<!-- Test -->
 	<path id="test-classpath">
-		<pathelement location="${lib}/junit-4.12.jar" />
-		<pathelement location="${lib}/hamcrest-core-1.3.jar" />
-		<pathelement location="${build}" />
+		<pathelement location="${library.dir}/junit-4.12.jar" />
+		<pathelement location="${library.dir}/hamcrest-core-1.3.jar" />
+		<pathelement location="${build.dir}" />
 	</path>
 	
 	<target name="compile-test" depends="compile">
-		<mkdir dir="${test.build}" />
-		<javac srcdir="${test}" destdir="${test.build}" includeantruntime="false">
+		<mkdir dir="${test.build.dir}" />
+		<javac srcdir="${test.source.dir}" destdir="${test.build.dir}" includeantruntime="false">
 			<classpath>
-				<pathelement location="${lib}/junit-4.12.jar" />
-				<pathelement location="${lib}/hamcrest-core-1.3.jar" />
-				<pathelement location="${build}" />
+				<path refid="test-classpath" />
 			</classpath>
 			<compilerarg value="-Xlint:unchecked" />
 		</javac>
@@ -54,28 +51,39 @@
 		<junit printsummary="on" haltonfailure="yes" fork="true">
 			<classpath>
 				<path refid="test-classpath" />
-				<pathelement location="${test.build}" />
+				<pathelement location="${test.build.dir}" />
 			</classpath>
 			<formatter type="brief" usefile="false" />
 			<batchtest>
-				<fileset dir="${test}" includes="**/*Test.java" />
+				<fileset dir="${test.source.dir}" includes="**/*Test.java" />
 			</batchtest>
 		</junit>
 	</target>
 	
+	<!-- Clean -->
 	<target name="clean">
-		<delete dir="${dist}" />
-		<delete dir="${build}" />
-		<delete dir="${test.build}" />
+		<delete dir="${build.dir}" />
+		<delete dir="${test.build.dir}" />
+		<delete dir="${deploy.dir}" />
 	</target>
 	
+	<!-- Jar -->
+	<target name="jar" depends="compile">
+		<mkdir dir="${deploy.dir}" />
+		<jar destfile="${deploy.dir}/${ant.project.name}.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="translator.MckTranslator" />
+			</manifest>
+		</jar>
+	</target>
 	
 	<!-- Javadocs -->
 	<target name="docs">
-		<javadoc packagenames="translator" sourcepath="${src}" destdir="${docs}" />
+		<mkdir dir="${documents.dir}" />
+		<javadoc packagenames="${packages}" sourcepath="${source.dir}" destdir="${documents.dir}" />
 	</target>
 	
 	<target name="clean-docs">
-		<delete dir="${docs}" />
+		<delete dir="${documents.dir}" />
 	</target>
 </project>
