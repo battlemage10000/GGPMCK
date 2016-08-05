@@ -889,8 +889,15 @@ public class MckTranslator {
 			
 			switch(type){
 			case ROOT:
-				for(ParseNode clause : children){
+				for(ParseNode clause : getChildren()){
 					lparse.append(clause.toLparse());
+					if(clause.getType() == GdlType.CLAUSE){
+						if(clause.getChildren().get(0).getAtom().equals(GDL_INIT) ||
+							clause.getChildren().get(0).getAtom().equals(GDL_NEXT) ||
+							clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)){
+							lparse.append(clause.toLparseWithBaseInput());
+						}
+					}
 				}
 				break;
 			case CLAUSE:
@@ -907,11 +914,11 @@ public class MckTranslator {
 				break;
 			case FORMULA:
 				//base and inputs
-				if(getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)){
+				/*if(getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)){
 					lparse.append("input(");
 				}else if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)){
 					lparse.append("base(");
-				}else if(getAtom().equals("not")){
+				}else*/ if(getAtom().equals("not")){
 					lparse.append("t1(");
 				}else{
 					lparse.append(getAtom()+"(");
@@ -937,6 +944,52 @@ public class MckTranslator {
 				break;
 			}
 			
+			return lparse.toString();
+		}
+		
+		private String toLparseWithBaseInput(){
+			StringBuilder lparse = new StringBuilder();
+			
+			switch(type){
+			case CLAUSE:
+				lparse.append(children.get(0).toLparseWithBaseInput());//head
+				if(children.size() > 1){
+					lparse.append(" :- ");
+					for(int i=1; i < children.size() - 1; i++){
+						lparse.append(children.get(i).toLparseWithBaseInput());
+						lparse.append(", ");
+					}
+					lparse.append(children.get(children.size() - 1).toLparseWithBaseInput());	
+				}
+				lparse.append(".\n");
+				break;
+			case FORMULA:
+				//base and inputs
+				if(getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)){
+					lparse.append("input(");
+				}else if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)){
+					lparse.append("base(");
+				}else if(getAtom().equals("not")){
+					lparse.append("t1(");
+				}else{
+					lparse.append(getAtom()+"(");
+				}
+				//Parameters
+				for(int i=0; i < children.size() - 1; i++){
+					lparse.append(children.get(i).toLparseWithBaseInput());
+					lparse.append(", ");
+				}
+				lparse.append(children.get(children.size() - 1).toLparseWithBaseInput());
+				lparse.append(")");
+				
+				//Facts
+				if(getParent().getType() == GdlType.ROOT){
+					lparse.append(".\n");
+				}
+				break;
+			default:
+				lparse.append(toLparse());
+			}
 			return lparse.toString();
 		}
 		
