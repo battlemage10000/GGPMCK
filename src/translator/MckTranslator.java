@@ -801,7 +801,9 @@ public class MckTranslator {
 	
 	/**
 	 * Can be used from the command line by moving to the build directory and using
-	 *     java MckTranslator path/to/game.gdl
+	 *     java translator.MckTranslator path/to/game.gdl
+	 *   or
+	 *     java -jar MckTranslator.jar path/to/game.gdl
 	 * which will save output to path/to/game.gdl.mck
 	 */
 	public static void main(String[] args){
@@ -813,17 +815,86 @@ public class MckTranslator {
 			gamePath = defaultGamePath;
 		}
 		
-		try {
-			List<String> tokens = tokenizeFile(gamePath);
-			ParseNode root = expandParseTree(tokens);
-			root = groundClauses(root);
-			
-			String translation = toMck(root);
-			saveFile(translation, gamePath + ".mck");
-		} catch(URISyntaxException e) { 
-			e.printStackTrace();
-		}catch(IOException e) { 
-			e.printStackTrace();
+		boolean helpSwitch = false;
+		boolean inputFileSwitch = false;
+		boolean outputFileSwitch = false;
+		boolean outputMckSwitch = true;
+		boolean outputLparseSwitch = false;
+		
+		String inputFilePath = "";
+		String outputFilePath = "";
+		
+		for(String arg : args){
+			switch(arg){
+			case "-h":
+			case "--help":
+				helpSwitch = true;
+				break;
+			case "-o":
+			case "--output":
+				outputFileSwitch = true;
+				break;
+			case "-i":
+			case "--input":
+				inputFileSwitch = true;
+				break;
+			case "--to-mck":
+				outputMckSwitch = true;
+				outputLparseSwitch = false;
+				break;
+			case "--to-lparse":
+				outputMckSwitch = false;
+				outputLparseSwitch = true;
+				break;
+			default:
+				if(outputFileSwitch){
+					outputFilePath = arg;
+					outputFileSwitch = false;
+				}else if(inputFileSwitch){
+					inputFilePath = arg;
+					inputFileSwitch = false;
+				}
+			}
+		}
+		
+		if(helpSwitch){
+			System.out.println("usage: java MckTranslator.jar [options] [gdlFileInput]");
+			System.out.println("Options:");
+			System.out.println("  -h --help    print this help file");
+			System.out.println("  -i --input   path to input file (default: in stream)");
+			System.out.println("  -o --output  path to output file (default: out stream)");
+			System.out.println("  --to-mck     output file is in mck format (default)");
+			System.out.println("  --to-lparse  output file is in lparse format");
+		}else{
+			try {
+				List<String> tokens;
+				if(inputFilePath.equals("")){
+					tokens = tokenizer(new InputStreamReader(System.in));
+				}else{
+					tokens = tokenizeFile(inputFilePath);
+				}
+				
+				ParseNode root = expandParseTree(tokens);
+				root = groundClauses(root);
+				
+				String translation;
+				if(outputLparseSwitch){
+					translation = toLparse(root);
+				}else{
+					translation = toMck(root);
+				}
+				
+				
+				if(outputFilePath.equals("")){
+					System.out.println(translation);
+				}else{
+					saveFile(translation, outputFilePath);
+				}
+			} catch(URISyntaxException e) { 
+				e.printStackTrace();
+			}catch(IOException e) { 
+				e.printStackTrace();
+			}
 		}
 	}
 	
