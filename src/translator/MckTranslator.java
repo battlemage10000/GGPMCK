@@ -947,6 +947,10 @@ public class MckTranslator {
 			return lparse.toString();
 		}
 		
+		/**
+		 * Recursive method for generating lparse formatted representation of parse tree
+		 * @return String lparse of the sub-tree rooted at node
+		 */
 		private String toLparseWithBaseInput(){
 			StringBuilder lparse = new StringBuilder();
 			
