@@ -126,7 +126,7 @@ public class MckTranslatorTest {
 			root = MckTranslator.groundClauses(root);
 			
 			//System.out.println(root.toString());
-			MckTranslator.printParseTree(root, "");
+			MckTranslator.printParseTree(root);
 			
 			//System.out.println(MckTranslator.toMck(root));
 			
@@ -166,7 +166,7 @@ public class MckTranslatorTest {
 		return domain;
 	}
 	
-	//@Test
+	@Test
 	public void mckTranslatorGdlTestAndSave(){
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(groundedDependencyTestGdlPath);
@@ -174,7 +174,7 @@ public class MckTranslatorTest {
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			MckTranslator.saveFile(root.toString(), "build-test/testGameAfterParse.gdl");
-			// Check that tokenizer, expandParseTree, ParseNode.toString and saveFile are doing their job
+			// Check that gdlTokenizer, expandParseTree, ParseNode.toString and saveFile are doing their job
 			//assertThat(tokens, is(MckTranslator.tokenizeFile("build-test/testGameAfterParse.gdl")));
 			
 			String mck = MckTranslator.toMck(root);
@@ -199,7 +199,7 @@ public class MckTranslatorTest {
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
-			//MckTranslator.printParseTreeTypes(root, "");
+			//MckTranslator.printParseTreeTypes(root);
 			
 			String lparse = MckTranslator.toLparse(root);
 			System.out.println(lparse);

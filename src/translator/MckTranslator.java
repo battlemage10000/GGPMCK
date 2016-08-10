@@ -26,7 +26,7 @@ public class MckTranslator {
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
 	 */
-	public static List<String> tokenizer(Reader file) throws IOException {
+	public static List<String> gdlTokenizer(Reader file) throws IOException {
 		List<String> tokens = new ArrayList<String>();
 
 		StringBuilder sb = new StringBuilder();
@@ -78,12 +78,12 @@ public class MckTranslator {
 	 * Overloaded method which just asks for filePath as opposed to File object
 	 */
 	public static List<String> tokenizeFile(String filePath) throws IOException, URISyntaxException {
-		return tokenizer(new FileReader(new File(filePath)));
+		return gdlTokenizer(new FileReader(new File(filePath)));
 	}
 	
 	
 	public static List<String> tokenizeGdl(String gdl) throws IOException {
-		return tokenizer(new StringReader(gdl));
+		return gdlTokenizer(new StringReader(gdl));
 	}
 	
 	/**
@@ -141,7 +141,21 @@ public class MckTranslator {
 		}
 		return root;
 	}
-
+	
+	public static boolean isVariableInTree(ParseNode node){
+		if(node.type == GdlType.VARIABLE){
+			return true;
+		}
+		
+		for(ParseNode child : node.getChildren()){
+			if(isVariableInTree(child)){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * Change sentences with variables to grounded equivalent. Takes root of
 	 * parse tree and returns root of grounded tree
@@ -154,7 +168,7 @@ public class MckTranslator {
 		ParseNode groundedRoot = new ParseNode();
 		
 		for(ParseNode clause : root.getChildren()){
-			if(clause.getType() == GdlType.CLAUSE && clause.toString().contains("?")){
+			if(clause.getType() == GdlType.CLAUSE && isVariableInTree(clause)){
 				Map<String, List<String>> vertexToDomainMapForClause = new HashMap<String, List<String>>();
 				
 				Queue<ParseNode> headList = new LinkedList<ParseNode>();
@@ -457,6 +471,7 @@ public class MckTranslator {
 
 	/**
 	 * TODO: takes a parse tree and returns MCK equivalent
+	 * TODO: rewrite to follow steps in mck paper
 	 */
 	public static String toMck(ParseNode root) {
 		
@@ -573,7 +588,7 @@ public class MckTranslator {
 	 * @param gdl
 	 * @return vocabulary
 	 */
-	public static Set<String> extractVocabulary(String gdl) {
+	private static Set<String> extractVocabulary(String gdl) {
 		// Extracting atoms
 		Set<String> vocabulary = new HashSet<String>();
 		for (String atom : gdl.split("\\(| |\\)")) {
@@ -590,7 +605,7 @@ public class MckTranslator {
 	 * @param gdl
 	 * @return relationsSet
 	 */
-	public static Set<String> extractRelations(String gdl) {
+	private static Set<String> extractRelations(String gdl) {
 		// Extracting relations
 		Set<String> relationsSet = new HashSet<String>();
 		for (String sentence : gdl.split("\\(")) {
@@ -608,7 +623,7 @@ public class MckTranslator {
 	 * @param gdl
 	 * @return
 	 */
-	public static Set<String> extractVariables(String gdl) {
+	private static Set<String> extractVariables(String gdl) {
 		Set<String> variables = new HashSet<String>();
 		String[] splitString = gdl.split("\\(| |\\)");
 		for (String atom : splitString) {
@@ -628,7 +643,7 @@ public class MckTranslator {
 	 * @param tokens
 	 * @return variables
 	 */
-	public static Set<String> variableSet(List<String> tokens) {
+	private static Set<String> variableSet(List<String> tokens) {
 		Set<String> variables = new HashSet<String>();
 		for (String token : tokens) {
 			if (token.charAt(0) == '?') {
@@ -734,7 +749,7 @@ public class MckTranslator {
 	}*/
 
 	/**
-	 * 
+	 * Outputs parse tree in lparse format
 	 */
 	public static String toLparse(ParseNode root){
 		StringBuilder lparse = new StringBuilder();
@@ -753,13 +768,17 @@ public class MckTranslator {
 	 * @param root
 	 * @param indent
 	 */
-	public static void printParseTree(ParseNode root, String indent) {
-		System.out.println(indent + root.atom);
+	public static void printParseTree(ParseNode root, String prefix, String indent) {
+		System.out.println(prefix + root.atom);
 		if (!root.children.isEmpty()) {
-			for (ParseNode child : root.children) {
-				printParseTree(child, indent + " -");
+			for (ParseNode child : root.getChildren()) {
+				printParseTree(child, prefix + indent, indent);
 			}
 		}
+	}
+	
+	public static void printParseTree(ParseNode root){
+		printParseTree(root, ">", " -");
 	}
 
 	/**
@@ -768,25 +787,25 @@ public class MckTranslator {
 	 * @param root
 	 * @param indent
 	 */
-	public static void printParseTreeTypes(ParseNode root, String indent) {
+	public static void printParseTreeTypes(ParseNode root, String prefix, String indent) {
 		switch (root.type) {
 		case ROOT:
-			System.out.println(indent + "ROOT");
+			System.out.println(prefix + "ROOT " + root.getAtom());
 			break;
 		case CLAUSE:
-			System.out.println(indent + "CLAUSE");
+			System.out.println(prefix + "CLAUSE " + root.getAtom());
 			break;
 		case HEAD:
-			System.out.println(indent + "HEAD");
+			System.out.println(prefix + "HEAD " + root.getAtom());
 			break;
 		case VARIABLE:
-			System.out.println(indent + "VARIABLE");
+			System.out.println(prefix + "VARIABLE " + root.getAtom());
 			break;
 		case FORMULA:
-			System.out.println(indent + "FORMULA");
+			System.out.println(prefix + "FORMULA " + root.getAtom());
 			break;
 		case CONSTANT:
-			System.out.println(indent + "CONSTANT");
+			System.out.println(prefix + "CONSTANT " + root.getAtom());
 			break;
 		default:
 			break;
@@ -794,9 +813,13 @@ public class MckTranslator {
 
 		if (!root.children.isEmpty()) {
 			for (ParseNode child : root.children) {
-				printParseTreeTypes(child, indent + " -");
+				printParseTreeTypes(child, prefix + indent, indent);
 			}
 		}
+	}
+	
+	public static void printParseTreeTypes(ParseNode root){
+		printParseTreeTypes(root, ">", " -");
 	}
 	
 	/**
@@ -807,19 +830,16 @@ public class MckTranslator {
 	 * which will save output to path/to/game.gdl.mck
 	 */
 	public static void main(String[] args){
-		final String defaultGamePath = "gdlii/MontyHall.gdl";
-		String gamePath;
-		if(args.length > 0) {
-			gamePath = args[0];
-		}else{
-			gamePath = defaultGamePath;
-		}
-		
 		boolean helpSwitch = false;
 		boolean inputFileSwitch = false;
+		boolean inputFileToken = false;
 		boolean outputFileSwitch = false;
+		boolean outputFileToken = false;
+		boolean groundSwitch = false;
 		boolean outputMckSwitch = true;
 		boolean outputLparseSwitch = false;
+		boolean parseTreeSwitch = false;
+		boolean parseTreeTypesSwitch = false;
 		
 		String inputFilePath = "";
 		String outputFilePath = "";
@@ -837,6 +857,11 @@ public class MckTranslator {
 			case "-i":
 			case "--input":
 				inputFileSwitch = true;
+				inputFileToken = true;
+				break;
+			case "-g":
+			case "--ground":
+				groundSwitch = true;
 				break;
 			case "--to-mck":
 				outputMckSwitch = true;
@@ -846,13 +871,21 @@ public class MckTranslator {
 				outputMckSwitch = false;
 				outputLparseSwitch = true;
 				break;
+			case "--parse-tree":
+				parseTreeSwitch = true;
+				break;
+			case "--parse-types":
+				parseTreeTypesSwitch = true;
+				break;
 			default:
-				if(outputFileSwitch){
+				if(outputFileToken){
 					outputFilePath = arg;
-					outputFileSwitch = false;
-				}else if(inputFileSwitch){
+					outputFileToken = false;
+				}else if(inputFileToken){
 					inputFilePath = arg;
-					inputFileSwitch = false;
+					inputFileToken = false;
+				}else if(!inputFileSwitch){
+					inputFilePath = arg;
 				}
 			}
 		}
@@ -860,22 +893,40 @@ public class MckTranslator {
 		if(helpSwitch){
 			System.out.println("usage: java MckTranslator.jar [options] [gdlFileInput]");
 			System.out.println("Options:");
-			System.out.println("  -h --help    print this help file");
-			System.out.println("  -i --input   path to input file (default: in stream)");
-			System.out.println("  -o --output  path to output file (default: out stream)");
-			System.out.println("  --to-mck     output file is in mck format (default)");
-			System.out.println("  --to-lparse  output file is in lparse format");
+			System.out.println("  -h --help     print this help file");
+			System.out.println("  -i --input    path to input file (default: in stream)");
+			System.out.println("  -o --output   path to output file (default: out stream)");
+			System.out.println("  --to-mck      output file is in mck format (default)");
+			System.out.println("  --to-lparse   output file is in lparse format");
+			System.out.println("  -g --ground   use internal grounder");
+			System.out.println("  --parse-tree  print parse tree for debug");
+			System.out.println("  --parse-types print parse tree type for debug");
 		}else{
 			try {
+				// Use either 
 				List<String> tokens;
 				if(inputFilePath.equals("")){
-					tokens = tokenizer(new InputStreamReader(System.in));
+					tokens = gdlTokenizer(new InputStreamReader(System.in));
 				}else{
 					tokens = tokenizeFile(inputFilePath);
 				}
-				
 				ParseNode root = expandParseTree(tokens);
-				root = groundClauses(root);
+				
+				// Use internal grounder
+				if(groundSwitch){
+					root = groundClauses(root);
+				}
+				
+				// Print parse tree for debugging
+				if(parseTreeSwitch){
+					printParseTree(root);
+				}
+				
+				// Print parse tree types for debugging
+				if(parseTreeTypesSwitch){
+					printParseTreeTypes(root);
+				}
+				
 				
 				String translation;
 				if(outputLparseSwitch){
