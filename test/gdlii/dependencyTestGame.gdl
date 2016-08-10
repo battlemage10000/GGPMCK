@@ -7,12 +7,12 @@
 (init (round 1))
 
 ; legal moves
-(<= (legal red (choose_hand rock)))
-(<= (legal red (choose_hand paper)))
-(<= (legal red (choose_hand scissors)))
-(<= (legal blue (choose_hand rock)))
-(<= (legal blue (choose_hand paper)))
-(<= (legal blue (choose_hand scissors)))
+(legal red (choose_hand rock))
+(legal red (choose_hand paper))
+(legal red (choose_hand scissors))
+(legal blue (choose_hand rock))
+(legal blue (choose_hand paper))
+(legal blue (choose_hand scissors))
 ;(<= (legal ?player (choose_hand rock)) (role ?player))
 ;(<= (legal ?player (choose_hand paper)) (role ?player))
 ;(<= (legal ?player (choose_hand scissors)) (role ?player))
