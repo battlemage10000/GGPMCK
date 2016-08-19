@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import translator.graph.DomainGraph;
 import translator.graph.DependencyGraph;
 import translator.graph.Vertex;
 
@@ -81,7 +82,6 @@ public class MckTranslator {
 		return gdlTokenizer(new FileReader(new File(filePath)));
 	}
 	
-	
 	public static List<String> tokenizeGdl(String gdl) throws IOException {
 		return gdlTokenizer(new StringReader(gdl));
 	}
@@ -142,6 +142,61 @@ public class MckTranslator {
 		return root;
 	}
 	
+	
+	
+	
+	// Follows the domain graph def in the ggp book
+	public static DomainGraph constructDomainGraph(ParseNode root){
+		DomainGraph graph = new DomainGraph();
+		HashMap<ParseNode, DomainGraph.Term> variableMap = new HashMap<ParseNode, DomainGraph.Term>();
+		
+		
+		Queue<ParseNode> queue = new LinkedList<ParseNode>();
+		queue.addAll(root.getChildren());
+		
+		while(!queue.isEmpty()){
+			ParseNode node = queue.remove();
+			switch(node.type){
+			case ROOT:
+				System.out.println("Should be impossible to reach root");
+				break;
+			case CLAUSE:
+				break;
+			case FORMULA:
+				graph.addFunction(node.getAtom(), node.getChildren().size());
+				for(int i=0; i<node.getChildren().size(); i++){
+					if(node.getChildren().get(i).type != GdlType.VARIABLE){
+						graph.addEdge(node.getAtom(), i+1, node.getChildren().get(i).getAtom(), 0);
+					}else{
+						ParseNode variable = node.getChildren().get(i);
+						if(variableMap.containsKey(variable)){
+							DomainGraph.Term varLink = variableMap.get(variable);
+							graph.addEdge(varLink.getTerm(), varLink.getArity(), node.getAtom(), i+1);
+						}else{
+							variableMap.put(variable, new DomainGraph.Term(node.getAtom(), i+1));
+						}
+					}
+				}
+				break;
+			case CONSTANT:
+				break;
+			case VARIABLE:
+				
+				break;
+			default:
+				System.out.println("The parse tree has a data error");
+			}
+			
+			queue.addAll(node.getChildren());
+		}
+		
+		graph.addEdge("base", 1, "true", 1);
+		graph.addEdge("input", 1, "does", 1);
+		graph.addEdge("input", 2, "does", 2);
+		
+		return graph;
+	}
+	
 	public static boolean isVariableInTree(ParseNode node){
 		if(node.type == GdlType.VARIABLE){
 			return true;
@@ -155,6 +210,49 @@ public class MckTranslator {
 		
 		return false;
 	}
+	
+	
+	public static ParseNode groundGdl(ParseNode root, DomainGraph domainGraph){
+		ParseNode groundedRoot = new ParseNode();
+		
+		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = domainGraph.getDomainMap();
+		Map<String, List<String>> domainGraphString = new HashMap<String, List<String>>();
+		for(DomainGraph.Term term : domainMap.keySet()){
+			String atom = term.getTerm();
+			List<String> domain = new ArrayList<String>();
+			for(DomainGraph.Term dependency : domainMap.get(term)){
+				domain.add(dependency.getTerm());
+			}
+			domainGraphString.put(atom, domain);
+		}
+		
+		for(ParseNode clause : root.getChildren()){
+			if(!isVariableInTree(clause)){
+				groundedRoot.getChildren().add(clause);
+			}else{
+				String groundedClauseString = groundClause(clause.toString(), domainGraphString);
+				List<String> groundedClauseTokens = null;
+				try{ 
+					groundedClauseTokens = tokenizeGdl(groundedClauseString);
+				}catch(IOException e){	e.printStackTrace();	}
+				
+				ParseNode clauseTree = expandParseTree(groundedClauseTokens);
+				groundedRoot.getChildren().add(clauseTree.getChildren().get(0));
+				
+			}
+		}
+		
+		return groundedRoot;
+	}
+	
+	//public static String groundClause(String gdlClause, Map<DomainGraph.Term, List<DomainGraph.Term>> domainMap){
+	//	StringBuilder groundedClauses = new StringBuilder();
+		
+		
+		
+	//	return groundedClauses.toString();
+	//}
+	
 	
 	/**
 	 * Change sentences with variables to grounded equivalent. Takes root of
@@ -277,7 +375,7 @@ public class MckTranslator {
 
 		return groundedRoot;
 	}
-
+	
 	/**
 	 * 
 	 * @param root
@@ -342,7 +440,7 @@ public class MckTranslator {
 
 		return graph;
 	}
-
+	
 	/**
 	 * Recursive method used to duplicate a subtree with a particular variable
 	 * instantiated to a particular constant
@@ -380,10 +478,12 @@ public class MckTranslator {
 		
 		//TODO: find out how to iterate over all values of all lists
 		
-			String clause = gdlClause;	
+			String clause = gdlClause;
 			for(String variable : vertexToDomainMap.keySet()){
 				if(vertexToDomainMap.get(variable) != null && clause.contains(variable)){
-					clause = clause.replace(variable, vertexToDomainMap.get(variable).get(0));
+					for(int i=0; i<vertexToDomainMap.get(variable).size(); i++){
+						clause = clause.replace(variable, vertexToDomainMap.get(variable).get(i));
+					}
 				}
 			}
 			groundedClauses.append(clause);
@@ -391,6 +491,9 @@ public class MckTranslator {
 		
 		return groundedClauses.toString();
 	}
+	
+	
+	
 	
 	@Deprecated
 	public static List<String> findRolesForMck(ParseNode root){
@@ -572,12 +675,25 @@ public class MckTranslator {
 	 * Save string to file.
 	 */
 	public static void saveFile(String text, String filename){
-		try(FileWriter writer = new FileWriter(filename)){
+		FileWriter writer = null;
+		try{
+			File file = new File(filename);
+			file.createNewFile();
+			
+			writer = new FileWriter(file);
 			writer.write(text);
 			writer.flush();
 			writer.close();
 		}catch(IOException e){
 			e.printStackTrace();
+		}finally{
+			if(writer != null){
+				try{
+					writer.close();
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -838,6 +954,7 @@ public class MckTranslator {
 		boolean groundSwitch = false;
 		boolean outputMckSwitch = true;
 		boolean outputLparseSwitch = false;
+		boolean outputDotSwitch = false;
 		boolean parseTreeSwitch = false;
 		boolean parseTreeTypesSwitch = false;
 		
@@ -853,6 +970,7 @@ public class MckTranslator {
 			case "-o":
 			case "--output":
 				outputFileSwitch = true;
+				outputFileToken = true;
 				break;
 			case "-i":
 			case "--input":
@@ -870,6 +988,9 @@ public class MckTranslator {
 			case "--to-lparse":
 				outputMckSwitch = false;
 				outputLparseSwitch = true;
+				break;
+			case "--to-dot":
+				outputDotSwitch = true;
 				break;
 			case "--parse-tree":
 				parseTreeSwitch = true;
@@ -891,13 +1012,14 @@ public class MckTranslator {
 		}
 		
 		if(helpSwitch){
-			System.out.println("usage: java MckTranslator.jar [options] [gdlFileInput]");
+			System.out.println("usage: java -jar MckTranslator.jar [options] [gdlFileInput]");
 			System.out.println("Options:");
 			System.out.println("  -h --help     print this help file");
-			System.out.println("  -i --input    path to input file (default: in stream)");
-			System.out.println("  -o --output   path to output file (default: out stream)");
+			System.out.println("  -i --input    path to input file (default: stdin)");
+			System.out.println("  -o --output   path to output file (default: stdout)");
 			System.out.println("  --to-mck      output file is in mck format (default)");
 			System.out.println("  --to-lparse   output file is in lparse format");
+			System.out.println("  --to-dot      output file is in dot format");
 			System.out.println("  -g --ground   use internal grounder");
 			System.out.println("  --parse-tree  print parse tree for debug");
 			System.out.println("  --parse-types print parse tree type for debug");
@@ -914,7 +1036,11 @@ public class MckTranslator {
 				
 				// Use internal grounder
 				if(groundSwitch){
-					root = groundClauses(root);
+					DomainGraph domain = constructDomainGraph(root);
+					if(outputDotSwitch){
+						System.out.println(domain.dotEncodedGraph());
+					}
+					root = groundGdl(root, domain);
 				}
 				
 				// Print parse tree for debugging

@@ -4,9 +4,12 @@ import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 import translator.MckTranslator;
 import translator.Arguments;
+import translator.graph.DomainGraph;
 import translator.graph.DependencyGraph;
 import translator.graph.Vertex;
 import translator.graph.Edge;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Queue;
@@ -22,6 +25,72 @@ public class MckTranslatorTest {
 	String testGdlPath = "test/gdlii/testGame.gdl";
 	String dependencyTestGdlPath = "test/gdlii/dependencyTestGame.gdl";
 	String groundedDependencyTestGdlPath = "test/gdlii/dependencyTestGroundedGame.gdl";
+	
+	String testGoals = "(<= (goal ?player 100) (true (win ?player))) (<= (goal red 50) (true (draw))) (<= (goal blue 50) (true (draw))) (<= (goal red 0) (true (not (win blue)))) (<= (goal blue 0) (true (not (win red))))";
+	String testGoalGrounding = "(<= (goal ?player 100) (true (win ?player)))";
+	
+	@Test
+	public void testSimpleDomainGraph(){
+		List<String> tokens = null;
+		try{
+			tokens = MckTranslator.tokenizeGdl(testGoals);
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
+		//MckTranslator.printParseTreeTypes(root);
+		
+		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = MckTranslator.constructDomainGraph(root).getDomainMap();
+		
+		for(DomainGraph.Term term : domainMap.keySet()){
+			//System.out.println("From: " + term.toString());
+			for(DomainGraph.Term dependency : domainMap.get(term)){
+				//System.out.println("  To: " + dependency.toString());
+			}
+		}
+	}
+	
+	@Test
+	public void testSimpleDomainGraphOnGdl(){
+		List<String> tokens = null;
+		try{
+			tokens = MckTranslator.tokenizeFile("res/gdlii/tictactoe.kif");
+		}catch(IOException e){
+			e.printStackTrace();
+		}catch(URISyntaxException e){
+			e.printStackTrace();
+		}
+		
+		MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
+		//MckTranslator.printParseTreeTypes(root);
+		
+		DomainGraph domainGraph = MckTranslator.constructDomainGraph(root);
+		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = domainGraph.getDomainMap();
+		
+		for(DomainGraph.Term term : domainMap.keySet()){
+			System.out.println("From: " + term.toString());
+			for(DomainGraph.Term dependency : domainMap.get(term)){
+				System.out.println("  To: " + dependency.toString());
+			}
+		}
+		
+		MckTranslator.ParseNode groundedRoot = MckTranslator.groundGdl(root, domainGraph);
+		MckTranslator.printParseTreeTypes(groundedRoot);
+	}
+	
+	@Test
+	public void testCreationOfGroundedClause(){
+		Map<String, List<String>> domainMap = new HashMap<String, List<String>>();
+		ArrayList<String> domain = new ArrayList<String>();
+		domain.add("red");
+		domain.add("blue");
+		domainMap.put("?player", domain);
+		
+		String groundedClauses = MckTranslator.groundClause(testGoalGrounding, domainMap);
+		
+		//System.out.println(groundedClauses);
+	}
 	
 	@Test
 	public void loadEmptyGameDescription() {
@@ -91,7 +160,7 @@ public class MckTranslatorTest {
 	}
 	
 	
-	//@Test
+	@Test
 	public void validDepencencyGraphGeneration() {
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
@@ -99,7 +168,7 @@ public class MckTranslatorTest {
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			DependencyGraph<Arguments> graph = MckTranslator.constructDependencyGraph(root);
-			graph.printGraph();
+			//graph.printGraph();
 			
 			
 			//for(Vertex<Arguments> vertex : graph.getVerticies()){
@@ -126,7 +195,7 @@ public class MckTranslatorTest {
 			root = MckTranslator.groundClauses(root);
 			
 			//System.out.println(root.toString());
-			MckTranslator.printParseTree(root);
+			//MckTranslator.printParseTree(root);
 			
 			//System.out.println(MckTranslator.toMck(root));
 			
@@ -181,7 +250,7 @@ public class MckTranslatorTest {
 			
 			MckTranslator.saveFile(mck, "build-test/mck-translation.mck");
 			
-			System.out.println(mck);
+			//System.out.println(mck);
 			
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
@@ -202,7 +271,7 @@ public class MckTranslatorTest {
 			//MckTranslator.printParseTreeTypes(root);
 			
 			String lparse = MckTranslator.toLparse(root);
-			System.out.println(lparse);
+			//System.out.println(lparse);
 			
 			MckTranslator.saveFile(lparse, "build-test/ungrounded.lp");
 		}catch(URISyntaxException e){
