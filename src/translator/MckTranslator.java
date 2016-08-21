@@ -21,8 +21,6 @@ public class MckTranslator {
 	public static final String GDL_NEXT = "next";
 	public static final String GDL_SEES = "sees";
 	public static final String GDL_CLAUSE = "<=";
-	// Old string manipulation constants for use with String.split()
-	//public static int STRING_HEAD = 0, STRING_BODY = 1, STRING_TAIL = 2;
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
@@ -142,9 +140,6 @@ public class MckTranslator {
 		return root;
 	}
 	
-	
-	
-	
 	// Follows the domain graph def in the ggp book
 	public static DomainGraph constructDomainGraph(ParseNode root){
 		DomainGraph graph = new DomainGraph();
@@ -197,6 +192,7 @@ public class MckTranslator {
 		return graph;
 	}
 	
+	
 	public static boolean isVariableInTree(ParseNode node){
 		if(node.type == GdlType.VARIABLE){
 			return true;
@@ -246,6 +242,7 @@ public class MckTranslator {
 		return groundedRoot;
 	}
 	
+	
 	public static String groundClause(ParseNode clauseNode, Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap){
 		StringBuilder groundedClauses = new StringBuilder();
 		
@@ -267,224 +264,6 @@ public class MckTranslator {
 		groundedClauses.append(groundClause(clauseNode.toString(), constantMap));
 		
 		return groundedClauses.toString();
-	}
-	
-	
-	/**
-	 * Change sentences with variables to grounded equivalent. Takes root of
-	 * parse tree and returns root of grounded tree
-	 * @Deprecated
-	 */
-	/*public static ParseNode groundClauses(ParseNode root) {
-
-		// Construct domain dependency map
-		DependencyGraph graph = constructDependencyGraph(root);
-		
-		ParseNode groundedRoot = new ParseNode();
-		
-		for(ParseNode clause : root.getChildren()){
-			if(clause.getType() == GdlType.CLAUSE && isVariableInTree(clause)){
-				Map<String, List<String>> vertexToDomainMapForClause = new HashMap<String, List<String>>();
-				
-				Queue<ParseNode> headList = new LinkedList<ParseNode>();
-				headList.add(clause.getChildren().get(0));
-				while(!headList.isEmpty()){
-					ParseNode headNode = headList.remove();
-					
-					if(headNode.type == GdlType.VARIABLE){
-						Vertex<Arguments> parameter = graph.getVertex(new Arguments(headNode.getParent().getAtom(), headNode.getParent().getChildren().indexOf(headNode)));
-						List<String> domainList = new ArrayList<String>();
-						for(Vertex<Arguments> vertex : parameter.getDomain()){
-							domainList.add(vertex.getData().getAtom());
-						}
-						if(!domainList.isEmpty())
-							vertexToDomainMapForClause.put(headNode.getAtom(), domainList);
-					}
-					
-					headList.addAll(headNode.getChildren());
-				}
-				try{
-					// Huge oneliner
-					// TODO: make this line more readable
-					groundedRoot.getChildren().addAll(expandParseTree(tokenizeGdl(groundClause(clause.toString(), vertexToDomainMapForClause))).getChildren());
-				}catch(IOException e){
-					e.printStackTrace();
-				}
-			}else{
-				groundedRoot.getChildren().add(clause);
-			}
-		}
-		*/
-		// TODO: replace variables with domain(grounding)
-		
-		/*
-		for(DependencyGraph.Vertex vertex : graph.verticies){
-			System.out.println("Domain of "+vertex.toString());
-			for(String atom : vertex.getDomain()){
-				System.out.println(atom);
-			}
-		}
-		*/
-		
-		/*
-		 * // Find all the domains Map<String, List<Set<String>>> arityMap = new
-		 * HashMap<String, List<Set<String>>>();
-		 * 
-		 * // Add all clauses to queue Queue<ParseNode> queue = new
-		 * LinkedList<ParseNode>(); queue.addAll(root.children);
-		 * 
-		 * while (!queue.isEmpty()) { ParseNode sentence = queue.remove();
-		 * 
-		 * String functionName = sentence.atom; List<Set<String>> parameters =
-		 * arityMap.get(functionName); if (parameters == null) { parameters =
-		 * new ArrayList<Set<String>>(); arityMap.put(functionName, parameters);
-		 * } for (int i = 0; i < sentence.children.size(); i++) { ParseNode
-		 * child = sentence.children.get(i);
-		 * 
-		 * Set<String> domain = null; if (i > parameters.size() - 1) { domain =
-		 * new HashSet<String>(); parameters.add(i, domain); } else { domain =
-		 * parameters.get(i); }
-		 * 
-		 * domain.add(child.atom);
-		 * 
-		 * if (!child.children.isEmpty()) { queue.add(child); } } }
-		 * 
-		 * // Print resulting map for (String function : arityMap.keySet()) {
-		 * System.out.println("function: " + function); List<Set<String>>
-		 * parameters = arityMap.get(function); for (int i = 0; i <
-		 * parameters.size(); i++) { System.out.print("para " + (i + 1) + " {");
-		 * for (String atom : parameters.get(i)) { System.out.print(atom + ",");
-		 * } System.out.println("}"); } }
-		 */
-
-		/*
-		 * // Find which clauses have variables in them ParseNode
-		 * clausesWithVariables = new ParseNode("", null); for
-		 * (ParseNode node : root.children) { queue = new
-		 * LinkedList<ParseNode>(); queue.add(node); boolean varFound =
-		 * false; while (!queue.isEmpty() && !varFound) { ParseNode child =
-		 * queue.remove(); if (child.type == GdlType.VARIABLE) { node.parent =
-		 * clausesWithVariables; clausesWithVariables.children.add(node);
-		 * varFound = true; } else { queue.addAll(child.children); } } }
-		 */
-		// remove clauses with variables from parse tree
-		// root.children.removeAll(clausesWithVariables.children);
-
-		// printParseTree(clausesWithVariables, "clauses with variables:");
-
-		/*
-		 * TODO: before we get to this point we need the domain dependency graph
-		 * // ground clauses with variables Set<String> variables =
-		 * extractVariables(clausesWithVariables.toString()); for (String var :
-		 * variables) { System.out.println("Variable: " + var); for
-		 * (ParseNode node : clausesWithVariables.children) { ParseNode
-		 * newNode = groundedCopyOfSubTree(node, var, "200"); newNode.parent =
-		 * root; root.children.add(newNode); } } //queue = new
-		 * LinkedList<ParseNode>();
-		 * //queue.addAll(clausesWithVariables.children); //while
-		 * (!queue.isEmpty()) { //
-		 * root.children.add(groundedCopyOfSubTree(queue.remove(), "?d",
-		 * "200")); //}
-		 * 
-		 * // printParseTree(clausesWithVariables, "Clause with variable :");
-		 * 
-		 */
-/*
-		return groundedRoot;
-	}*/
-	
-	/**
-	 * 
-	 * @param root
-	 * @return
-	 * @Deprecated
-	 */
-	/*public static DependencyGraph<Arguments> constructDependencyGraph(ParseNode root) {
-		// Initialize empty graph
-		DependencyGraph<Arguments> graph = new DependencyGraph<Arguments>();
-		
-		
-		// Initialize queue and add all the branches of the root node
-		Queue<ParseNode> queue = new LinkedList<ParseNode>();
-		queue.addAll(root.children);
-		// Initialize a map that is used to link different times a variable is called in a clause
-		Map<String, Vertex> variableToVertexMap = new HashMap<String, Vertex>();
-
-		while (!queue.isEmpty()) {
-			ParseNode node = queue.remove(); // Get next node in queue
-			
-			// TODO: Fix issue where some domains aren't followed properly
-			
-			switch(node.type){
-			
-				// Variables first instance added to variableToVertexMap which is then retrieved every time variable is called again
-			case VARIABLE:
-				if(variableToVertexMap.containsKey(node.atom) && variableToVertexMap.get(node.atom) != null){
-					// if map has atom then add an edge from map to new node
-					variableToVertexMap.get(node.atom).addNeighbor(graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
-				}else {
-					// if map doesn't have atom then check if new node exists then add new node to map
-					if(!graph.hasVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)))){
-						// add new node if doesn't exist
-						graph.addVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
-					}
-					if(node.getParent().getChildren().indexOf(node) == 0){
-						variableToVertexMap.put(node.atom, graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node)+1)));
-					}
-				}
-				break;
-				
-				// Non-Variables{Formula, Head, Constant} add node as depencency of parent
-			case FORMULA:
-			case HEAD:
-			case CONSTANT:
-				if (!graph.hasVertex(new Vertex<Arguments>(new Arguments(node.atom, 0)))) {
-					graph.addVertex(new Vertex<Arguments>(new Arguments(node.atom, 0)));
-				}
-				if (node.parent.type != GdlType.CLAUSE && !graph.hasVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node) + 1)))) {
-					graph.addVertex(new Vertex<Arguments>(new Arguments(node.parent.atom, node.parent.children.indexOf(node) + 1)));
-				}
-				if(node.parent.type != GdlType.CLAUSE){
-					graph.getVertex(new Arguments(node.parent.atom, node.parent.children.indexOf(node) + 1))
-						.addNeighbor(graph.getVertex(new Arguments(node.atom, 0)));
-				}
-				
-				// Root or Clause do nothing
-			case ROOT:
-			case CLAUSE:
-			}
-			queue.addAll(node.children); // Add branches of node to queue
-		}
-
-		return graph;
-	}*/
-	
-	/**
-	 * Recursive method used to duplicate a subtree with a particular variable
-	 * instantiated to a particular constant
-	 * 
-	 * @param root
-	 * @param variable
-	 * @param constant
-	 * @return groundedRoot
-	 * @Deprecated
-	 */
-	public static ParseNode groundedCopyOfSubTree(ParseNode oldNode, String variable, String constant) {
-		ParseNode newNode = new ParseNode();
-		if (!oldNode.distinct(variable)) {
-			newNode.atom = constant;
-			newNode.type = GdlType.FORMULA;
-		} else {
-			newNode.atom = oldNode.atom;
-			newNode.type = oldNode.type;
-		}
-
-		for (ParseNode oldChild : oldNode.children) {
-			ParseNode newChild = groundedCopyOfSubTree(oldChild, variable, constant);
-			newChild.parent = newNode;
-			newNode.children.add(newChild);
-		}
-		return newNode;
 	}
 	
 	/**
@@ -511,34 +290,6 @@ public class MckTranslator {
 		return groundedClauses.toString();
 	}
 	
-	
-	
-	
-	@Deprecated
-	public static List<String> findRolesForMck(ParseNode root){
-		ArrayList<String> roles = new ArrayList<String>();
-		for(ParseNode child : root.children){
-			if(child.atom.equals(GDL_ROLE)){
-				roles.add(child.children.get(0).atom);
-			}
-		}
-		return roles;
-	}
-	
-	@Deprecated
-	public static List<String> findLegalsForMck(ParseNode root){
-		ArrayList<String> legals = new ArrayList<String>();
-		
-		for(ParseNode node : root.children){
-			if(node.atom.equals("<=")){
-				ParseNode child = node.children.get(0);
-				if(child.atom.equals(GDL_LEGAL)){
-					legals.add("legal_" + child.children.get(0).atom + "_" + child.children.get(1).toString().replace("(", "").replace(")", "").replace(" ", "_"));
-				}
-			}
-		}
-		return legals;
-	}
 	
 	public static List<String> findBoolVarsForMck(ParseNode root){
 		ArrayList<String> boolVars = new ArrayList<String>();
@@ -570,6 +321,7 @@ public class MckTranslator {
 		return boolVars;
 	}
 	
+	
 	public static Map<String, List<String>> findMovesForMck(ParseNode root){
 		Map<String, List<String>> roleToMoveMap = new HashMap<String, List<String>>();
 		
@@ -590,7 +342,7 @@ public class MckTranslator {
 		}
 		return roleToMoveMap;
 	}
-
+	
 	/**
 	 * TODO: takes a parse tree and returns MCK equivalent
 	 * TODO: rewrite to follow steps in mck paper
@@ -715,174 +467,7 @@ public class MckTranslator {
 			}
 		}
 	}
-
-	/**
-	 * Extracts a set of Strings which represent the vocabulary of the GDL
-	 * 
-	 * @deprecated
-	 * @param gdl
-	 * @return vocabulary
-	 */
-	/*private static Set<String> extractVocabulary(String gdl) {
-		// Extracting atoms
-		Set<String> vocabulary = new HashSet<String>();
-		for (String atom : gdl.split("\\(| |\\)")) {
-			vocabulary.add(atom);
-		}
-		vocabulary.remove("");
-		return vocabulary;
-	}*/
-
-	/**
-	 * Extract a set of relations in the GDL
-	 * 
-	 * @deprecated
-	 * @param gdl
-	 * @return relationsSet
-	 */
-	/*private static Set<String> extractRelations(String gdl) {
-		// Extracting relations
-		Set<String> relationsSet = new HashSet<String>();
-		for (String sentence : gdl.split("\\(")) {
-			relationsSet.add(sentence.split(" ")[0]);
-		}
-		relationsSet.remove("");
-		return relationsSet;
-	}*/
-
-	/**
-	 * Extract a set of variables from the GDL. Should not be used because the
-	 * variableSet doesn't take scope into consideration
-	 * 
-	 * @deprecated
-	 * @param gdl
-	 * @return
-	 */
-	/*private static Set<String> extractVariables(String gdl) {
-		Set<String> variables = new HashSet<String>();
-		String[] splitString = gdl.split("\\(| |\\)");
-		for (String atom : splitString) {
-			if (atom.length() > 0 && atom.charAt(0) == '?') {
-				variables.add(atom);
-			}
-		}
-		return variables;
-	}*/
-
-	/**
-	 * Extracts variables from the GDL in token list form. Shouldn't be used
-	 * because doesn't take into consideration variable scope and allows
-	 * overlaps
-	 * 
-	 * @deprecated
-	 * @param tokens
-	 * @return variables
-	 */
-	/*private static Set<String> variableSet(List<String> tokens) {
-		Set<String> variables = new HashSet<String>();
-		for (String token : tokens) {
-			if (token.charAt(0) == '?') {
-				variables.add(token);
-			}
-		}
-		return variables;
-	}*/
-
-	/**
-	 * Given a string with "(" find everything it's closing ")" Effectively
-	 * changing "atom (atom (atom)) (atom)" to { "atom", "atom (atom)",
-	 * " (atom)"}
-	 * 
-	 * @deprecated
-	 * @param string
-	 * @return splitString : String[] { before, middle, after } or "" if no
-	 *         brackets
-	 */
-	/*public static String[] findNextBracket(String string) {
-		int level;
-		String[] splitString = string.split("\\(", 2);// find first cut
-		if (splitString.length > 1) {
-			level = 1;
-		} else {
-			splitString[0] = splitString[0].trim();
-			return splitString;
-		}
-		String before = splitString[STRING_HEAD];
-
-		// find second cut
-		StringBuilder sb = new StringBuilder();
-		while (level > 0) {
-
-			// split on closing bracket
-			splitString = splitString[STRING_BODY].split("\\)", 2);
-			level--;
-
-			// add all opening brackets to level
-			level += splitString[STRING_HEAD].split("\\(").length - 1;
-
-			// add everything before closing bracket
-			sb.append(splitString[STRING_HEAD].trim());
-			if (level > 0)
-				sb.append(")");
-		}
-
-		return new String[] { before.trim(), sb.toString().trim(), splitString[STRING_BODY].trim() };
-	}*/
-
-	/**
-	 * A recursive method that will expand the children of a ParseNode
-	 * 
-	 * @deprecated
-	 * @param parent
-	 * @param gdl
-	 * @return
-	 */
-	/*private static ParseNode expandParseTree(ParseNode parent, String string) {
-		//System.out.println(string);
-		String[] splitString = string.trim().split("\\(| |\\)", 2);
-		ParseNode ParseNode = null;
-
-		if (splitString[0] != "") {
-			ParseNode = new ParseNode(splitString[0], parent);
-		} else {
-			ParseNode = parent;
-		}
-		// ParseNode.parent = parent;
-		// ParseNode.atom = splitString[0];
-
-		//System.out.println(ParseNode.atom);
-
-		if (splitString.length > 1) {
-			splitString = findNextBracket(splitString[STRING_BODY]);
-		} else {
-			// return ParseNode;
-		}
-
-		while (splitString.length > 1) {
-			if (splitString[STRING_HEAD].trim() != "") {
-				String[] constants = splitString[STRING_HEAD].trim().split(" ");
-				for (String constant : constants) {
-					if (constant != "") {
-						ParseNode.children.add(new ParseNode(constant, ParseNode));
-					}
-				}
-			}
-
-			ParseNode.children.add(expandParseTree(ParseNode, splitString[STRING_BODY]));
-			splitString = findNextBracket(splitString[STRING_TAIL]);
-		}
-
-		if (splitString[STRING_HEAD].trim() != "") {
-			String[] constants = splitString[STRING_HEAD].trim().split(" ");
-			for (String constant : constants) {
-				if (constant != "") {
-					ParseNode.children.add(new ParseNode(constant, ParseNode));
-				}
-			}
-		}
-		return ParseNode;
-	}*/
-
+	
 	/**
 	 * Outputs parse tree in lparse format
 	 */
@@ -896,7 +481,7 @@ public class MckTranslator {
 		
 		return lparse.toString();
 	}
-
+	
 	/**
 	 * Print the atoms of the nodes of the tree
 	 * 
@@ -912,10 +497,11 @@ public class MckTranslator {
 		}
 	}
 	
+	
 	public static void printParseTree(ParseNode root){
 		printParseTree(root, ">", " -");
 	}
-
+	
 	/**
 	 * Print the GdlType of the nodes of the tree
 	 * 
@@ -952,6 +538,7 @@ public class MckTranslator {
 			}
 		}
 	}
+	
 	
 	public static void printParseTreeTypes(ParseNode root){
 		printParseTreeTypes(root, ">", " -");
@@ -1098,9 +685,9 @@ public class MckTranslator {
 		}
 	}
 	
-	// TODO: get rid of head keyword
+	
 	public enum GdlType {
-		ROOT, CLAUSE, HEAD, FORMULA, VARIABLE, CONSTANT
+		ROOT, CLAUSE, FORMULA, VARIABLE, CONSTANT
 		
 	}
 	
@@ -1288,15 +875,15 @@ public class MckTranslator {
 				sb.append("(");
 			}
 			sb.append(atom);
-
+			
 			for (ParseNode child : children) {
 				sb.append(" " + child.toString());
 			}
-
+			
 			if (!children.isEmpty() && !atom.equals("")) {
 				sb.append(")");
 			}
-
+			
 			return sb.toString();
 		}
 	}

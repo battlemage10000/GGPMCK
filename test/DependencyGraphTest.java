@@ -40,9 +40,5 @@ public class DependencyGraphTest {
 		assertThat(domainGraph.hasTerm("function", 0), is(true));
 		assertThat(domainGraph.hasTerm("function", 1), is(true));
 		assertThat(domainGraph.hasTerm("function", 2), is(true));
-		
-		
-		//domainGraph.printGraph();
-		//domainGraph.printGraphDomains();
 	}
 }
