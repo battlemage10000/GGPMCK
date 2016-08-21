@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class DomainGraph{
-
 	private Map<Term, ArrayList<Term>> adjacencyMap;
 	
 	public DomainGraph(){
@@ -19,8 +18,11 @@ public class DomainGraph{
 	}
 	
 	public ArrayList<Term> getNeighbours(String term, int arity){
-		if(hasTerm(term, arity)){	return adjacencyMap.get(new Term(term, arity));	}
-		else{	return new ArrayList<Term>();	}
+		if(hasTerm(term, arity)){
+			return adjacencyMap.get(new Term(term, arity));
+		}else{
+			return new ArrayList<Term>();
+		}
 	}
 	
 	public ArrayList<Term> getDomain(String term, int arity){
@@ -97,9 +99,11 @@ public class DomainGraph{
 		for(Term node : adjacencyMap.keySet()){
 			dot.append(System.lineSeparator() + "d_" + node.getTerm());
 			if(node.getArity() > 0){
-				dot.append("_" + node.getArity() + " [label=\"" + node.getTerm() + "_" + node.getArity() +"\",color=blue]");
+				dot.append("_" + node.getArity() + " [label=\"" + node.getTerm() + "[" + node.getArity() +"]\",color=blue]");
 			}else if(node.getFunctionArity() > 0){
-				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/" + node.getFunctionArity() +"\",color=green]");
+				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/" + node.getFunctionArity() +"\",color=red]");
+			}else{
+				dot.append(" [label=\""+node.getTerm()+"\",color=green]");
 			}
 		}
 		
@@ -143,15 +147,6 @@ public class DomainGraph{
 	}
 	
 	public void printGraphDomains(){
-		
-		System.out.println("From : legal[1]");
-		for(Term to : getDomain("legal", 1)){
-			System.out.println("  To : " + to.toString());
-		}
-		System.out.println("From : legal[2]");
-		for(Term to : getDomain("legal", 2)){
-			System.out.println("  To : " + to.toString());
-		}
 		for(Term from : adjacencyMap.keySet()){
 			System.out.println("From : " + from.toString());
 			for(Term to : getDomain(from.getTerm(), from.getArity())){
@@ -192,17 +187,27 @@ public class DomainGraph{
 			}
 		}
 		
-		public String getTerm(){	return term;	}
+		public String getTerm(){
+			return term;
+		}
 		
-		public int getArity(){	return arity;	}
+		public int getArity(){
+			return arity;
+		}
 		
-		public int getFunctionArity(){	return functionArity;	}
+		public int getFunctionArity(){
+			return functionArity;
+		}
 		
 		@Override
-		public String toString(){	return term + "[" + arity + "]";	}
+		public String toString(){
+			return term + "[" + arity + "]";
+		}
 		
 		@Override
-		public int hashCode(){	return toString().hashCode();	}
+		public int hashCode(){
+			return toString().hashCode();
+		}
 		
 		@Override
 		public boolean equals(Object obj){

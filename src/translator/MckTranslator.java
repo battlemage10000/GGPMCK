@@ -248,12 +248,13 @@ public class MckTranslator {
 	
 	public static String groundClause(ParseNode clauseNode, Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap){
 		StringBuilder groundedClauses = new StringBuilder();
+		
 		Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
-		
-		
 		for(ParseNode node : clauseNode){
 			if(node.type == GdlType.VARIABLE){
-				if(!constantMap.containsKey(node.getAtom())) constantMap.put(node.getAtom(), new ArrayList<String>());
+				if(!constantMap.containsKey(node.getAtom())){
+					constantMap.put(node.getAtom(), new ArrayList<String>());
+				}
 				
 				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(), node.getParent().getChildren().indexOf(node));
 				if(domainMap.containsKey(varTerm)){	
@@ -262,15 +263,6 @@ public class MckTranslator {
 					}
 				}
 			}
-			
-			/*for(int i=0; i<=node.getChildren().size(); i++){
-				DomainGraph.Term baseTerm = new DomainGraph.Term(node.getAtom(), i);
-				if(i > 0 && domainMap.containsKey(baseTerm) && domainMap.get(baseTerm).size() > 0){
-					ParseNode substitutionNode = new ParseNode(domainMap.get(new DomainGraph.Term(node.getAtom(), i)).get(0).getTerm(), node, GdlType.CONSTANT);
-					node.getChildren().set(i-1, substitutionNode);
-					System.out.println(node.toString());
-				}
-			}*/
 		}
 		groundedClauses.append(groundClause(clauseNode.toString(), constantMap));
 		
@@ -979,7 +971,8 @@ public class MckTranslator {
 		boolean outputFileSwitch = false;
 		boolean outputFileToken = false;
 		boolean groundSwitch = false;
-		boolean outputMckSwitch = true;
+		boolean debugSwitch = false;
+		boolean outputMckSwitch = false;
 		boolean outputLparseSwitch = false;
 		boolean outputDotSwitch = false;
 		boolean parseTreeSwitch = false;
@@ -1008,12 +1001,14 @@ public class MckTranslator {
 			case "--ground":
 				groundSwitch = true;
 				break;
+			case "-d":
+			case "--debug":
+				debugSwitch = true;
+				break;
 			case "--to-mck":
 				outputMckSwitch = true;
-				outputLparseSwitch = false;
 				break;
 			case "--to-lparse":
-				outputMckSwitch = false;
 				outputLparseSwitch = true;
 				break;
 			case "--to-dot":
@@ -1048,6 +1043,7 @@ public class MckTranslator {
 			System.out.println("  --to-lparse   output file is in lparse format");
 			System.out.println("  --to-dot      output file is in dot format");
 			System.out.println("  -g --ground   use internal grounder");
+			System.out.println("  -d --debug    manually sellect outputs in debug mode");
 			System.out.println("  --parse-tree  print parse tree for debug");
 			System.out.println("  --parse-types print parse tree type for debug");
 		}else{
@@ -1089,10 +1085,10 @@ public class MckTranslator {
 				}
 				
 				
-				if(outputFilePath.equals("")){
-					System.out.println(translation);
-				}else{
+				if(outputFileSwitch){
 					saveFile(translation, outputFilePath);
+				}else if(!debugSwitch || outputLparseSwitch || outputMckSwitch){
+					System.out.println(translation);
 				}
 			} catch(URISyntaxException e) { 
 				e.printStackTrace();
@@ -1284,42 +1280,6 @@ public class MckTranslator {
 			
 			return iterator.iterator();
 		}
-		
-		/*public Iterator<ParseNode> iterator(){
-			return new Iterator<ParseNode>(){
-				private ParseNode node;
-				private int index;
-				private Iterator<ParseNode> child;
-				
-				public Iterator<ParseNode> init(ParseNode node){
-					this.node = node;
-					index = -1;
-					return this;
-				}
-				
-				public boolean hasNext(){
-					if(index < getChildren().size() && child != null && child.hasNext()){
-						return true;
-					}
-					return false;
-				}
-				
-				public ParseNode next(){
-					if(index == -1){
-						index++;
-						return node;
-					}else if(child != null && child.hasNext()){
-						return child.next();
-					}else if(index < getChildren().size()){
-						child = getChildren().get(index).iterator();
-						index++;
-						return node;
-					}else{
-						throw new NoSuchElementException();
-					}
-				}
-			}.init(this);
-		}*/
 		
 		@Override
 		public String toString() {
