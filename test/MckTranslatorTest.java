@@ -69,27 +69,54 @@ public class MckTranslatorTest {
 		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = domainGraph.getDomainMap();
 		
 		for(DomainGraph.Term term : domainMap.keySet()){
-			System.out.println("From: " + term.toString());
+			//System.out.println("From: " + term.toString());
 			for(DomainGraph.Term dependency : domainMap.get(term)){
-				System.out.println("  To: " + dependency.toString());
+				//System.out.println("  To: " + dependency.toString());
 			}
 		}
 		
 		MckTranslator.ParseNode groundedRoot = MckTranslator.groundGdl(root, domainGraph);
-		MckTranslator.printParseTreeTypes(groundedRoot);
+		//MckTranslator.printParseTreeTypes(groundedRoot);
 	}
 	
 	@Test
 	public void testCreationOfGroundedClause(){
-		Map<String, List<String>> domainMap = new HashMap<String, List<String>>();
-		ArrayList<String> domain = new ArrayList<String>();
-		domain.add("red");
-		domain.add("blue");
-		domainMap.put("?player", domain);
+		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = new HashMap<DomainGraph.Term, ArrayList<DomainGraph.Term>>();
+		ArrayList<DomainGraph.Term> domain = new ArrayList<DomainGraph.Term>();
+		domain.add(new DomainGraph.Term("red", 0));
+		domain.add(new DomainGraph.Term("blue", 0));
+		domainMap.put(new DomainGraph.Term("goal", 1), domain);
+		domainMap.put(new DomainGraph.Term("win", 1), domain);
 		
-		String groundedClauses = MckTranslator.groundClause(testGoalGrounding, domainMap);
+		List<String> tokens = new ArrayList<String>();
+		try{
+			tokens = MckTranslator.tokenizeGdl(testGoalGrounding);
+		}catch(IOException e){	e.printStackTrace();	}
 		
-		//System.out.println(groundedClauses);
+		for(String token : tokens)System.out.print(token + " ");
+		
+		String groundedClauses = MckTranslator.groundClause(MckTranslator.expandParseTree(tokens), domainMap);
+		
+		System.out.println(groundedClauses);
+		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))"));
+	}
+	
+	@Test
+	public void testParseTreeIterator(){
+		List<String> tokens = null;
+		try{
+			tokens = MckTranslator.tokenizeGdl(testGoalGrounding);
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
+		
+		StringBuilder sb = new StringBuilder();
+		for(MckTranslator.ParseNode node : root){
+			sb.append(node.getAtom() + " ");
+		}
+		assertThat(sb.toString(), is(" <= goal ?player__1 100 true win ?player__1 "));
 	}
 	
 	@Test
@@ -160,14 +187,14 @@ public class MckTranslatorTest {
 	}
 	
 	
-	@Test
+	//@Test
 	public void validDepencencyGraphGeneration() {
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
-			DependencyGraph<Arguments> graph = MckTranslator.constructDependencyGraph(root);
+			//DependencyGraph<Arguments> graph = MckTranslator.constructDependencyGraph(root);
 			//graph.printGraph();
 			
 			
@@ -192,7 +219,7 @@ public class MckTranslatorTest {
 			//		}
 			//	}
 			//}
-			root = MckTranslator.groundClauses(root);
+			//root = MckTranslator.groundClauses(root);
 			
 			//System.out.println(root.toString());
 			//MckTranslator.printParseTree(root);
@@ -209,7 +236,7 @@ public class MckTranslatorTest {
 	}
 	
 	@Deprecated
-	private List<String> getDomain(Vertex<Arguments> vertex){
+	/*private List<String> getDomain(Vertex<Arguments> vertex){
 		List<String> domain = new ArrayList<String>();
 		List<Vertex<Arguments>> visited = new LinkedList<Vertex<Arguments>>();
 		LinkedList<Edge<Arguments>> queue = new LinkedList<Edge<Arguments>>();
@@ -233,7 +260,7 @@ public class MckTranslatorTest {
 		}
 		
 		return domain;
-	}
+	}*/
 	
 	@Test
 	public void mckTranslatorGdlTestAndSave(){

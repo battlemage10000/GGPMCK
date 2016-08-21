@@ -93,7 +93,15 @@ public class DomainGraph{
 		StringBuilder dot = new StringBuilder();
 		
 		dot.append("strict digraph {");
-		dot.append(System.lineSeparator());
+		
+		for(Term node : adjacencyMap.keySet()){
+			dot.append(System.lineSeparator() + "d_" + node.getTerm());
+			if(node.getArity() > 0){
+				dot.append("_" + node.getArity() + " [label=\"" + node.getTerm() + "_" + node.getArity() +"\",color=blue]");
+			}else if(node.getFunctionArity() > 0){
+				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/" + node.getFunctionArity() +"\",color=green]");
+			}
+		}
 		
 		for(Term from : adjacencyMap.keySet()){
 			if(adjacencyMap.get(from).size() > 0){
@@ -103,7 +111,7 @@ public class DomainGraph{
 					if(to.getArity() > 0){
 						dot.append("_" + to.getArity() + " ");
 					}else if(to.getFunctionArity() > 0){
-						dot.append("_" + to.getFunctionArity() + " ");
+						dot.append("__" + to.getFunctionArity() + " ");
 					}else{
 						dot.append(" ");
 					}
@@ -114,7 +122,6 @@ public class DomainGraph{
 		
 		dot.append(System.lineSeparator());
 		dot.append("}");
-		//dot.append(System.lineSeparator());
 		
 		return dot.toString();
 	}

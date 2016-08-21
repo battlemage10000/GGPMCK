@@ -21,7 +21,7 @@
 	<target name="compile" description="compiles the source code">
 		<tstamp />
 		<mkdir dir="${build.dir}" />
-		<javac srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false" >
+		<javac srcdir="${source.dir}" destdir="${build.dir}" includeantruntime="false" debug="true">
 			<compilerarg value="-Xlint:unchecked" />
 		</javac>
 		<copy todir="${build.dir}">
@@ -39,7 +39,7 @@
 	
 	<target name="compile-test" depends="compile">
 		<mkdir dir="${test.build.dir}" />
-		<javac srcdir="${test.source.dir}" destdir="${test.build.dir}" includeantruntime="false">
+		<javac srcdir="${test.source.dir}" destdir="${test.build.dir}" includeantruntime="false" debug="true">
 			<classpath>
 				<path refid="test-classpath" />
 			</classpath>

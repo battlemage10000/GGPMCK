@@ -230,35 +230,60 @@ public class MckTranslator {
 			if(!isVariableInTree(clause)){
 				groundedRoot.getChildren().add(clause);
 			}else{
-				String groundedClauseString = groundClause(clause.toString(), domainGraphString);
+				String groundedClauseString = groundClause(clause, domainMap);
 				List<String> groundedClauseTokens = null;
 				try{ 
 					groundedClauseTokens = tokenizeGdl(groundedClauseString);
 				}catch(IOException e){	e.printStackTrace();	}
 				
 				ParseNode clauseTree = expandParseTree(groundedClauseTokens);
-				groundedRoot.getChildren().add(clauseTree.getChildren().get(0));
-				
+				if(!clauseTree.getChildren().isEmpty()){
+					groundedRoot.getChildren().add(clauseTree.getChildren().get(0));
+				}
 			}
 		}
 		
 		return groundedRoot;
 	}
 	
-	//public static String groundClause(String gdlClause, Map<DomainGraph.Term, List<DomainGraph.Term>> domainMap){
-	//	StringBuilder groundedClauses = new StringBuilder();
+	public static String groundClause(ParseNode clauseNode, Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap){
+		StringBuilder groundedClauses = new StringBuilder();
+		Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
 		
 		
+		for(ParseNode node : clauseNode){
+			if(node.type == GdlType.VARIABLE){
+				if(!constantMap.containsKey(node.getAtom())) constantMap.put(node.getAtom(), new ArrayList<String>());
+				
+				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(), node.getParent().getChildren().indexOf(node));
+				if(domainMap.containsKey(varTerm)){	
+					for(DomainGraph.Term term : domainMap.get(varTerm)){
+						constantMap.get(node.getAtom()).add(term.getTerm());
+					}
+				}
+			}
+			
+			/*for(int i=0; i<=node.getChildren().size(); i++){
+				DomainGraph.Term baseTerm = new DomainGraph.Term(node.getAtom(), i);
+				if(i > 0 && domainMap.containsKey(baseTerm) && domainMap.get(baseTerm).size() > 0){
+					ParseNode substitutionNode = new ParseNode(domainMap.get(new DomainGraph.Term(node.getAtom(), i)).get(0).getTerm(), node, GdlType.CONSTANT);
+					node.getChildren().set(i-1, substitutionNode);
+					System.out.println(node.toString());
+				}
+			}*/
+		}
+		groundedClauses.append(groundClause(clauseNode.toString(), constantMap));
 		
-	//	return groundedClauses.toString();
-	//}
+		return groundedClauses.toString();
+	}
 	
 	
 	/**
 	 * Change sentences with variables to grounded equivalent. Takes root of
 	 * parse tree and returns root of grounded tree
+	 * @Deprecated
 	 */
-	public static ParseNode groundClauses(ParseNode root) {
+	/*public static ParseNode groundClauses(ParseNode root) {
 
 		// Construct domain dependency map
 		DependencyGraph graph = constructDependencyGraph(root);
@@ -297,7 +322,7 @@ public class MckTranslator {
 				groundedRoot.getChildren().add(clause);
 			}
 		}
-		
+		*/
 		// TODO: replace variables with domain(grounding)
 		
 		/*
@@ -372,16 +397,17 @@ public class MckTranslator {
 		 * // printParseTree(clausesWithVariables, "Clause with variable :");
 		 * 
 		 */
-
+/*
 		return groundedRoot;
-	}
+	}*/
 	
 	/**
 	 * 
 	 * @param root
 	 * @return
+	 * @Deprecated
 	 */
-	public static DependencyGraph<Arguments> constructDependencyGraph(ParseNode root) {
+	/*public static DependencyGraph<Arguments> constructDependencyGraph(ParseNode root) {
 		// Initialize empty graph
 		DependencyGraph<Arguments> graph = new DependencyGraph<Arguments>();
 		
@@ -439,7 +465,7 @@ public class MckTranslator {
 		}
 
 		return graph;
-	}
+	}*/
 	
 	/**
 	 * Recursive method used to duplicate a subtree with a particular variable
@@ -472,8 +498,9 @@ public class MckTranslator {
 	/**
 	 * 
 	 * @return string with grounded clause which can be expanded into parse tree of clause
+	 * @Deprecated
 	 */
-	public static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap){
+	private static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap){
 		StringBuilder groundedClauses = new StringBuilder();
 		
 		//TODO: find out how to iterate over all values of all lists
@@ -704,7 +731,7 @@ public class MckTranslator {
 	 * @param gdl
 	 * @return vocabulary
 	 */
-	private static Set<String> extractVocabulary(String gdl) {
+	/*private static Set<String> extractVocabulary(String gdl) {
 		// Extracting atoms
 		Set<String> vocabulary = new HashSet<String>();
 		for (String atom : gdl.split("\\(| |\\)")) {
@@ -712,7 +739,7 @@ public class MckTranslator {
 		}
 		vocabulary.remove("");
 		return vocabulary;
-	}
+	}*/
 
 	/**
 	 * Extract a set of relations in the GDL
@@ -721,7 +748,7 @@ public class MckTranslator {
 	 * @param gdl
 	 * @return relationsSet
 	 */
-	private static Set<String> extractRelations(String gdl) {
+	/*private static Set<String> extractRelations(String gdl) {
 		// Extracting relations
 		Set<String> relationsSet = new HashSet<String>();
 		for (String sentence : gdl.split("\\(")) {
@@ -729,7 +756,7 @@ public class MckTranslator {
 		}
 		relationsSet.remove("");
 		return relationsSet;
-	}
+	}*/
 
 	/**
 	 * Extract a set of variables from the GDL. Should not be used because the
@@ -739,7 +766,7 @@ public class MckTranslator {
 	 * @param gdl
 	 * @return
 	 */
-	private static Set<String> extractVariables(String gdl) {
+	/*private static Set<String> extractVariables(String gdl) {
 		Set<String> variables = new HashSet<String>();
 		String[] splitString = gdl.split("\\(| |\\)");
 		for (String atom : splitString) {
@@ -748,7 +775,7 @@ public class MckTranslator {
 			}
 		}
 		return variables;
-	}
+	}*/
 
 	/**
 	 * Extracts variables from the GDL in token list form. Shouldn't be used
@@ -759,7 +786,7 @@ public class MckTranslator {
 	 * @param tokens
 	 * @return variables
 	 */
-	private static Set<String> variableSet(List<String> tokens) {
+	/*private static Set<String> variableSet(List<String> tokens) {
 		Set<String> variables = new HashSet<String>();
 		for (String token : tokens) {
 			if (token.charAt(0) == '?') {
@@ -767,7 +794,7 @@ public class MckTranslator {
 			}
 		}
 		return variables;
-	}
+	}*/
 
 	/**
 	 * Given a string with "(" find everything it's closing ")" Effectively
@@ -1085,7 +1112,7 @@ public class MckTranslator {
 	 * Inner class that represents one node in the parse tree
 	 * where the children for a formula are a list of parameters
 	 */
-	public static class ParseNode {
+	public static class ParseNode implements Iterable<ParseNode>{
 		GdlType type;
 		String atom;
 		ParseNode parent;
@@ -1244,6 +1271,55 @@ public class MckTranslator {
 			}
 			return lparse.toString();
 		}
+		
+		public Iterator<ParseNode> iterator(){
+			Queue<ParseNode> iterator = new LinkedList<ParseNode>();
+			
+			iterator.add(this);
+			for(ParseNode child : getChildren()){
+				for(ParseNode node : child){
+					iterator.add(node);
+				}
+			}
+			
+			return iterator.iterator();
+		}
+		
+		/*public Iterator<ParseNode> iterator(){
+			return new Iterator<ParseNode>(){
+				private ParseNode node;
+				private int index;
+				private Iterator<ParseNode> child;
+				
+				public Iterator<ParseNode> init(ParseNode node){
+					this.node = node;
+					index = -1;
+					return this;
+				}
+				
+				public boolean hasNext(){
+					if(index < getChildren().size() && child != null && child.hasNext()){
+						return true;
+					}
+					return false;
+				}
+				
+				public ParseNode next(){
+					if(index == -1){
+						index++;
+						return node;
+					}else if(child != null && child.hasNext()){
+						return child.next();
+					}else if(index < getChildren().size()){
+						child = getChildren().get(index).iterator();
+						index++;
+						return node;
+					}else{
+						throw new NoSuchElementException();
+					}
+				}
+			}.init(this);
+		}*/
 		
 		@Override
 		public String toString() {
