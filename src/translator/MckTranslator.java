@@ -39,7 +39,7 @@ public class MckTranslator {
 				if (sb.length() > 0 && !comment) {
 					tokens.add(sb.toString());
 				}
-				if(!comment){
+				if (!comment) {
 					tokens.add(String.valueOf((char) character));
 				}
 				sb = new StringBuilder();
@@ -72,18 +72,18 @@ public class MckTranslator {
 
 		return tokens;
 	}
-	
+
 	/**
 	 * Overloaded method which just asks for filePath as opposed to File object
 	 */
 	public static List<String> tokenizeFile(String filePath) throws IOException, URISyntaxException {
 		return gdlTokenizer(new FileReader(new File(filePath)));
 	}
-	
+
 	public static List<String> tokenizeGdl(String gdl) throws IOException {
 		return gdlTokenizer(new StringReader(gdl));
 	}
-	
+
 	/**
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
@@ -102,7 +102,7 @@ public class MckTranslator {
 				break;
 			case ")":
 				parent = parent.parent;
-				if(scopedVariable == true && parent.type == GdlType.ROOT){
+				if (scopedVariable == true && parent.type == GdlType.ROOT) {
 					scopedVariable = false;
 					scopeNumber++;
 				}
@@ -117,13 +117,14 @@ public class MckTranslator {
 				break;
 			default:
 				newNode = new ParseNode(token, parent, GdlType.CONSTANT);
-				//if (parent.type == GdlType.CLAUSE && parent.children.isEmpty()) {
-					//newNode.type = GdlType.HEAD;
-				//} else 
-				if(parent.type == GdlType.CONSTANT){
+				// if (parent.type == GdlType.CLAUSE &&
+				// parent.children.isEmpty()) {
+				// newNode.type = GdlType.HEAD;
+				// } else
+				if (parent.type == GdlType.CONSTANT) {
 					parent.type = GdlType.FORMULA;
 				}
-					
+
 				if (newNode.atom.charAt(0) == '?') {
 					newNode.type = GdlType.VARIABLE;
 					scopedVariable = true;
@@ -139,19 +140,18 @@ public class MckTranslator {
 		}
 		return root;
 	}
-	
+
 	// Follows the domain graph def in the ggp book
-	public static DomainGraph constructDomainGraph(ParseNode root){
+	public static DomainGraph constructDomainGraph(ParseNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<ParseNode, DomainGraph.Term> variableMap = new HashMap<ParseNode, DomainGraph.Term>();
-		
-		
+
 		Queue<ParseNode> queue = new LinkedList<ParseNode>();
 		queue.addAll(root.getChildren());
-		
-		while(!queue.isEmpty()){
+
+		while (!queue.isEmpty()) {
 			ParseNode node = queue.remove();
-			switch(node.type){
+			switch (node.type) {
 			case ROOT:
 				System.out.println("Should be impossible to reach root");
 				break;
@@ -159,16 +159,16 @@ public class MckTranslator {
 				break;
 			case FORMULA:
 				graph.addFunction(node.getAtom(), node.getChildren().size());
-				for(int i=0; i<node.getChildren().size(); i++){
-					if(node.getChildren().get(i).type != GdlType.VARIABLE){
-						graph.addEdge(node.getAtom(), i+1, node.getChildren().get(i).getAtom(), 0);
-					}else{
+				for (int i = 0; i < node.getChildren().size(); i++) {
+					if (node.getChildren().get(i).type != GdlType.VARIABLE) {
+						graph.addEdge(node.getAtom(), i + 1, node.getChildren().get(i).getAtom(), 0);
+					} else {
 						ParseNode variable = node.getChildren().get(i);
-						if(variableMap.containsKey(variable)){
+						if (variableMap.containsKey(variable)) {
 							DomainGraph.Term varLink = variableMap.get(variable);
-							graph.addEdge(varLink.getTerm(), varLink.getArity(), node.getAtom(), i+1);
-						}else{
-							variableMap.put(variable, new DomainGraph.Term(node.getAtom(), i+1));
+							graph.addEdge(varLink.getTerm(), varLink.getArity(), node.getAtom(), i + 1);
+						} else {
+							variableMap.put(variable, new DomainGraph.Term(node.getAtom(), i + 1));
 						}
 					}
 				}
@@ -176,131 +176,131 @@ public class MckTranslator {
 			case CONSTANT:
 				break;
 			case VARIABLE:
-				
+
 				break;
 			default:
 				System.out.println("The parse tree has a data error");
 			}
-			
+
 			queue.addAll(node.getChildren());
 		}
-		
+
 		graph.addEdge("base", 1, "true", 1);
 		graph.addEdge("input", 1, "does", 1);
 		graph.addEdge("input", 2, "does", 2);
-		
+
 		return graph;
 	}
-	
-	
-	public static boolean isVariableInTree(ParseNode node){
-		if(node.type == GdlType.VARIABLE){
+
+	public static boolean isVariableInTree(ParseNode node) {
+		if (node.type == GdlType.VARIABLE) {
 			return true;
 		}
-		
-		for(ParseNode child : node.getChildren()){
-			if(isVariableInTree(child)){
+
+		for (ParseNode child : node.getChildren()) {
+			if (isVariableInTree(child)) {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
-	
-	public static ParseNode groundGdl(ParseNode root, DomainGraph domainGraph){
+
+	public static ParseNode groundGdl(ParseNode root, DomainGraph domainGraph) {
 		ParseNode groundedRoot = new ParseNode();
-		
+
 		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = domainGraph.getDomainMap();
 		Map<String, List<String>> domainGraphString = new HashMap<String, List<String>>();
-		for(DomainGraph.Term term : domainMap.keySet()){
+		for (DomainGraph.Term term : domainMap.keySet()) {
 			String atom = term.getTerm();
 			List<String> domain = new ArrayList<String>();
-			for(DomainGraph.Term dependency : domainMap.get(term)){
+			for (DomainGraph.Term dependency : domainMap.get(term)) {
 				domain.add(dependency.getTerm());
 			}
 			domainGraphString.put(atom, domain);
 		}
-		
-		for(ParseNode clause : root.getChildren()){
-			if(!isVariableInTree(clause)){
+
+		for (ParseNode clause : root.getChildren()) {
+			if (!isVariableInTree(clause)) {
 				groundedRoot.getChildren().add(clause);
-			}else{
+			} else {
 				String groundedClauseString = groundClause(clause, domainMap);
 				List<String> groundedClauseTokens = null;
-				try{ 
+				try {
 					groundedClauseTokens = tokenizeGdl(groundedClauseString);
-				}catch(IOException e){	e.printStackTrace();	}
-				
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
 				ParseNode clauseTree = expandParseTree(groundedClauseTokens);
-				if(!clauseTree.getChildren().isEmpty()){
+				if (!clauseTree.getChildren().isEmpty()) {
 					groundedRoot.getChildren().add(clauseTree.getChildren().get(0));
 				}
 			}
 		}
-		
+
 		return groundedRoot;
 	}
-	
-	
-	public static String groundClause(ParseNode clauseNode, Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap){
+
+	public static String groundClause(ParseNode clauseNode,
+			Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap) {
 		StringBuilder groundedClauses = new StringBuilder();
-		
+
 		Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
-		for(ParseNode node : clauseNode){
-			if(node.type == GdlType.VARIABLE){
-				if(!constantMap.containsKey(node.getAtom())){
+		for (ParseNode node : clauseNode) {
+			if (node.type == GdlType.VARIABLE) {
+				if (!constantMap.containsKey(node.getAtom())) {
 					constantMap.put(node.getAtom(), new ArrayList<String>());
 				}
-				
-				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(), node.getParent().getChildren().indexOf(node));
-				if(domainMap.containsKey(varTerm)){	
-					for(DomainGraph.Term term : domainMap.get(varTerm)){
+
+				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
+						node.getParent().getChildren().indexOf(node));
+				if (domainMap.containsKey(varTerm)) {
+					for (DomainGraph.Term term : domainMap.get(varTerm)) {
 						constantMap.get(node.getAtom()).add(term.getTerm());
 					}
 				}
 			}
 		}
 		groundedClauses.append(groundClause(clauseNode.toString(), constantMap));
-		
+
 		return groundedClauses.toString();
 	}
-	
+
 	/**
 	 * 
-	 * @return string with grounded clause which can be expanded into parse tree of clause
+	 * @return string with grounded clause which can be expanded into parse tree
+	 *         of clause
 	 * @Deprecated
 	 */
-	private static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap){
+	private static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap) {
 		StringBuilder groundedClauses = new StringBuilder();
-		
-		//TODO: find out how to iterate over all values of all lists
-		
-			String clause = gdlClause;
-			for(String variable : vertexToDomainMap.keySet()){
-				if(vertexToDomainMap.get(variable) != null && clause.contains(variable)){
-					for(int i=0; i<vertexToDomainMap.get(variable).size(); i++){
-						clause = clause.replace(variable, vertexToDomainMap.get(variable).get(i));
-					}
+
+		// TODO: find out how to iterate over all values of all lists
+
+		String clause = gdlClause;
+		for (String variable : vertexToDomainMap.keySet()) {
+			if (vertexToDomainMap.get(variable) != null && clause.contains(variable)) {
+				for (int i = 0; i < vertexToDomainMap.get(variable).size(); i++) {
+					clause = clause.replace(variable, vertexToDomainMap.get(variable).get(i));
 				}
 			}
-			groundedClauses.append(clause);
-		
-		
+		}
+		groundedClauses.append(clause);
+
 		return groundedClauses.toString();
 	}
-	
-	
-	public static List<String> findBoolVarsForMck(ParseNode root){
+
+	public static List<String> findBoolVarsForMck(ParseNode root) {
 		ArrayList<String> boolVars = new ArrayList<String>();
-		
+
 		Queue<ParseNode> childrenQueue = new LinkedList<ParseNode>();
 		childrenQueue.addAll(root.children);
-		
-		while(!childrenQueue.isEmpty()){
+
+		while (!childrenQueue.isEmpty()) {
 			ParseNode node = childrenQueue.remove();
-			
-			switch(node.atom){
+
+			switch (node.atom) {
 			case "<=":
 				childrenQueue.addAll(node.children);
 				break;
@@ -317,70 +317,68 @@ public class MckTranslator {
 				break;
 			}
 		}
-		
+
 		return boolVars;
 	}
-	
-	
-	public static Map<String, List<String>> findMovesForMck(ParseNode root){
+
+	public static Map<String, List<String>> findMovesForMck(ParseNode root) {
 		Map<String, List<String>> roleToMoveMap = new HashMap<String, List<String>>();
-		
-		for(ParseNode clause : root.getChildren()){
-			if(clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GDL_LEGAL)){
+
+		for (ParseNode clause : root.getChildren()) {
+			if (clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GDL_LEGAL)) {
 				ParseNode legal = clause.getChildren().get(0);
 				String role = legal.getChildren().get(0).toString();
 				String move = legal.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
-				
-				if(!roleToMoveMap.containsKey(role)){
+
+				if (!roleToMoveMap.containsKey(role)) {
 					roleToMoveMap.put(role, new ArrayList<String>());
 				}
-				
-				if(!roleToMoveMap.get(role).contains(move)){
+
+				if (!roleToMoveMap.get(role).contains(move)) {
 					roleToMoveMap.get(role).add(move);
 				}
 			}
 		}
 		return roleToMoveMap;
 	}
-	
+
 	/**
-	 * TODO: takes a parse tree and returns MCK equivalent
-	 * TODO: rewrite to follow steps in mck paper
+	 * TODO: takes a parse tree and returns MCK equivalent TODO: rewrite to
+	 * follow steps in mck paper
 	 */
 	public static String toMck(ParseNode root) {
-		
-		List<String> roles = findRolesForMck(root);
+
+		// List<String> roles = findRolesForMck(root);
 		Map<String, List<String>> roleToMoveMap = findMovesForMck(root);
-		List<String> legals = findLegalsForMck(root);
+		// List<String> legals = findLegalsForMck(root);
 		List<String> boolVars = findBoolVarsForMck(root);
-		
+
 		StringBuilder sb = new StringBuilder();
 		// Construct MCK version
 		sb.append("-- MCK file generated using MckTranslator from a GGP game description");
 		sb.append(System.lineSeparator());
-		
+
 		sb.append(System.lineSeparator() + "-- Environment Variables");
-		for(String boolVar : boolVars){
+		for (String boolVar : boolVars) {
 			sb.append(System.lineSeparator());
 			sb.append(boolVar + ": Bool");
 		}
 		sb.append(System.lineSeparator());
-		
-		
+
 		sb.append(System.lineSeparator() + "-- Environment Initial Conditions");
 		sb.append(System.lineSeparator() + "init_cond = ");
-		for(String var : boolVars){
+		for (String var : boolVars) {
 			sb.append(System.lineSeparator());
 			sb.append(var + "==False /\\ ");
 		}
 		sb.delete(sb.length() - 4, sb.length());
 		sb.append(System.lineSeparator());
-		
+
 		sb.append(System.lineSeparator() + "-- Agent bindings");
 		for (String role : roleToMoveMap.keySet()) {
 			sb.append(System.lineSeparator() + "agent Player_" + role + " \"" + role + "\" (");
-			for(String var : boolVars){
-				if(var.contains("_"+role+"_")){
+			for (String var : boolVars) {
+				if (var.contains("_" + role + "_")) {
 					sb.append(System.lineSeparator() + var + ", ");
 				}
 			}
@@ -390,24 +388,25 @@ public class MckTranslator {
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator() + "transitions");
 		sb.append(System.lineSeparator() + "begin");
-		
-		for(String role : roleToMoveMap.keySet()){
-			for(String move : roleToMoveMap.get(role)){
-				sb.append(System.lineSeparator() + "if Player_" + role + ".Move_" + move + " -> did_" + role + "_" + move + " := True");
+
+		for (String role : roleToMoveMap.keySet()) {
+			for (String move : roleToMoveMap.get(role)) {
+				sb.append(System.lineSeparator() + "if Player_" + role + ".Move_" + move + " -> did_" + role + "_"
+						+ move + " := True");
 				sb.append(System.lineSeparator() + "[] otherwise -> did_" + role + "_" + move + " := False");
 				sb.append(System.lineSeparator() + "fi;");
 			}
 		}
-		
+
 		sb.append(System.lineSeparator() + "end");
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
-		
+
 		sb.append("-- Specification");
 		sb.append(System.lineSeparator());
 		sb.append("spec_spr = AG(");
-		for(String legal : legals){
-			for(String role : roles){
+		for (String role : roleToMoveMap.keySet()) {
+			for (String legal : roleToMoveMap.get(role)) {
 				sb.append("(" + legal + " => Knows Player_" + role + " " + legal + ")");
 				sb.append(" /\\ ");
 			}
@@ -415,73 +414,73 @@ public class MckTranslator {
 		sb.delete(sb.length() - 4, sb.length());
 		sb.append(")");
 		sb.append(System.lineSeparator());
-		
+
 		sb.append(System.lineSeparator() + "-- Protocol Declarations");
-		for(String role : roleToMoveMap.keySet()){
-			sb.append(System.lineSeparator() + "protocol \""+role+"\" (");
-			for(String move : roleToMoveMap.get(role)){
-				sb.append(System.lineSeparator()+"  legal_" + role + "_" + move + ": Bool, ");
-				sb.append(System.lineSeparator()+"  did_" + role + "_" + move + ": observable Bool, ");
+		for (String role : roleToMoveMap.keySet()) {
+			sb.append(System.lineSeparator() + "protocol \"" + role + "\" (");
+			for (String move : roleToMoveMap.get(role)) {
+				sb.append(System.lineSeparator() + "  legal_" + role + "_" + move + ": Bool, ");
+				sb.append(System.lineSeparator() + "  did_" + role + "_" + move + ": observable Bool, ");
 			}
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append(System.lineSeparator() + ")");
-			
+
 			sb.append(System.lineSeparator() + "begin");
 			sb.append(System.lineSeparator() + "  do");
 			sb.append(System.lineSeparator() + "  ");
-			for(String move : roleToMoveMap.get(role)){
-					sb.append("legal_" + role + "_" + move + " -> <<Move_" + move + ">>");
-					sb.append(System.lineSeparator() + "  [] ");
+			for (String move : roleToMoveMap.get(role)) {
+				sb.append("legal_" + role + "_" + move + " -> <<Move_" + move + ">>");
+				sb.append(System.lineSeparator() + "  [] ");
 			}
 			sb.delete(sb.length() - 6, sb.length());
 			sb.append(System.lineSeparator() + "  od");
 			sb.append(System.lineSeparator() + "end");
 			sb.append(System.lineSeparator());
 		}
-		
+
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Save string to file.
 	 */
-	public static void saveFile(String text, String filename){
+	public static void saveFile(String text, String filename) {
 		FileWriter writer = null;
-		try{
+		try {
 			File file = new File(filename);
 			file.createNewFile();
-			
+
 			writer = new FileWriter(file);
 			writer.write(text);
 			writer.flush();
 			writer.close();
-		}catch(IOException e){
+		} catch (IOException e) {
 			e.printStackTrace();
-		}finally{
-			if(writer != null){
-				try{
+		} finally {
+			if (writer != null) {
+				try {
 					writer.close();
-				}catch(IOException e){
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * Outputs parse tree in lparse format
 	 */
-	public static String toLparse(ParseNode root){
+	public static String toLparse(ParseNode root) {
 		StringBuilder lparse = new StringBuilder();
-		
+
 		lparse.append("{true(V1):base(V1)}.\n");
 		lparse.append("1={does(V2, V3):input(V2, V3)} :- role(V2).\n");
-		
+
 		lparse.append(root.toLparse());
-		
+
 		return lparse.toString();
 	}
-	
+
 	/**
 	 * Print the atoms of the nodes of the tree
 	 * 
@@ -496,12 +495,11 @@ public class MckTranslator {
 			}
 		}
 	}
-	
-	
-	public static void printParseTree(ParseNode root){
+
+	public static void printParseTree(ParseNode root) {
 		printParseTree(root, ">", " -");
 	}
-	
+
 	/**
 	 * Print the GdlType of the nodes of the tree
 	 * 
@@ -515,9 +513,6 @@ public class MckTranslator {
 			break;
 		case CLAUSE:
 			System.out.println(prefix + "CLAUSE " + root.getAtom());
-			break;
-		case HEAD:
-			System.out.println(prefix + "HEAD " + root.getAtom());
 			break;
 		case VARIABLE:
 			System.out.println(prefix + "VARIABLE " + root.getAtom());
@@ -538,20 +533,18 @@ public class MckTranslator {
 			}
 		}
 	}
-	
-	
-	public static void printParseTreeTypes(ParseNode root){
+
+	public static void printParseTreeTypes(ParseNode root) {
 		printParseTreeTypes(root, ">", " -");
 	}
-	
+
 	/**
-	 * Can be used from the command line by moving to the build directory and using
-	 *     java translator.MckTranslator path/to/game.gdl
-	 *   or
-	 *     java -jar MckTranslator.jar path/to/game.gdl
-	 * which will save output to path/to/game.gdl.mck
+	 * Can be used from the command line by moving to the build directory and
+	 * using java translator.MckTranslator path/to/game.gdl or java -jar
+	 * MckTranslator.jar path/to/game.gdl which will save output to
+	 * path/to/game.gdl.mck
 	 */
-	public static void main(String[] args){
+	public static void main(String[] args) {
 		boolean helpSwitch = false;
 		boolean inputFileSwitch = false;
 		boolean inputFileToken = false;
@@ -564,12 +557,12 @@ public class MckTranslator {
 		boolean outputDotSwitch = false;
 		boolean parseTreeSwitch = false;
 		boolean parseTreeTypesSwitch = false;
-		
+
 		String inputFilePath = "";
 		String outputFilePath = "";
-		
-		for(String arg : args){
-			switch(arg){
+
+		for (String arg : args) {
+			switch (arg) {
 			case "-h":
 			case "--help":
 				helpSwitch = true;
@@ -608,19 +601,19 @@ public class MckTranslator {
 				parseTreeTypesSwitch = true;
 				break;
 			default:
-				if(outputFileToken){
+				if (outputFileToken) {
 					outputFilePath = arg;
 					outputFileToken = false;
-				}else if(inputFileToken){
+				} else if (inputFileToken) {
 					inputFilePath = arg;
 					inputFileToken = false;
-				}else if(!inputFileSwitch){
+				} else if (!inputFileSwitch) {
 					inputFilePath = arg;
 				}
 			}
 		}
-		
-		if(helpSwitch){
+
+		if (helpSwitch) {
 			System.out.println("usage: java -jar MckTranslator.jar [options] [gdlFileInput]");
 			System.out.println("Options:");
 			System.out.println("  -h --help     print this help file");
@@ -633,69 +626,66 @@ public class MckTranslator {
 			System.out.println("  -d --debug    manually sellect outputs in debug mode");
 			System.out.println("  --parse-tree  print parse tree for debug");
 			System.out.println("  --parse-types print parse tree type for debug");
-		}else{
+		} else {
 			try {
-				// Use either 
+				// Use either
 				List<String> tokens;
-				if(inputFilePath.equals("")){
+				if (inputFilePath.equals("")) {
 					tokens = gdlTokenizer(new InputStreamReader(System.in));
-				}else{
+				} else {
 					tokens = tokenizeFile(inputFilePath);
 				}
 				ParseNode root = expandParseTree(tokens);
-				
+
 				// Use internal grounder
-				if(groundSwitch){
+				if (groundSwitch) {
 					DomainGraph domain = constructDomainGraph(root);
-					if(outputDotSwitch){
+					if (outputDotSwitch) {
 						System.out.println(domain.dotEncodedGraph());
 					}
 					root = groundGdl(root, domain);
 				}
-				
+
 				// Print parse tree for debugging
-				if(parseTreeSwitch){
+				if (parseTreeSwitch) {
 					printParseTree(root);
 				}
-				
+
 				// Print parse tree types for debugging
-				if(parseTreeTypesSwitch){
+				if (parseTreeTypesSwitch) {
 					printParseTreeTypes(root);
 				}
-				
-				
+
 				String translation;
-				if(outputLparseSwitch){
+				if (outputLparseSwitch) {
 					translation = toLparse(root);
-				}else{
+				} else {
 					translation = toMck(root);
 				}
-				
-				
-				if(outputFileSwitch){
+
+				if (outputFileSwitch) {
 					saveFile(translation, outputFilePath);
-				}else if(!debugSwitch || outputLparseSwitch || outputMckSwitch){
+				} else if (!debugSwitch || outputLparseSwitch || outputMckSwitch) {
 					System.out.println(translation);
 				}
-			} catch(URISyntaxException e) { 
+			} catch (URISyntaxException e) {
 				e.printStackTrace();
-			}catch(IOException e) { 
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
-	
+
 	public enum GdlType {
 		ROOT, CLAUSE, FORMULA, VARIABLE, CONSTANT
-		
+
 	}
-	
-	/** 
-	 * Inner class that represents one node in the parse tree
-	 * where the children for a formula are a list of parameters
+
+	/**
+	 * Inner class that represents one node in the parse tree where the children
+	 * for a formula are a list of parameters
 	 */
-	public static class ParseNode implements Iterable<ParseNode>{
+	public static class ParseNode implements Iterable<ParseNode> {
 		GdlType type;
 		String atom;
 		ParseNode parent;
@@ -725,72 +715,73 @@ public class MckTranslator {
 		public boolean distinct(ParseNode node) {
 			return !this.atom.equals(node.getAtom());
 		}
-		
-		public GdlType getType(){
+
+		public GdlType getType() {
 			return type;
 		}
-		
-		public String getAtom(){
+
+		public String getAtom() {
 			return atom;
 		}
-		
-		public ParseNode getParent(){
+
+		public ParseNode getParent() {
 			return parent;
 		}
-		
-		public List<ParseNode> getChildren(){
+
+		public List<ParseNode> getChildren() {
 			return children;
 		}
-		
-		public String toLparse(){
+
+		public String toLparse() {
 			StringBuilder lparse = new StringBuilder();
-			
-			switch(type){
+
+			switch (type) {
 			case ROOT:
-				for(ParseNode clause : getChildren()){
+				for (ParseNode clause : getChildren()) {
 					lparse.append(clause.toLparse());
-					if(clause.getType() == GdlType.CLAUSE){
-						if(clause.getChildren().get(0).getAtom().equals(GDL_INIT) ||
-							clause.getChildren().get(0).getAtom().equals(GDL_NEXT) ||
-							clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)){
+					if (clause.getType() == GdlType.CLAUSE) {
+						if (clause.getChildren().get(0).getAtom().equals(GDL_INIT)
+								|| clause.getChildren().get(0).getAtom().equals(GDL_NEXT)
+								|| clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)) {
 							lparse.append(clause.toLparseWithBaseInput());
 						}
 					}
 				}
 				break;
 			case CLAUSE:
-				lparse.append(children.get(0).toLparse());//head
-				if(children.size() > 1){
+				lparse.append(children.get(0).toLparse());// head
+				if (children.size() > 1) {
 					lparse.append(" :- ");
-					for(int i=1; i < children.size() - 1; i++){
+					for (int i = 1; i < children.size() - 1; i++) {
 						lparse.append(children.get(i).toLparse());
 						lparse.append(", ");
 					}
-					lparse.append(children.get(children.size() - 1).toLparse());	
+					lparse.append(children.get(children.size() - 1).toLparse());
 				}
 				lparse.append(".\n");
 				break;
 			case FORMULA:
-				//base and inputs
-				/*if(getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)){
-					lparse.append("input(");
-				}else if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)){
-					lparse.append("base(");
-				}else*/ if(getAtom().equals("not")){
+				// base and inputs
+				/*
+				 * if(getAtom().equals(GDL_DOES) ||
+				 * getAtom().equals(GDL_LEGAL)){ lparse.append("input("); }else
+				 * if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE)
+				 * || getAtom().equals(GDL_NEXT)){ lparse.append("base("); }else
+				 */ if (getAtom().equals("not")) {
 					lparse.append("t1(");
-				}else{
-					lparse.append(getAtom()+"(");
+				} else {
+					lparse.append(getAtom() + "(");
 				}
-				//Parameters
-				for(int i=0; i < children.size() - 1; i++){
+				// Parameters
+				for (int i = 0; i < children.size() - 1; i++) {
 					lparse.append(children.get(i).toLparse());
 					lparse.append(", ");
 				}
 				lparse.append(children.get(children.size() - 1).toLparse());
 				lparse.append(")");
-				
-				//Facts
-				if(getParent().getType() == GdlType.ROOT){
+
+				// Facts
+				if (getParent().getType() == GdlType.ROOT) {
 					lparse.append(".\n");
 				}
 				break;
@@ -801,51 +792,53 @@ public class MckTranslator {
 				lparse.append(getAtom());
 				break;
 			}
-			
+
 			return lparse.toString();
 		}
-		
+
 		/**
-		 * Recursive method for generating lparse formatted representation of parse tree
+		 * Recursive method for generating lparse formatted representation of
+		 * parse tree
+		 * 
 		 * @return String lparse of the sub-tree rooted at node
 		 */
-		private String toLparseWithBaseInput(){
+		private String toLparseWithBaseInput() {
 			StringBuilder lparse = new StringBuilder();
-			
-			switch(type){
+
+			switch (type) {
 			case CLAUSE:
-				lparse.append(children.get(0).toLparseWithBaseInput());//head
-				if(children.size() > 1){
+				lparse.append(children.get(0).toLparseWithBaseInput());// head
+				if (children.size() > 1) {
 					lparse.append(" :- ");
-					for(int i=1; i < children.size() - 1; i++){
+					for (int i = 1; i < children.size() - 1; i++) {
 						lparse.append(children.get(i).toLparseWithBaseInput());
 						lparse.append(", ");
 					}
-					lparse.append(children.get(children.size() - 1).toLparseWithBaseInput());	
+					lparse.append(children.get(children.size() - 1).toLparseWithBaseInput());
 				}
 				lparse.append(".\n");
 				break;
 			case FORMULA:
-				//base and inputs
-				if(getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)){
+				// base and inputs
+				if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
 					lparse.append("input(");
-				}else if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)){
+				} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)) {
 					lparse.append("base(");
-				}else if(getAtom().equals("not")){
+				} else if (getAtom().equals("not")) {
 					lparse.append("t1(");
-				}else{
-					lparse.append(getAtom()+"(");
+				} else {
+					lparse.append(getAtom() + "(");
 				}
-				//Parameters
-				for(int i=0; i < children.size() - 1; i++){
+				// Parameters
+				for (int i = 0; i < children.size() - 1; i++) {
 					lparse.append(children.get(i).toLparseWithBaseInput());
 					lparse.append(", ");
 				}
 				lparse.append(children.get(children.size() - 1).toLparseWithBaseInput());
 				lparse.append(")");
-				
-				//Facts
-				if(getParent().getType() == GdlType.ROOT){
+
+				// Facts
+				if (getParent().getType() == GdlType.ROOT) {
 					lparse.append(".\n");
 				}
 				break;
@@ -854,20 +847,20 @@ public class MckTranslator {
 			}
 			return lparse.toString();
 		}
-		
-		public Iterator<ParseNode> iterator(){
+
+		public Iterator<ParseNode> iterator() {
 			Queue<ParseNode> iterator = new LinkedList<ParseNode>();
-			
+
 			iterator.add(this);
-			for(ParseNode child : getChildren()){
-				for(ParseNode node : child){
+			for (ParseNode child : getChildren()) {
+				for (ParseNode node : child) {
 					iterator.add(node);
 				}
 			}
-			
+
 			return iterator.iterator();
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
@@ -875,15 +868,15 @@ public class MckTranslator {
 				sb.append("(");
 			}
 			sb.append(atom);
-			
+
 			for (ParseNode child : children) {
 				sb.append(" " + child.toString());
 			}
-			
+
 			if (!children.isEmpty() && !atom.equals("")) {
 				sb.append(")");
 			}
-			
+
 			return sb.toString();
 		}
 	}
