@@ -254,8 +254,9 @@ public class MckTranslator {
 					constantMap.put(node.getAtom(), new ArrayList<String>());
 				}
 
-				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
-						node.getParent().getChildren().indexOf(node));
+				DomainGraph.Term varTerm = new DomainGraph.Term(
+						node.getParent().getAtom(),
+						node.getParent().getChildren().indexOf(node)+1);
 				if (domainMap.containsKey(varTerm)) {
 					for (DomainGraph.Term term : domainMap.get(varTerm)) {
 						constantMap.get(node.getAtom()).add(term.getTerm());

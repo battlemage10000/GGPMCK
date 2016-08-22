@@ -91,14 +91,19 @@ public class MckTranslatorTest {
 		List<String> tokens = new ArrayList<String>();
 		try{
 			tokens = MckTranslator.tokenizeGdl(testGoalGrounding);
-		}catch(IOException e){	e.printStackTrace();	}
+		}catch(IOException e){
+			e.printStackTrace();
+		}
 		
-		for(String token : tokens)System.out.print(token + " ");
+		for(DomainGraph.Term from: domainMap.keySet()){
+			System.out.println(from.toString());
+			for(DomainGraph.Term to: domainMap.get(from))System.out.println("  " + to.toString());
+		}
 		
 		String groundedClauses = MckTranslator.groundClause(MckTranslator.expandParseTree(tokens), domainMap);
 		
 		System.out.println(groundedClauses);
-		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))"));
+		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))(<= (goal blue 100) (true (win blue)))"));
 	}
 	
 	@Test
@@ -193,13 +198,13 @@ public class MckTranslatorTest {
 			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
-			MckTranslator.saveFile(root.toString(), "build-test/testGameAfterParse.gdl");
+			MckTranslator.saveFile(root.toString(), "build/testGameAfterParse.gdl");
 			// Check that gdlTokenizer, expandParseTree, ParseNode.toString and saveFile are doing their job
 			//assertThat(tokens, is(MckTranslator.tokenizeFile("build-test/testGameAfterParse.gdl")));
 			
 			String mck = MckTranslator.toMck(root);
 			
-			MckTranslator.saveFile(mck, "build-test/mck-translation.mck");
+			MckTranslator.saveFile(mck, "build/mck-translation.mck");
 			
 			//System.out.println(mck);
 			
@@ -224,7 +229,7 @@ public class MckTranslatorTest {
 			String lparse = MckTranslator.toLparse(root);
 			//System.out.println(lparse);
 			
-			MckTranslator.saveFile(lparse, "build-test/ungrounded.lp");
+			MckTranslator.saveFile(lparse, "build/ungrounded.lp");
 		}catch(URISyntaxException e){
 			e.printStackTrace();
 		}catch(IOException e){
