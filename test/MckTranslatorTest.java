@@ -95,15 +95,9 @@ public class MckTranslatorTest {
 			e.printStackTrace();
 		}
 		
-		for(DomainGraph.Term from: domainMap.keySet()){
-			System.out.println(from.toString());
-			for(DomainGraph.Term to: domainMap.get(from))System.out.println("  " + to.toString());
-		}
-		
 		String groundedClauses = MckTranslator.groundClause(MckTranslator.expandParseTree(tokens), domainMap);
 		
-		System.out.println(groundedClauses);
-		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))(<= (goal blue 100) (true (win blue)))"));
+		assertThat(groundedClauses, is(" (<= (goal red 100) (true (win red))) (<= (goal blue 100) (true (win blue)))"));
 	}
 	
 	@Test

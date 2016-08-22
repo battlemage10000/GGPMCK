@@ -244,8 +244,6 @@ public class MckTranslator {
 
 	public static String groundClause(ParseNode clauseNode,
 			Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap) {
-		StringBuilder groundedClauses = new StringBuilder();
-
 		Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
 		for (ParseNode node : clauseNode) {
 			if (node.type == GdlType.VARIABLE) {
@@ -256,16 +254,17 @@ public class MckTranslator {
 				DomainGraph.Term varTerm = new DomainGraph.Term(
 						node.getParent().getAtom(),
 						node.getParent().getChildren().indexOf(node)+1);
+				
 				if (domainMap.containsKey(varTerm)) {
 					for (DomainGraph.Term term : domainMap.get(varTerm)) {
-						constantMap.get(node.getAtom()).add(term.getTerm());
+						if(!constantMap.get(node.getAtom()).contains(term.getTerm())){
+							constantMap.get(node.getAtom()).add(term.getTerm());
+						}
 					}
 				}
 			}
 		}
-		groundedClauses.append(groundClause(clauseNode.toString(), constantMap));
-
-		return groundedClauses.toString();
+		return groundClause(clauseNode.toString(), constantMap);
 	}
 
 	/**
