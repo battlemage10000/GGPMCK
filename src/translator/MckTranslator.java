@@ -122,7 +122,7 @@ public class MckTranslator {
 				// newNode.type = GdlType.HEAD;
 				// } else
 				if (parent.type == GdlType.CONSTANT) {
-					parent.type = GdlType.FORMULA;
+					parent.type = GdlType.FUNCTION;
 				}
 
 				if (newNode.atom.charAt(0) == '?') {
@@ -157,11 +157,13 @@ public class MckTranslator {
 				break;
 			case CLAUSE:
 				break;
-			case FORMULA:
+			case FUNCTION:
 				graph.addFunction(node.getAtom(), node.getChildren().size());
 				for (int i = 0; i < node.getChildren().size(); i++) {
-					if (node.getChildren().get(i).type != GdlType.VARIABLE) {
-						graph.addEdge(node.getAtom(), i + 1, node.getChildren().get(i).getAtom(), 0);
+					if (node.getChildren().get(i).type == GdlType.CONSTANT) {
+						graph.addEdge(node.getAtom(), i + 1, node.getChildren().get(i).getAtom(), 0); //TODO: fix this line
+					} else if(node.getChildren().get(i).type == GdlType.FUNCTION){
+						
 					} else {
 						ParseNode variable = node.getChildren().get(i);
 						if (variableMap.containsKey(variable)) {
@@ -185,11 +187,10 @@ public class MckTranslator {
 			queue.addAll(node.getChildren());
 		}
 
-		graph.addEdge("base", 1, "true", 1);
-		graph.addEdge("input", 1, "does", 1);
-		graph.addEdge("input", 2, "does", 2);
+	graph.addEdge("base",1,"true",1);graph.addEdge("input",1,"does",1);graph.addEdge("input",2,"does",2);
 
-		return graph;
+	return graph;
+
 	}
 
 	public static boolean isVariableInTree(ParseNode node) {
@@ -517,7 +518,7 @@ public class MckTranslator {
 		case VARIABLE:
 			System.out.println(prefix + "VARIABLE " + root.getAtom());
 			break;
-		case FORMULA:
+		case FUNCTION:
 			System.out.println(prefix + "FORMULA " + root.getAtom());
 			break;
 		case CONSTANT:
@@ -677,7 +678,7 @@ public class MckTranslator {
 	}
 
 	public enum GdlType {
-		ROOT, CLAUSE, FORMULA, VARIABLE, CONSTANT
+		ROOT, CLAUSE, FUNCTION, VARIABLE, CONSTANT
 
 	}
 
@@ -686,10 +687,10 @@ public class MckTranslator {
 	 * for a formula are a list of parameters
 	 */
 	public static class ParseNode implements Iterable<ParseNode> {
-		GdlType type;
-		String atom;
-		ParseNode parent;
-		List<ParseNode> children;
+		private GdlType type;
+		private String atom;
+		private ParseNode parent;
+		private List<ParseNode> children;
 
 		ParseNode() {
 			this("", null, GdlType.ROOT);
@@ -706,14 +707,6 @@ public class MckTranslator {
 			this.parent = parent;
 			this.children = new ArrayList<ParseNode>();
 			this.type = type;
-		}
-
-		public boolean distinct(String atom) {
-			return !this.atom.equals(atom);
-		}
-
-		public boolean distinct(ParseNode node) {
-			return !this.atom.equals(node.getAtom());
 		}
 
 		public GdlType getType() {
@@ -760,7 +753,7 @@ public class MckTranslator {
 				}
 				lparse.append(".\n");
 				break;
-			case FORMULA:
+			case FUNCTION:
 				// base and inputs
 				/*
 				 * if(getAtom().equals(GDL_DOES) ||
@@ -818,7 +811,7 @@ public class MckTranslator {
 				}
 				lparse.append(".\n");
 				break;
-			case FORMULA:
+			case FUNCTION:
 				// base and inputs
 				if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
 					lparse.append("input(");

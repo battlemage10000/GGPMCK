@@ -168,7 +168,7 @@ public class MckTranslatorTest {
 					//assertThat(node.getAtom().charAt(0), is(not('?')));
 					assertThat(node.getChildren().isEmpty(), is(true));
 					break;
-				case FORMULA:
+				case FUNCTION:
 					assertThat(node.getChildren().isEmpty(), is(false));
 					break;
 				case CLAUSE:

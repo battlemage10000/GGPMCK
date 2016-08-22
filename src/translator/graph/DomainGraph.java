@@ -64,12 +64,14 @@ public class DomainGraph{
 		}
 	}
 	
-	public void addFunction(String term, int arity){
-		Term function = new Term(term, arity, true);
+	public void addFunction(String term, int functionArity){
+		Term function = new Term(term, functionArity, true);
 		if(!adjacencyMap.containsKey(function)){
 			adjacencyMap.put(function, new ArrayList<Term>());
+		}else{
+			adjacencyMap.put(function, adjacencyMap.get(function));
 		}
-		for(int i=1; i<= arity; i++){
+		for(int i=1; i<= functionArity; i++){
 			Term parameter = new Term(term, i);
 			if(!adjacencyMap.containsKey(parameter)){
 				adjacencyMap.put(parameter, new ArrayList<Term>());
