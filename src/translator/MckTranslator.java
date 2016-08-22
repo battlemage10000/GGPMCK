@@ -239,7 +239,6 @@ public class MckTranslator {
 				}
 			}
 		}
-
 		return groundedRoot;
 	}
 
@@ -275,7 +274,7 @@ public class MckTranslator {
 	 *         of clause
 	 * @Deprecated
 	 */
-	private static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap) {
+	/*private static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap) {
 		StringBuilder groundedClauses = new StringBuilder();
 
 		// TODO: find out how to iterate over all values of all lists
@@ -291,6 +290,24 @@ public class MckTranslator {
 		groundedClauses.append(clause);
 
 		return groundedClauses.toString();
+	}*/
+	
+	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap){
+		if(constantMap.keySet().isEmpty()){
+			return gdlClause;
+		}
+		
+		StringBuilder groundedClause = new StringBuilder();
+		Map<String, List<String>> childMap = constantMap;
+		String variable = childMap.keySet().iterator().next();
+		List<String> domain = childMap.remove(variable);
+		
+		for(String term : domain){
+			String subClause = gdlClause.replace(variable, term);
+			groundedClause.append(groundClause(subClause, childMap));
+		}
+		
+		return groundedClause.toString();
 	}
 
 	public static List<String> findBoolVarsForMck(ParseNode root) {
