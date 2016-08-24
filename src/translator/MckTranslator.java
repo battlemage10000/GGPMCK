@@ -2,11 +2,8 @@ package translator;
 
 import java.io.*;
 import java.util.*;
-import java.net.URI;
 import java.net.URISyntaxException;
 import translator.graph.DomainGraph;
-import translator.graph.DependencyGraph;
-import translator.graph.Vertex;
 
 /**
  * Translates GDL-II in infix notation to MCK
@@ -91,7 +88,7 @@ public class MckTranslator {
 		ParseNode root = new ParseNode("", null, GdlType.ROOT);
 
 		ParseNode parent = root;
-		boolean functionName = false;
+		//boolean functionName = false;
 		boolean openBracket = false;
 		boolean scopedVariable = false;
 		int scopeNumber = 1;
@@ -117,10 +114,6 @@ public class MckTranslator {
 				break;
 			default:
 				newNode = new ParseNode(token, parent, GdlType.CONSTANT);
-				// if (parent.type == GdlType.CLAUSE &&
-				// parent.children.isEmpty()) {
-				// newNode.type = GdlType.HEAD;
-				// } else
 				if (parent.type == GdlType.CONSTANT) {
 					parent.type = GdlType.FUNCTION;
 				}
@@ -128,7 +121,7 @@ public class MckTranslator {
 				if (newNode.atom.charAt(0) == '?') {
 					newNode.type = GdlType.VARIABLE;
 					scopedVariable = true;
-					newNode.atom = newNode.atom + "__" + scopeNumber;
+					newNode.atom = newNode.atom + "___" + scopeNumber;
 				}
 				parent.children.add(newNode);
 				if (openBracket) {
@@ -145,19 +138,13 @@ public class MckTranslator {
 	public static DomainGraph constructDomainGraph(ParseNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<ParseNode, DomainGraph.Term> variableMap = new HashMap<ParseNode, DomainGraph.Term>();
-
+		
 		Queue<ParseNode> queue = new LinkedList<ParseNode>();
 		queue.addAll(root.getChildren());
-
+		
 		while (!queue.isEmpty()) {
 			ParseNode node = queue.remove();
-			switch (node.type) {
-			case ROOT:
-				System.out.println("Should be impossible to reach root");
-				break;
-			case CLAUSE:
-				break;
-			case FUNCTION:
+			if (node.type == GdlType.FUNCTION){
 				graph.addFunction(node.getAtom(), node.getChildren().size());
 				for (int i = 0; i < node.getChildren().size(); i++) {
 					if (node.getChildren().get(i).type == GdlType.CONSTANT) {
@@ -174,23 +161,14 @@ public class MckTranslator {
 						}
 					}
 				}
-				break;
-			case CONSTANT:
-				break;
-			case VARIABLE:
-
-				break;
-			default:
-				System.out.println("The parse tree has a data error");
 			}
-
 			queue.addAll(node.getChildren());
 		}
-
-	graph.addEdge("base",1,"true",1);graph.addEdge("input",1,"does",1);graph.addEdge("input",2,"does",2);
-
-	return graph;
-
+		
+		graph.addEdge("base",1,"true",1);
+		graph.addEdge("input",1,"does",1);
+		graph.addEdge("input",2,"does",2);
+		return graph;
 	}
 
 	public static boolean isVariableInTree(ParseNode node) {
@@ -271,26 +249,7 @@ public class MckTranslator {
 	 * 
 	 * @return string with grounded clause which can be expanded into parse tree
 	 *         of clause
-	 * @Deprecated
 	 */
-	/*private static String groundClause(String gdlClause, Map<String, List<String>> vertexToDomainMap) {
-		StringBuilder groundedClauses = new StringBuilder();
-
-		// TODO: find out how to iterate over all values of all lists
-
-		String clause = gdlClause;
-		for (String variable : vertexToDomainMap.keySet()) {
-			if (vertexToDomainMap.get(variable) != null && clause.contains(variable)) {
-				for (int i = 0; i < vertexToDomainMap.get(variable).size(); i++) {
-					clause = clause.replace(variable, vertexToDomainMap.get(variable).get(i));
-				}
-			}
-		}
-		groundedClauses.append(clause);
-
-		return groundedClauses.toString();
-	}*/
-	
 	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap){
 		if(constantMap.keySet().isEmpty()){
 			return gdlClause;
@@ -361,8 +320,8 @@ public class MckTranslator {
 	}
 
 	/**
-	 * TODO: takes a parse tree and returns MCK equivalent TODO: rewrite to
-	 * follow steps in mck paper
+	 * TODO: takes a parse tree and returns MCK equivalent 
+	 * TODO: rewrite to follow steps in mck paper
 	 */
 	public static String toMck(ParseNode root) {
 
@@ -696,7 +655,6 @@ public class MckTranslator {
 
 	public enum GdlType {
 		ROOT, CLAUSE, FUNCTION, VARIABLE, CONSTANT
-
 	}
 
 	/**
