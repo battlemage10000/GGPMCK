@@ -7,30 +7,30 @@
 (init (round 1))
 
 ; legal moves
-(<= (legal red (choose_hand rock)))
-(<= (legal red (choose_hand paper)))
-(<= (legal red (choose_hand scissors)))
-(<= (legal blue (choose_hand rock)))
-(<= (legal blue (choose_hand paper)))
-(<= (legal blue (choose_hand scissors)))
+(legal red (choose_hand rock))
+(legal red (choose_hand paper))
+(legal red (choose_hand scissors))
+(legal blue (choose_hand rock))
+(legal blue (choose_hand paper))
+(legal blue (choose_hand scissors))
 
 
 ; state transitions
-(<= (next (round 2)) (true (round 1)) (true (draw)))
-(<= (next (round 3)) (true (round 2)) (true (draw)))
+(<= (next (round 2)) (true (round 1)) (true draw))
+(<= (next (round 3)) (true (round 2)) (true draw))
 
-(<= (draw) (does red (choose_hand rock)) (does blue (choose_hand rock)))
-(<= (draw) (does red (choose_hand paper)) (does blue (choose_hand paper)))
-(<= (draw) (does red (choose_hand scissors)) (does blue (choose_hand scissors)))
+(<= (next draw) (does red (choose_hand rock)) (does blue (choose_hand rock)))
+(<= (next draw) (does red (choose_hand paper)) (does blue (choose_hand paper)))
+(<= (next draw) (does red (choose_hand scissors)) (does blue (choose_hand scissors)))
 
 
 ; terminal conditions
-(<= (win red) (does red (choose_hand rock)) (does blue (choose_hand scissors)))
-(<= (win red) (does red (choose_hand paper)) (does blue (choose_hand rock)))
-(<= (win red) (does red (choose_hand scissors)) (does blue (choose_hand paper)))
-(<= (win blue) (does blue (choose_hand rock)) (does red (choose_hand scissors)))
-(<= (win blue) (does blue (choose_hand paper)) (does red (choose_hand rock)))
-(<= (win blue) (does blue (choose_hand scissors)) (does red (choose_hand paper)))
+(<= (next (win red)) (does red (choose_hand rock)) (does blue (choose_hand scissors)))
+(<= (next (win red)) (does red (choose_hand paper)) (does blue (choose_hand rock)))
+(<= (next (win red)) (does red (choose_hand scissors)) (does blue (choose_hand paper)))
+(<= (next (win blue)) (does blue (choose_hand rock)) (does red (choose_hand scissors)))
+(<= (next (win blue)) (does blue (choose_hand paper)) (does red (choose_hand rock)))
+(<= (next (win blue)) (does blue (choose_hand scissors)) (does red (choose_hand paper)))
 
 (<= terminal (true (win red)))
 (<= terminal (true (win blue)))
@@ -39,11 +39,11 @@
 
 ; assign points after termination
 (<= (goal red 100) (true (win red)))
-(<= (goal blue 100) (true (win blue)))
-(<= (goal red 50) (true (draw)))
-(<= (goal blue 50) (true (draw)))
-(<= (goal red 0) (true (not (win blue))))
-(<= (goal blue 0) (true (not (win red))))
+(<= (goal blue 100) (true(win blue)))
+(<= (goal red 50) (true draw))
+(<= (goal blue 50) (true draw))
+(<= (goal red 0) (true (win blue)))
+(<= (goal blue 0) (true (win red)))
 
 ;(role red)
 ;(role blue)

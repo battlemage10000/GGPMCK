@@ -4,7 +4,7 @@
 ; empty clause
 ()
 
-(init) ; unary clause with comment after
+(role player1) ; unary clause with comment after
 
 ( the 
 ; commented ) ( clause
