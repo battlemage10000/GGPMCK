@@ -1,49 +1,100 @@
 ; game used to test dependency graph
 
-; define players
+;;;  Roles  ;;;
 (role red)
 (role blue)
 
+
+;;; Initial Conditions  ;;;
 (init (round 1))
 
-; legal moves
-(legal red (choose_hand rock))
-(legal red (choose_hand paper))
-(legal red (choose_hand scissors))
-(legal blue (choose_hand rock))
-(legal blue (choose_hand paper))
-(legal blue (choose_hand scissors))
-;(<= (legal ?player (choose_hand rock)) (role ?player))
-;(<= (legal ?player (choose_hand paper)) (role ?player))
-;(<= (legal ?player (choose_hand scissors)) (role ?player))
+
+;;;  Legal Moves ;;;
+(<= (legal ?player (choose_hand rock)) 
+    (role ?player))
+(<= (legal ?player (choose_hand paper)) 
+    (role ?player))
+(<= (legal ?player (choose_hand scissors)) 
+    (role ?player))
 
 
-; state transitions
-(<= (next (round 2)) (true (round 1)) (true draw))
-(<= (next (round 3)) (true (round 2)) (true draw))
+;;;  State Transitions  ;;;
+(<= (next (round 2)) 
+   (true (round 1)) 
+   (true draw))
+   
+(<= (next (round 3)) 
+   (true (round 2)) 
+   (true draw))
 
-;(<= (next draw) (does red (choose_hand rock)) (does blue (choose_hand rock)))
-;(<= (draw) (does red (choose_hand paper)) (does blue (choose_hand paper)))
-(<= (next draw) (does red (choose_hand ?hand)) (does blue (choose_hand ?hand)))
+(<= (next draw) 
+   (does red (choose_hand ?hand)) 
+   (does blue (choose_hand ?hand)))
+
+(<= (next (win red)) 
+   (does red (choose_hand rock)) 
+   (does blue (choose_hand scissors)))
+    
+(<= (next (win red)) 
+   (does red (choose_hand paper)) 
+   (does blue (choose_hand rock)))
+    
+(<= (next (win red)) 
+   (does red (choose_hand scissors)) 
+   (does blue (choose_hand paper)))
+    
+(<= (next (win blue)) 
+   (does blue (choose_hand rock)) 
+   (does red (choose_hand scissors)))
+    
+(<= (next (win blue)) 
+   (does blue (choose_hand paper)) 
+   (does red (choose_hand rock)))
+    
+(<= (next (win blue)) 
+   (does blue (choose_hand scissors)) 
+   (does red (choose_hand paper)))
 
 
-; terminal conditions
-(<= (next (win red)) (does red (choose_hand rock)) (does blue (choose_hand scissors)))
-(<= (next (win red)) (does red (choose_hand paper)) (does blue (choose_hand rock)))
-(<= (next (win red)) (does red (choose_hand scissors)) (does blue (choose_hand paper)))
-(<= (next (win blue)) (does blue (choose_hand rock)) (does red (choose_hand scissors)))
-(<= (next (win blue)) (does blue (choose_hand paper)) (does red (choose_hand rock)))
-(<= (next (win blue)) (does blue (choose_hand scissors)) (does red (choose_hand paper)))
-
-(<= terminal (true (win red)))
-(<= terminal (true (win blue)))
-(<= terminal (true (round 3)))
+;;;  Terminal Conditions ;;;
+(<= terminal 
+   (true (win red)))
+    
+(<= terminal 
+   (true (win blue)))
+    
+(<= terminal 
+   (true (round 3)))
 
 
-; assign points after termination
-;(<= (goal red 100) (true (win red)))
-(<= (goal ?player 100) (true (win ?player)))
-(<= (goal red 50) (true draw))
-(<= (goal blue 50) (true draw))
-(<= (goal red 0) (true (win blue)))
-(<= (goal blue 0) (true (win red)))
+;;;  Goal Conditions  ;;;
+(<= (goal ?player 100) 
+   (true (win ?player)))
+    
+(<= (goal red 50) 
+   (true draw))
+    
+(<= (goal blue 50) 
+   (true draw))
+    
+(<= (goal red 0) 
+   (true (win blue)))
+    
+(<= (goal blue 0) 
+   (true (win red)))
+   
+;;;  Base  ;;;
+(base (round 1))
+(base (round 2))
+(base (round 3))
+(base (win red))
+(base (win blue))
+(base draw)
+
+;;;  Input  ;;;
+(input red (choose_hand rock))
+(input red (choose_hand paper))
+(input red (choose_hand scissors))
+(input blue (choose_hand rock))
+(input blue (choose_hand paper))
+(input blue (choose_hand scissors))

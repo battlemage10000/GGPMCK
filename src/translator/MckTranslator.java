@@ -3,6 +3,8 @@ package translator;
 import java.io.*;
 import java.util.*;
 import java.net.URISyntaxException;
+
+import translator.grammar.GdlAtom;
 import translator.graph.DomainGraph;
 
 /**
@@ -598,9 +600,9 @@ public class MckTranslator {
 			System.out.println("  -o --output   path to output file (default: stdout)");
 			System.out.println("  --to-mck      output file is in mck format (default)");
 			System.out.println("  --to-lparse   output file is in lparse format");
-			System.out.println("  --to-dot      output file is in dot format");
+			System.out.println("  --to-dot      output dependency graph in dot format. Use with --ground");
 			System.out.println("  -g --ground   use internal grounder");
-			System.out.println("  -d --debug    manually sellect outputs in debug mode");
+			System.out.println("  -d --debug    manually select outputs in debug mode");
 			System.out.println("  --parse-tree  print parse tree for debug");
 			System.out.println("  --parse-types print parse tree type for debug");
 		} else {
@@ -654,18 +656,18 @@ public class MckTranslator {
 	}
 
 	public enum GdlType {
-		ROOT, CLAUSE, FUNCTION, VARIABLE, CONSTANT
+		ROOT, CLAUSE, RELATION, FUNCTION, CONSTANT, VARIABLE
 	}
-
+	
 	/**
 	 * Inner class that represents one node in the parse tree where the children
 	 * for a formula are a list of parameters
 	 */
-	public static class ParseNode implements Iterable<ParseNode> {
-		private GdlType type;
-		private String atom;
-		private ParseNode parent;
-		private List<ParseNode> children;
+	public static class ParseNode implements Iterable<ParseNode>, GdlAtom, OrderedTreeNode {
+		GdlType type;
+		String atom;
+		ParseNode parent;
+		private ArrayList<ParseNode> children;
 
 		ParseNode() {
 			this("", null, GdlType.ROOT);
@@ -687,16 +689,18 @@ public class MckTranslator {
 		public GdlType getType() {
 			return type;
 		}
-
+		
+		@Override
 		public String getAtom() {
 			return atom;
 		}
+		
 
 		public ParseNode getParent() {
 			return parent;
 		}
 
-		public List<ParseNode> getChildren() {
+		public ArrayList<ParseNode> getChildren() {
 			return children;
 		}
 
@@ -729,13 +733,7 @@ public class MckTranslator {
 				lparse.append(".\n");
 				break;
 			case FUNCTION:
-				// base and inputs
-				/*
-				 * if(getAtom().equals(GDL_DOES) ||
-				 * getAtom().equals(GDL_LEGAL)){ lparse.append("input("); }else
-				 * if(getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE)
-				 * || getAtom().equals(GDL_NEXT)){ lparse.append("base("); }else
-				 */ if (getAtom().equals("not")) {
+				if (getAtom().equals("not")) {
 					lparse.append("t1(");
 				} else {
 					lparse.append(getAtom() + "(");

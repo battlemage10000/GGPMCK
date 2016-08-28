@@ -1,18 +1,9 @@
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
-import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
-import java.util.ArrayList;
 
 public class DependencyGraphTest {
-
-	@Test
-	public void initializesEmpty(){
-		DependencyGraph graph = new DependencyGraph();
-		assertThat(graph.verticies.isEmpty(), is(true));
-	}
 	
 	@Test
 	public void graphTest(){

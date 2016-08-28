@@ -77,7 +77,7 @@ public class DomainGraph{
 		}
 	}
 	
-	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity){
+	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity, boolean function){
 		Term from = new Term(fromTerm, fromArity);
 		Term to = new Term(toTerm, toArity);
 		if(!adjacencyMap.containsKey(from)){
@@ -89,6 +89,11 @@ public class DomainGraph{
 		if(!adjacencyMap.containsKey(to)){
 			adjacencyMap.put(to, new ArrayList<Term>());
 		}
+	}
+	
+
+	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity){
+		addEdge(fromTerm, fromArity, toTerm, toArity, false);
 	}
 	
 	public String dotEncodedGraph(){

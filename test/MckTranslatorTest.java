@@ -1,13 +1,8 @@
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 import translator.MckTranslator;
-import translator.Arguments;
 import translator.graph.DomainGraph;
-import translator.graph.DependencyGraph;
-import translator.graph.Vertex;
-import translator.graph.Edge;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +10,6 @@ import java.util.Arrays;
 import java.util.Queue;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -29,6 +23,7 @@ public class MckTranslatorTest {
 	String testGoals = "(<= (goal ?player 100) (true (win ?player))) (<= (goal red 50) (true (draw))) (<= (goal blue 50) (true (draw))) (<= (goal red 0) (true (not (win blue)))) (<= (goal blue 0) (true (not (win red))))";
 	String testGoalGrounding = "(<= (goal ?player 100) (true (win ?player)))";
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testSimpleDomainGraph(){
 		List<String> tokens = null;
@@ -51,6 +46,7 @@ public class MckTranslatorTest {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testSimpleDomainGraphOnGdl(){
 		List<String> tokens = null;
@@ -115,10 +111,10 @@ public class MckTranslatorTest {
 		for(MckTranslator.ParseNode node : root){
 			sb.append(node.getAtom() + " ");
 		}
-		assertThat(sb.toString(), is(" <= goal ?player__1 100 true win ?player__1 "));
+		assertThat(sb.toString(), is(" <= goal ?player___1 100 true win ?player___1 "));
 	}
 	
-	@Test
+	//@Test
 	public void loadEmptyGameDescription() {
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(emptyGdlPath);
@@ -130,13 +126,13 @@ public class MckTranslatorTest {
 		}
 	}
 	
-	@Test
+	//@Test
 	public void loadUnformatedValidTokens() {
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(testGdlPath);
 			assertThat(tokens.isEmpty(), is(false));
 			
-			assertThat(tokens, is(Arrays.asList("(",")","(","init",")","(","the","clause",")")));
+			assertThat(tokens, is(Arrays.asList("(",")","(","role","player1",")","(","the","clause",")")));
 			
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
@@ -150,7 +146,6 @@ public class MckTranslatorTest {
 	public void loadGameAndConstructParseTree(){
 		try{
 			List<String> tokens = MckTranslator.tokenizeFile(dependencyTestGdlPath);
-			
 			MckTranslator.ParseNode root = MckTranslator.expandParseTree(tokens);
 			
 			// TODO: add a gdl validator method based on this code
@@ -162,10 +157,12 @@ public class MckTranslatorTest {
 				
 				switch(node.getType()){
 				case VARIABLE:
-					assertThat(node.getAtom().charAt(0), is('?'));
-				case CONSTANT:
-					//assertThat(node.getAtom().charAt(0), is(not('?')));
 					assertThat(node.getChildren().isEmpty(), is(true));
+					assertThat(node.getAtom().charAt(0), is('?'));
+					break;
+				case CONSTANT:
+					assertThat(node.getChildren().isEmpty(), is(true));
+					assertThat(node.getAtom().charAt(0), is(not('?')));
 					break;
 				case FUNCTION:
 					assertThat(node.getChildren().isEmpty(), is(false));
@@ -173,6 +170,7 @@ public class MckTranslatorTest {
 				case CLAUSE:
 					assertThat(node.getParent().getType(), is(MckTranslator.GdlType.ROOT));
 					break;
+				default:
 				}
 				
 				parseTreeValidatingQueue.addAll(node.getChildren());
@@ -185,6 +183,9 @@ public class MckTranslatorTest {
 		}
 	}
 	
+	/*
+	 * 
+	 */
 	@Test
 	public void mckTranslatorGdlTestAndSave(){
 		try{
@@ -194,13 +195,12 @@ public class MckTranslatorTest {
 			
 			MckTranslator.saveFile(root.toString(), "build/testGameAfterParse.gdl");
 			// Check that gdlTokenizer, expandParseTree, ParseNode.toString and saveFile are doing their job
-			//assertThat(tokens, is(MckTranslator.tokenizeFile("build-test/testGameAfterParse.gdl")));
+			List<String> tokensAfterSave = MckTranslator.tokenizeFile("build/testGameAfterParse.gdl");
+			assertThat(tokens, is(tokensAfterSave));
 			
-			String mck = MckTranslator.toMck(root);
-			
-			MckTranslator.saveFile(mck, "build/mck-translation.mck");
-			
-			//System.out.println(mck);
+			MckTranslator.saveFile(MckTranslator.expandParseTree(tokensAfterSave).toString(), "build/testGameAfterParseTwice.gdl");
+			List<String> tokensAfterSaveTwice = MckTranslator.tokenizeFile("build/testGameAfterParseTwice.gdl");
+			assertThat(tokensAfterSave, is(tokensAfterSaveTwice));
 			
 		}catch(URISyntaxException e) {
 			e.printStackTrace();
