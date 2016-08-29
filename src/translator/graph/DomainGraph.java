@@ -72,22 +72,26 @@ public class DomainGraph{
 		for(int i=1; i<= functionArity; i++){
 			Term parameter = new Term(term, i);
 			if(!adjacencyMap.containsKey(parameter)){
-				adjacencyMap.put(parameter, new ArrayList<Term>());
+				addTerm(term, i);
 			}	
 		}
 	}
 	
-	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity, boolean function){
+	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity, boolean toFunction){
 		Term from = new Term(fromTerm, fromArity);
-		Term to = new Term(toTerm, toArity);
+		Term to = new Term(toTerm, toArity, toFunction);
 		if(!adjacencyMap.containsKey(from)){
-			adjacencyMap.put(from, new ArrayList<Term>());
+			addTerm(fromTerm, fromArity);
+		}
+		if(!adjacencyMap.containsKey(to)){
+			if(toFunction){
+				addFunction(toTerm, toArity);
+			}else{
+				addTerm(toTerm, toArity);
+			}
 		}
 		if(!adjacencyMap.get(from).contains(to)){
 			adjacencyMap.get(from).add(to);
-		}
-		if(!adjacencyMap.containsKey(to)){
-			adjacencyMap.put(to, new ArrayList<Term>());
 		}
 	}
 	
@@ -107,6 +111,13 @@ public class DomainGraph{
 				dot.append("_" + node.getArity() + " [label=\"" + node.getTerm() + "[" + node.getArity() +"]\",color=blue]");
 			}else if(node.getFunctionArity() > 0){
 				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/" + node.getFunctionArity() +"\",color=red]");
+				// Add subgraph that links functor to function parameters
+				dot.append(System.lineSeparator() + "subgraph {");
+				for(int i=1; i <= node.getFunctionArity(); i++){
+					dot.append(System.lineSeparator() + "  d_" + node.getTerm() + "__" + node.getFunctionArity());
+					dot.append("  ->  d_" + node.getTerm() + "_" + i);
+				}
+				dot.append(System.lineSeparator() + "}");
 			}else{
 				dot.append(" [label=\""+node.getTerm()+"\",color=green]");
 			}
@@ -117,13 +128,14 @@ public class DomainGraph{
 				dot.append(System.lineSeparator() +"  d_" + from.getTerm() + "_" + from.getArity() + " -> { ");
 				for(Term to : adjacencyMap.get(from)){
 					dot.append("d_" + to.getTerm());
-					if(to.getArity() > 0){
-						dot.append("_" + to.getArity() + " ");
-					}else if(to.getFunctionArity() > 0){
-						dot.append("__" + to.getFunctionArity() + " ");
-					}else{
-						dot.append(" ");
+					
+					if(to.getFunctionArity() > 0){
+						dot.append("__" + to.getFunctionArity());
+					}else if(to.getArity() > 0){
+						dot.append("_" + to.getArity());
 					}
+					dot.append(" ");
+					
 				}
 				dot.append("}");
 			}

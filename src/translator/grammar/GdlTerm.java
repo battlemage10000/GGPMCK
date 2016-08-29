@@ -191,4 +191,9 @@ public class GdlTerm implements GdlNode, LparseNode{
 
 		return sb.toString();
 	}
+	
+	@Override
+	public int hashCode(){
+		return atom.hashCode();
+	}
 }

@@ -20,10 +20,11 @@ public class MckTranslator {
 	public static final String GDL_SEES = "sees";
 	public static final String GDL_CLAUSE = "<=";
 
+	// TODO: Issue with variables not linking properly
 	// Follows the domain graph def in the ggp book
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
-		HashMap<GdlNode, DomainGraph.Term> variableMap = new HashMap<GdlNode, DomainGraph.Term>();
+		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
 		
 		Queue<GdlNode> queue = new LinkedList<GdlNode>();
 		queue.addAll(root.getChildren());
@@ -32,18 +33,19 @@ public class MckTranslator {
 			GdlNode node = queue.remove();
 			if (node.getType() == GdlType.FUNCTION){
 				graph.addFunction(node.getAtom(), node.getChildren().size());
+				
 				for (int i = 0; i < node.getChildren().size(); i++) {
-					if (node.getChildren().get(i).getType() == GdlType.CONSTANT) {
-						graph.addEdge(node.getAtom(), i + 1, node.getChildren().get(i).getAtom(), 0); //TODO: fix this line
-					} else if(node.getChildren().get(i).getType() == GdlType.FUNCTION){
-						
+					GdlNode childNode = node.getChildren().get(i);
+					if (childNode.getType() == GdlType.CONSTANT) {
+						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), 0, false);
+					} else if(childNode.getType() == GdlType.FUNCTION){
+						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), childNode.getChildren().size(), true);
 					} else {
-						GdlNode variable = node.getChildren().get(i);
-						if (variableMap.containsKey(variable)) {
-							DomainGraph.Term varLink = variableMap.get(variable);
+						if (variableMap.containsKey(childNode.getAtom())) {
+							DomainGraph.Term varLink = variableMap.get(childNode.getAtom());
 							graph.addEdge(varLink.getTerm(), varLink.getArity(), node.getAtom(), i + 1);
 						} else {
-							variableMap.put(variable, new DomainGraph.Term(node.getAtom(), i + 1));
+							variableMap.put(childNode.getAtom(), new DomainGraph.Term(node.getAtom(), i + 1));
 						}
 					}
 				}
@@ -377,16 +379,17 @@ public class MckTranslator {
 		case CLAUSE:
 			System.out.println(prefix + "CLAUSE " + root.getAtom());
 			break;
-		case VARIABLE:
-			System.out.println(prefix + "VARIABLE " + root.getAtom());
+		case RELATION:
+			System.out.println(prefix + "RELATION " + root.getAtom());
 			break;
 		case FUNCTION:
-			System.out.println(prefix + "FORMULA " + root.getAtom());
+			System.out.println(prefix + "FUNCTION " + root.getAtom());
 			break;
 		case CONSTANT:
 			System.out.println(prefix + "CONSTANT " + root.getAtom());
 			break;
-		default:
+		case VARIABLE:
+			System.out.println(prefix + "VARIABLE " + root.getAtom());
 			break;
 		}
 
@@ -591,6 +594,11 @@ public class MckTranslator {
 			}
 
 			return sb.toString();
+		}
+	
+		@Override 
+		public int hashCode(){
+			return atom.hashCode();
 		}
 	}
 }
