@@ -72,7 +72,7 @@
 		<mkdir dir="${deploy.dir}" />
 		<jar destfile="${deploy.dir}/${ant.project.name}.jar" basedir="${build.dir}">
 			<manifest>
-				<attribute name="Main-Class" value="translator.MckTranslator" />
+				<attribute name="Main-Class" value="translator.Main" />
 			</manifest>
 		</jar>
 		<copy todir="${deploy.dir}">
