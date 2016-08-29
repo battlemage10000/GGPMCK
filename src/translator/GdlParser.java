@@ -11,9 +11,11 @@ import java.util.List;
 
 import translator.MckTranslator.GdlType;
 import translator.MckTranslator.ParseNode;
+import translator.grammar.GdlNode;
+import translator.grammar.GdlTerm;
 
 public class GdlParser {
-	
+
 	public final static char SEMI = ';';
 	public final static char OPEN_P = '(';
 	public final static char CLOSE_P = ')';
@@ -21,7 +23,7 @@ public class GdlParser {
 	public final static char TAB = '\t';
 	public final static char NEW_LINE = '\n';
 	public final static char RETURN = '\r';
-	
+
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
 	 */
@@ -74,24 +76,29 @@ public class GdlParser {
 	}
 
 	/**
-	 * Overloaded method which just asks for filePath as opposed to File object
+	 * Overloaded method which doesn't require casting to Reader for common use
+	 * cases
 	 */
 	public static List<String> tokenizeFile(String filePath) throws IOException, URISyntaxException {
 		return gdlTokenizer(new FileReader(new File(filePath)));
 	}
 
-	public static List<String> tokenizeGdl(String gdl) throws IOException {
+	/**
+	 * Overloaded method which doesn't require casting to Reader for common use
+	 * cases
+	 */
+	public static List<String> tokenizeString(String gdl) throws IOException {
 		return gdlTokenizer(new StringReader(gdl));
 	}
 
 	/**
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
-	public static ParseNode expandParseTree(List<String> tokens) {
-		ParseNode root = new ParseNode("", null, GdlType.ROOT);
+	public static GdlNode expandParseTree(List<String> tokens) {
+		GdlNode root = new ParseNode("", null, GdlType.ROOT);
 
-		ParseNode parent = root;
-		//boolean functionName = false;
+		GdlNode parent = root;
+		// boolean functionName = false;
 		boolean openBracket = false;
 		boolean scopedVariable = false;
 		int scopeNumber = 1;
@@ -108,7 +115,7 @@ public class GdlParser {
 				}
 				break;
 			case MckTranslator.GDL_CLAUSE:
-				ParseNode newNode = new ParseNode(token, parent, GdlType.CLAUSE);
+				GdlNode newNode = new ParseNode(token, parent, GdlType.CLAUSE);
 				parent.getChildren().add(newNode);
 				if (openBracket) {
 					parent = newNode;
@@ -116,16 +123,11 @@ public class GdlParser {
 				}
 				break;
 			default:
-				newNode = new ParseNode(token, parent, GdlType.CONSTANT);
-				if (parent.getType() == GdlType.CONSTANT) {
-					parent.type = GdlType.FUNCTION;
-				}
-
-				if (newNode.getAtom().charAt(0) == '?') {
-					newNode.type = GdlType.VARIABLE;
+				if (token.charAt(0) == '?') {
 					scopedVariable = true;
-					newNode.atom = newNode.getAtom() + "___" + scopeNumber;
+					token = token + "___" + scopeNumber;
 				}
+				newNode = new GdlTerm(token, parent);
 				parent.getChildren().add(newNode);
 				if (openBracket) {
 					parent = newNode;
@@ -135,5 +137,17 @@ public class GdlParser {
 			}
 		}
 		return root;
+	}
+
+	public static GdlNode parseFile(String filePath) throws IOException, URISyntaxException {
+		return expandParseTree(gdlTokenizer(new FileReader(new File(filePath))));
+	}
+
+	/**
+	 * Overloaded method which doesn't require casting to Reader for common use
+	 * cases
+	 */
+	public static GdlNode parseString(String gdl) throws IOException {
+		return expandParseTree(gdlTokenizer(new StringReader(gdl)));
 	}
 }
