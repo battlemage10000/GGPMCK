@@ -430,10 +430,10 @@ public class MckTranslator {
 	public enum GdlType {
 		ROOT, CLAUSE, RELATION, FUNCTION, CONSTANT, VARIABLE
 	}
-	
+
 	/**
-	 * Inner class that represents one node in the parse tree where the getChildren()
-	 * for a formula are a list of parameters
+	 * Inner class that represents one node in the parse tree where the
+	 * getChildren() for a formula are a list of parameters
 	 */
 	public static class ParseNode implements GdlNode, LparseNode {
 		GdlType type;
@@ -446,11 +446,6 @@ public class MckTranslator {
 			this.children = new ArrayList<GdlNode>();
 		}
 
-		ParseNode(String atom, GdlNode parent) {
-			this(atom, parent, GdlType.ROOT);
-			this.children = new ArrayList<GdlNode>();
-		}
-
 		ParseNode(String atom, GdlNode parent, GdlType type) {
 			this.atom = atom;
 			this.parent = parent;
@@ -458,49 +453,52 @@ public class MckTranslator {
 			this.type = type;
 		}
 
+		@Override
 		public GdlType getType() {
 			return type;
 		}
-		
+
 		@Override
 		public String getAtom() {
 			return atom;
 		}
-		
 
+		@Override
 		public GdlNode getParent() {
 			return parent;
 		}
 
+		@Override
 		public ArrayList<GdlNode> getChildren() {
 			return children;
 		}
 
+		@Override
 		public String toLparse() {
 			StringBuilder lparse = new StringBuilder();
 
 			switch (getType()) {
 			case ROOT:
 				for (GdlNode clause : getChildren()) {
-					lparse.append(((LparseNode)clause).toLparse());
+					lparse.append(((LparseNode) clause).toLparse());
 					if (clause.getType() == GdlType.CLAUSE) {
 						if (clause.getChildren().get(0).getAtom().equals(GDL_INIT)
 								|| clause.getChildren().get(0).getAtom().equals(GDL_NEXT)
 								|| clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)) {
-							lparse.append(((LparseNode)clause).toLparseWithBaseInput());
+							lparse.append(((LparseNode) clause).toLparseWithBaseInput());
 						}
 					}
 				}
 				break;
 			case CLAUSE:
-				lparse.append(((LparseNode)getChildren().get(0)).toLparse());// head
+				lparse.append(((LparseNode) getChildren().get(0)).toLparse());// head
 				if (getChildren().size() > 1) {
 					lparse.append(" :- ");
 					for (int i = 1; i < getChildren().size() - 1; i++) {
-						lparse.append(((LparseNode)getChildren().get(i)).toLparse());
+						lparse.append(((LparseNode) getChildren().get(i)).toLparse());
 						lparse.append(", ");
 					}
-					lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparse());
+					lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparse());
 				}
 				lparse.append(".\n");
 				break;
@@ -512,10 +510,10 @@ public class MckTranslator {
 				}
 				// Parameters
 				for (int i = 0; i < getChildren().size() - 1; i++) {
-					lparse.append(((LparseNode)getChildren().get(i)).toLparse());
+					lparse.append(((LparseNode) getChildren().get(i)).toLparse());
 					lparse.append(", ");
 				}
-				lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparse());
+				lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparse());
 				lparse.append(")");
 
 				// Facts
@@ -540,19 +538,20 @@ public class MckTranslator {
 		 * 
 		 * @return String lparse of the sub-tree rooted at node
 		 */
+		@Override
 		public String toLparseWithBaseInput() {
 			StringBuilder lparse = new StringBuilder();
 
 			switch (getType()) {
 			case CLAUSE:
-				lparse.append(((LparseNode)getChildren().get(0)).toLparseWithBaseInput());// head
+				lparse.append(((LparseNode) getChildren().get(0)).toLparseWithBaseInput());// head
 				if (getChildren().size() > 1) {
 					lparse.append(" :- ");
 					for (int i = 1; i < getChildren().size() - 1; i++) {
-						lparse.append(((LparseNode)getChildren().get(i)).toLparseWithBaseInput());
+						lparse.append(((LparseNode) getChildren().get(i)).toLparseWithBaseInput());
 						lparse.append(", ");
 					}
-					lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
+					lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
 				}
 				lparse.append(".\n");
 				break;
@@ -569,10 +568,10 @@ public class MckTranslator {
 				}
 				// Parameters
 				for (int i = 0; i < getChildren().size() - 1; i++) {
-					lparse.append(((LparseNode)getChildren().get(i)).toLparseWithBaseInput());
+					lparse.append(((LparseNode) getChildren().get(i)).toLparseWithBaseInput());
 					lparse.append(", ");
 				}
-				lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
+				lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
 				lparse.append(")");
 
 				// Facts
@@ -586,6 +585,7 @@ public class MckTranslator {
 			return lparse.toString();
 		}
 
+		@Override
 		public Iterator<GdlNode> iterator() {
 			Queue<GdlNode> iterator = new LinkedList<GdlNode>();
 
@@ -617,9 +617,9 @@ public class MckTranslator {
 
 			return sb.toString();
 		}
-	
-		@Override 
-		public int hashCode(){
+
+		@Override
+		public int hashCode() {
 			return atom.hashCode();
 		}
 	}
