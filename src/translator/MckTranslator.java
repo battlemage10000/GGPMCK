@@ -408,6 +408,24 @@ public class MckTranslator {
 		printParseTreeTypes(root, ">", " -");
 	}
 
+	public static void prettyPrint(GdlNode root) {
+		for (GdlNode clause : root.getChildren()) {
+			if (clause.getType() == GdlType.CLAUSE) {
+				for (GdlNode literal : clause.getChildren()) {
+					if (literal == clause.getChildren().get(0)) {
+						System.out.println("(<= " + literal.toString());
+					} else if (literal == clause.getChildren().get(clause.getChildren().size() - 1)) {
+						System.out.println("   " + literal.toString() + ")");
+					} else {
+						System.out.println("   " + literal.toString());
+					}
+				}
+			} else {
+				System.out.println(clause);
+			}
+			System.out.println();
+		}
+	}
 
 	public enum GdlType {
 		ROOT, CLAUSE, RELATION, FUNCTION, CONSTANT, VARIABLE
