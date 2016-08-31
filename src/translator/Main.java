@@ -8,7 +8,7 @@ import java.util.List;
 import translator.grammar.GdlNode;
 import translator.graph.DomainGraph;
 
-public class Main extends MckTranslator{
+public class Main extends MckTranslator {
 	/**
 	 * Can be used from the command line by moving to the build directory and
 	 * using java translator.MckTranslator path/to/game.gdl or java -jar
@@ -131,8 +131,8 @@ public class Main extends MckTranslator{
 				if (parseTreeTypesSwitch) {
 					printParseTreeTypes(root);
 				}
-				
-				if (prettyPrintSwitch){
+
+				if (prettyPrintSwitch) {
 					prettyPrint(root);
 				}
 

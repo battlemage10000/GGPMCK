@@ -75,7 +75,6 @@ public class MckTranslator {
 		return false;
 	}
 
-
 	public static GdlNode groundGdl(GdlNode root, DomainGraph domainGraph) {
 		GdlNode groundedRoot = new ParseNode();
 

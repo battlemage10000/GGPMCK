@@ -19,13 +19,13 @@ public class GdlRule implements GdlNode, LparseNode {
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
 	}
-	
-	public GdlNode getHead(){
+
+	public GdlNode getHead() {
 		return children.get(0);
 	}
-	
-	public ArrayList<GdlNode> getBody(){
-		return (ArrayList<GdlNode>) children.subList(1, children.size()-1);
+
+	public ArrayList<GdlNode> getBody() {
+		return (ArrayList<GdlNode>) children.subList(1, children.size() - 1);
 	}
 
 	@Override

@@ -9,18 +9,18 @@ import translator.LparseNode;
 import translator.MckTranslator;
 import translator.MckTranslator.GdlType;
 
-public class GdlTerm implements GdlNode, LparseNode{
-	
+public class GdlTerm implements GdlNode, LparseNode {
+
 	private String atom;
 	private GdlNode parent;
 	private ArrayList<GdlNode> children;
-	
-	public GdlTerm(String atom, GdlNode parent){
+
+	public GdlTerm(String atom, GdlNode parent) {
 		this.atom = atom;
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
 	}
-	
+
 	@Override
 	public String getAtom() {
 		return atom;
@@ -52,15 +52,15 @@ public class GdlTerm implements GdlNode, LparseNode{
 
 	@Override
 	public GdlType getType() {
-		if(atom.charAt(0) == '?'){
+		if (atom.charAt(0) == '?') {
 			return GdlType.VARIABLE;
-		}else if(children.isEmpty()){
+		} else if (children.isEmpty()) {
 			return GdlType.CONSTANT;
-		}else{
+		} else {
 			return GdlType.FUNCTION;
 		}
 	}
-	
+
 	public String toLparse() {
 		StringBuilder lparse = new StringBuilder();
 
@@ -73,10 +73,10 @@ public class GdlTerm implements GdlNode, LparseNode{
 			}
 			// Parameters
 			for (int i = 0; i < getChildren().size() - 1; i++) {
-				lparse.append(((LparseNode)getChildren().get(i)).toLparse());
+				lparse.append(((LparseNode) getChildren().get(i)).toLparse());
 				lparse.append(", ");
 			}
-			lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparse());
+			lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparse());
 			lparse.append(")");
 
 			// Facts
@@ -96,8 +96,8 @@ public class GdlTerm implements GdlNode, LparseNode{
 	}
 
 	/**
-	 * Recursive method for generating lparse formatted representation of
-	 * parse tree
+	 * Recursive method for generating lparse formatted representation of parse
+	 * tree
 	 * 
 	 * @return String lparse of the sub-tree rooted at node
 	 */
@@ -110,7 +110,8 @@ public class GdlTerm implements GdlNode, LparseNode{
 			// base and inputs
 			if (getAtom().equals(MckTranslator.GDL_DOES) || getAtom().equals(MckTranslator.GDL_LEGAL)) {
 				lparse.append("input(");
-			} else if (getAtom().equals(MckTranslator.GDL_INIT) || getAtom().equals(MckTranslator.GDL_TRUE) || getAtom().equals(MckTranslator.GDL_NEXT)) {
+			} else if (getAtom().equals(MckTranslator.GDL_INIT) || getAtom().equals(MckTranslator.GDL_TRUE)
+					|| getAtom().equals(MckTranslator.GDL_NEXT)) {
 				lparse.append("base(");
 			} else if (getAtom().equals("not")) {
 				lparse.append("t1(");
@@ -122,7 +123,7 @@ public class GdlTerm implements GdlNode, LparseNode{
 				lparse.append(((LparseNode) getChildren().get(i)).toLparseWithBaseInput());
 				lparse.append(", ");
 			}
-			lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
+			lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
 			lparse.append(")");
 
 			// Facts
@@ -135,7 +136,6 @@ public class GdlTerm implements GdlNode, LparseNode{
 		}
 		return lparse.toString();
 	}
-
 
 	@Override
 	public String toString() {
@@ -155,9 +155,9 @@ public class GdlTerm implements GdlNode, LparseNode{
 
 		return sb.toString();
 	}
-	
+
 	@Override
-	public int hashCode(){
+	public int hashCode() {
 		return atom.hashCode();
 	}
 }

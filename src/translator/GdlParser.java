@@ -58,13 +58,13 @@ public class GdlParser {
 			case NEW_LINE:
 			case RETURN:
 				// new line (ends comments)
-				if(comment){
+				if (comment) {
 					sb = new StringBuilder();
 				}
 				comment = false;
 				break;
 			case SEMICOLON:
-				// comment
+				// start of comment
 				comment = true;
 				break;
 			default:
@@ -73,7 +73,7 @@ public class GdlParser {
 				break;
 			}
 		}
-		
+
 		file.close();
 		return tokens;
 	}
