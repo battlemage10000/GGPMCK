@@ -12,11 +12,12 @@ import java.util.List;
 import translator.MckTranslator.GdlType;
 import translator.MckTranslator.ParseNode;
 import translator.grammar.GdlNode;
+import translator.grammar.GdlRule;
 import translator.grammar.GdlTerm;
 
 public class GdlParser {
 
-	public final static char SEMI = ';';
+	public final static char SEMICOLON = ';';
 	public final static char OPEN_P = '(';
 	public final static char CLOSE_P = ')';
 	public final static char SPACE = ' ';
@@ -60,7 +61,7 @@ public class GdlParser {
 				comment = false;
 				sb = new StringBuilder();
 				break;
-			case SEMI:
+			case SEMICOLON:
 				// comment
 				comment = true;
 				sb.append((char) character);
@@ -71,7 +72,8 @@ public class GdlParser {
 				break;
 			}
 		}
-
+		
+		file.close();
 		return tokens;
 	}
 
@@ -80,7 +82,9 @@ public class GdlParser {
 	 * cases
 	 */
 	public static List<String> tokenizeFile(String filePath) throws IOException, URISyntaxException {
-		return gdlTokenizer(new FileReader(new File(filePath)));
+		try (FileReader fr = new FileReader(new File(filePath))) {
+			return gdlTokenizer(fr);
+		}
 	}
 
 	/**
@@ -115,7 +119,7 @@ public class GdlParser {
 				}
 				break;
 			case MckTranslator.GDL_CLAUSE:
-				GdlNode newNode = new ParseNode(token, parent, GdlType.CLAUSE);
+				GdlNode newNode = new GdlRule(parent);
 				parent.getChildren().add(newNode);
 				if (openBracket) {
 					parent = newNode;
@@ -125,7 +129,7 @@ public class GdlParser {
 			default:
 				if (token.charAt(0) == '?') {
 					scopedVariable = true;
-					token = token + "___" + scopeNumber;
+					token = "?" + scopeNumber + "_" + token;
 				}
 				newNode = new GdlTerm(token, parent);
 				parent.getChildren().add(newNode);
@@ -140,7 +144,7 @@ public class GdlParser {
 	}
 
 	public static GdlNode parseFile(String filePath) throws IOException, URISyntaxException {
-		return expandParseTree(gdlTokenizer(new FileReader(new File(filePath))));
+		return expandParseTree(tokenizeFile(filePath));
 	}
 
 	/**
@@ -148,6 +152,6 @@ public class GdlParser {
 	 * cases
 	 */
 	public static GdlNode parseString(String gdl) throws IOException {
-		return expandParseTree(gdlTokenizer(new StringReader(gdl)));
+		return expandParseTree(tokenizeString(gdl));
 	}
 }
