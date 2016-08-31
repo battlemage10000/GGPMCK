@@ -21,26 +21,26 @@ public class MckTranslator {
 	public static final String GDL_CLAUSE = "<=";
 	public static final String GDL_NOT = "not";
 
-	/* 
+	/**
 	 * Follows the domain graph definition in the ggp book
 	 */
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
-		
+
 		Queue<GdlNode> queue = new LinkedList<GdlNode>();
 		queue.addAll(root.getChildren());
-		
+
 		while (!queue.isEmpty()) {
 			GdlNode node = queue.remove();
-			if (node.getType() == GdlType.FUNCTION && !node.getAtom().equals(GDL_NOT)){
+			if (node.getType() == GdlType.FUNCTION && !node.getAtom().equals(GDL_NOT)) {
 				graph.addFunction(node.getAtom(), node.getChildren().size());
-				
+
 				for (int i = 0; i < node.getChildren().size(); i++) {
 					GdlNode childNode = node.getChildren().get(i);
 					if (childNode.getType() == GdlType.CONSTANT) {
 						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), 0, false);
-					} else if(childNode.getType() == GdlType.FUNCTION){
+					} else if (childNode.getType() == GdlType.FUNCTION) {
 						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), childNode.getChildren().size(), true);
 					} else {
 						if (variableMap.containsKey(childNode.getAtom())) {
@@ -54,10 +54,10 @@ public class MckTranslator {
 			}
 			queue.addAll(node.getChildren());
 		}
-		
-		graph.addEdge("base",1,"true",1);
-		graph.addEdge("input",1,"does",1);
-		graph.addEdge("input",2,"does",2);
+
+		graph.addEdge("base", 1, "true", 1);
+		graph.addEdge("input", 1, "does", 1);
+		graph.addEdge("input", 2, "does", 2);
 		return graph;
 	}
 
@@ -75,35 +75,27 @@ public class MckTranslator {
 		return false;
 	}
 
+
 	public static GdlNode groundGdl(GdlNode root, DomainGraph domainGraph) {
 		GdlNode groundedRoot = new ParseNode();
 
-		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = domainGraph.getDomainMap();
-		Map<String, List<String>> domainGraphString = new HashMap<String, List<String>>();
-		for (DomainGraph.Term term : domainMap.keySet()) {
-			String atom = term.getTerm();
-			List<String> domain = new ArrayList<String>();
-			for (DomainGraph.Term dependency : domainMap.get(term)) {
-				domain.add(dependency.getTerm());
-			}
-			domainGraphString.put(atom, domain);
-		}
-
 		for (GdlNode clause : root.getChildren()) {
-			if (!isVariableInTree(clause)) {
+			if (!isVariableInTree(clause)) { // No variables is already ground
 				groundedRoot.getChildren().add(clause);
 			} else {
-				String groundedClauseString = groundClause(clause, domainMap);
-				List<String> groundedClauseTokens = null;
+				String groundedClauseString = groundClause(clause, domainGraph.getDomainMap());
+
+				GdlNode clauseTree = new ParseNode(); // Default root node if
+														// parseString throws
+														// error
 				try {
-					groundedClauseTokens = GdlParser.tokenizeString(groundedClauseString);
+					clauseTree = GdlParser.parseString(groundedClauseString);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 
-				GdlNode clauseTree = GdlParser.expandParseTree(groundedClauseTokens);
 				if (!clauseTree.getChildren().isEmpty()) {
-					groundedRoot.getChildren().add(clauseTree.getChildren().get(0));
+					groundedRoot.getChildren().addAll(clauseTree.getChildren());
 				}
 			}
 		}
@@ -119,13 +111,12 @@ public class MckTranslator {
 					constantMap.put(node.getAtom(), new ArrayList<String>());
 				}
 
-				DomainGraph.Term varTerm = new DomainGraph.Term(
-						node.getParent().getAtom(),
-						node.getParent().getChildren().indexOf(node)+1);
-				
+				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
+						node.getParent().getChildren().indexOf(node) + 1);
+
 				if (domainMap.containsKey(varTerm)) {
 					for (DomainGraph.Term term : domainMap.get(varTerm)) {
-						if(!constantMap.get(node.getAtom()).contains(term.getTerm())){
+						if (!constantMap.get(node.getAtom()).contains(term.getTerm())) {
 							constantMap.get(node.getAtom()).add(term.getTerm());
 						}
 					}
@@ -140,26 +131,35 @@ public class MckTranslator {
 	 * @return string with grounded clause which can be expanded into parse tree
 	 *         of clause
 	 */
-	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap){
-		if(constantMap.keySet().isEmpty()){
-			return gdlClause;
+	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap) {
+
+		Queue<String> subClauses = new LinkedList<String>();
+		Queue<String> subClausesAlt = new LinkedList<String>();
+		subClausesAlt.add(gdlClause);
+		for (String variable : constantMap.keySet()) {
+			subClauses = subClausesAlt;
+			subClausesAlt = new LinkedList<String>();
+
+			List<String> domain = constantMap.get(variable);
+
+			while (!subClauses.isEmpty()) {
+				String subClause = subClauses.remove();
+				for (String term : domain) {
+
+					subClausesAlt.add(subClause.replace(variable, term));
+
+				}
+			}
 		}
-		
-		StringBuilder groundedClause = new StringBuilder();
-		Map<String, List<String>> childMap = constantMap;
-		String variable = childMap.keySet().iterator().next();
-		List<String> domain = childMap.remove(variable);
-		
-		for(String term : domain){
-			String subClause = gdlClause.replace(variable, term);
-			groundedClause.append(groundClause(subClause, childMap));
+
+		StringBuilder groundedClauses = new StringBuilder();
+		for (String subClause : subClausesAlt) {
+			groundedClauses.append(subClause);
 		}
-		
-		return groundedClause.toString();
+
+		return groundedClauses.toString();
 	}
 
-	
-	
 	public static List<String> findBoolVarsForMck(GdlNode root) {
 		ArrayList<String> boolVars = new ArrayList<String>();
 
@@ -195,7 +195,7 @@ public class MckTranslator {
 
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GDL_LEGAL)) {
-				GdlNode legal = (GdlNode) clause.getChildren().get(0);
+				GdlNode legal = clause.getChildren().get(0);
 				String role = legal.getChildren().get(0).toString();
 				String move = legal.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
 
@@ -212,8 +212,8 @@ public class MckTranslator {
 	}
 
 	/**
-	 * TODO: takes a parse tree and returns MCK equivalent 
-	 * TODO: rewrite to follow steps in mck paper
+	 * TODO: takes a parse tree and returns MCK equivalent TODO: rewrite to
+	 * follow steps in mck paper
 	 */
 	public static String toMck(GdlNode root) {
 
@@ -345,7 +345,7 @@ public class MckTranslator {
 		lparse.append("{true(V1):base(V1)}.\n");
 		lparse.append("1={does(V2, V3):input(V2, V3)} :- role(V2).\n");
 
-		lparse.append(((ParseNode)root).toLparse());
+		lparse.append(((ParseNode) root).toLparse());
 
 		return lparse.toString();
 	}
