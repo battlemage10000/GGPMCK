@@ -26,6 +26,7 @@ public class Main extends MckTranslator{
 		boolean outputMckSwitch = false;
 		boolean outputLparseSwitch = false;
 		boolean outputDotSwitch = false;
+		boolean prettyPrintSwitch = false;
 		boolean parseTreeSwitch = false;
 		boolean parseTreeTypesSwitch = false;
 
@@ -65,6 +66,9 @@ public class Main extends MckTranslator{
 			case "--to-dot":
 				outputDotSwitch = true;
 				break;
+			case "--pretty":
+				prettyPrintSwitch = true;
+				break;
 			case "--parse-tree":
 				parseTreeSwitch = true;
 				break;
@@ -93,6 +97,7 @@ public class Main extends MckTranslator{
 			System.out.println("  --to-mck      output file is in mck format (default)");
 			System.out.println("  --to-lparse   output file is in lparse format");
 			System.out.println("  --to-dot      output dependency graph in dot format. Use with --ground");
+			System.out.println("  --pretty      formatted gdl. Use with --ground");
 			System.out.println("  -g --ground   use internal grounder");
 			System.out.println("  -d --debug    manually select outputs in debug mode");
 			System.out.println("  --parse-tree  print parse tree for debug");
@@ -125,6 +130,10 @@ public class Main extends MckTranslator{
 				// Print parse tree types for debugging
 				if (parseTreeTypesSwitch) {
 					printParseTreeTypes(root);
+				}
+				
+				if (prettyPrintSwitch){
+					prettyPrint(root);
 				}
 
 				String translation;
