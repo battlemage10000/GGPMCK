@@ -26,7 +26,7 @@ public class DependencyGraphTest {
 		assertThat(domainGraph.getNeighbours("something", 2).size(), is(0));
 		
 		assertThat(domainGraph.getDomain("stuff", 3).size(), is(2));
-		assertThat(domainGraph.getDomain("thing", 1).size(), is(2));
+		assertThat(domainGraph.getDomain("thing", 1).size(), is(3));
 		
 		assertThat(domainGraph.hasTerm("function", 0), is(true));
 		assertThat(domainGraph.hasTerm("function", 1), is(true));
