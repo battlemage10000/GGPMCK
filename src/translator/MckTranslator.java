@@ -19,9 +19,11 @@ public class MckTranslator {
 	public static final String GDL_NEXT = "next";
 	public static final String GDL_SEES = "sees";
 	public static final String GDL_CLAUSE = "<=";
+	public static final String GDL_NOT = "not";
 
-	// TODO: Issue with variables not linking properly
-	// Follows the domain graph def in the ggp book
+	/* 
+	 * Follows the domain graph definition in the ggp book
+	 */
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
@@ -31,7 +33,7 @@ public class MckTranslator {
 		
 		while (!queue.isEmpty()) {
 			GdlNode node = queue.remove();
-			if (node.getType() == GdlType.FUNCTION){
+			if (node.getType() == GdlType.FUNCTION && !node.getAtom().equals(GDL_NOT)){
 				graph.addFunction(node.getAtom(), node.getChildren().size());
 				
 				for (int i = 0; i < node.getChildren().size(); i++) {
@@ -156,6 +158,8 @@ public class MckTranslator {
 		return groundedClause.toString();
 	}
 
+	
+	
 	public static List<String> findBoolVarsForMck(GdlNode root) {
 		ArrayList<String> boolVars = new ArrayList<String>();
 
