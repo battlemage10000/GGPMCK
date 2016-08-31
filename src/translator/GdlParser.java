@@ -58,13 +58,14 @@ public class GdlParser {
 			case NEW_LINE:
 			case RETURN:
 				// new line (ends comments)
+				if(comment){
+					sb = new StringBuilder();
+				}
 				comment = false;
-				sb = new StringBuilder();
 				break;
 			case SEMICOLON:
 				// comment
 				comment = true;
-				sb.append((char) character);
 				break;
 			default:
 				// all other characters, usually part of atoms
