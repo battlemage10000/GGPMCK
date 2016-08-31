@@ -65,30 +65,6 @@ public class GdlTerm implements GdlNode, LparseNode{
 		StringBuilder lparse = new StringBuilder();
 
 		switch (getType()) {
-		case ROOT:
-			for (GdlNode clause : getChildren()) {
-				lparse.append(((LparseNode)clause).toLparse());
-				if (clause.getType() == GdlType.CLAUSE) {
-					if (clause.getChildren().get(0).getAtom().equals(MckTranslator.GDL_INIT)
-							|| clause.getChildren().get(0).getAtom().equals(MckTranslator.GDL_NEXT)
-							|| clause.getChildren().get(0).getAtom().equals(MckTranslator.GDL_LEGAL)) {
-						lparse.append(((LparseNode)clause).toLparseWithBaseInput());
-					}
-				}
-			}
-			break;
-		case CLAUSE:
-			lparse.append(((LparseNode)getChildren().get(0)).toLparse());// head
-			if (getChildren().size() > 1) {
-				lparse.append(" :- ");
-				for (int i = 1; i < getChildren().size() - 1; i++) {
-					lparse.append(((LparseNode)getChildren().get(i)).toLparse());
-					lparse.append(", ");
-				}
-				lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparse());
-			}
-			lparse.append(".\n");
-			break;
 		case FUNCTION:
 			if (getAtom().equals("not")) {
 				lparse.append("t1(");
@@ -130,18 +106,6 @@ public class GdlTerm implements GdlNode, LparseNode{
 		StringBuilder lparse = new StringBuilder();
 
 		switch (getType()) {
-		case CLAUSE:
-			lparse.append(((LparseNode)getChildren().get(0)).toLparseWithBaseInput());// head
-			if (getChildren().size() > 1) {
-				lparse.append(" :- ");
-				for (int i = 1; i < getChildren().size() - 1; i++) {
-					lparse.append(((LparseNode)getChildren().get(i)).toLparseWithBaseInput());
-					lparse.append(", ");
-				}
-				lparse.append(((LparseNode)getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
-			}
-			lparse.append(".\n");
-			break;
 		case FUNCTION:
 			// base and inputs
 			if (getAtom().equals(MckTranslator.GDL_DOES) || getAtom().equals(MckTranslator.GDL_LEGAL)) {
