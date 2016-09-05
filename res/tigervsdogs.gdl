@@ -1,0 +1,343 @@
+;; Surrounding the Tiger (or Tiger and Dogs) Game
+;; 16 dog and 1 tiger in a 5x5 board. 
+;; Dogs aim to surround the tiger completely and the tiger aims to kill 6 dogs. 
+;; Ji Ruan, October 2012
+
+;; Roles
+
+(role tiger)
+(role dog)
+
+;; Initial Situation
+
+(init (cell 3 c tiger))
+
+(init (cell 1 a dog))
+(init (cell 2 a dog))
+(init (cell 3 a dog))
+(init (cell 4 a dog))
+(init (cell 5 a dog))
+(init (cell 1 e dog))
+(init (cell 2 e dog))
+(init (cell 3 e dog))
+(init (cell 4 e dog))
+(init (cell 5 e dog))
+(init (cell 1 b dog))
+(init (cell 1 c dog))
+(init (cell 1 d dog))
+(init (cell 5 b dog))
+(init (cell 5 c dog))
+(init (cell 5 d dog))
+
+(init (cell 2 b blank))
+(init (cell 2 c blank))
+(init (cell 2 d blank))
+(init (cell 3 b blank))
+(init (cell 3 d blank))
+(init (cell 4 b blank))
+(init (cell 4 c blank))
+(init (cell 4 d blank))
+
+(init (control tiger))
+(init (dogkilled 0))
+(init (round 0))
+
+;; Legal moves
+
+(<= (legal tiger (move ?m ?n))
+	(true (cell ?m ?n blank))
+	(true (cell ?x ?y tiger))
+	(links ?x ?y ?m ?n)
+	(true (control tiger)))
+(<= (legal tiger noop) 
+	(true (control dog)))
+
+(<= (legal dog (move ?x ?y ?m ?n)) 
+	(true (cell ?m ?n blank)) 
+	(true (cell ?x ?y dog))
+	(links ?x ?y ?m ?n)
+	(true (control dog)))
+(<= (legal dog noop)
+	(true (control tiger)))
+
+(<= (next (round ?y))
+	(true (round ?x))
+	(succd ?x ?y))
+(<= (next (control tiger))
+	(true (control dog))) 
+(<= (next (control dog))
+	(true (control tiger)))
+
+;; Tiger Moves
+
+;;Killing position 1, the tiger enters to the centre of a shoreline with two dogs. 
+;;two dogs are killed together
+
+(<= (killdogs ?x1 ?y1 ?x3 ?y3)
+	(shortline ?x1 ?y1 ?x2 ?y2 ?x3 ?y3)
+	(true (cell ?x1 ?y1 dog))
+	(true (cell ?x3 ?y3 dog))
+	(does tiger (move ?x2 ?y2)))
+
+(<= (killdog ?x1 ?y1)
+	(killdogs ?x1 ?y1 ?x2 ?y2))
+(<= (killdog ?x2 ?y2)
+	(killdogs ?x1 ?y1 ?x2 ?y2))
+
+;;Killing position 2, the tiger enters the centre of a longline with two dogs beside. 
+
+(<= (killdogs ?x2 ?y2 ?x4 ?y4)
+	(longline ?x1 ?y1 ?x2 ?y2 ?x3 ?y3 ?x4 ?y4 ?x5 ?y5)
+	(true (cell ?x2 ?y2 dog))
+	(true (cell ?x4 ?y4 dog))
+	(true (cell ?x1 ?y1 blank))
+	(true (cell ?x3 ?y3 blank))
+	(true (cell ?x5 ?y5 blank))
+	(does tiger (move ?x3 ?y3)))
+
+;;Killing position 3, the tiger enters the 2ed place of a longline with two dogs beside and no dogs at 4th place. 
+
+(<= (killdogs ?x1 ?y1 ?x3 ?y3)
+	(longline ?x1 ?y1 ?x2 ?y2 ?x3 ?y3 ?x4 ?y4 ?x5 ?y5)
+	(true (cell ?x1 ?y1 dog))
+	(true (cell ?x3 ?y3 dog))
+	(true (cell ?x2 ?y2 blank))
+	(true (cell ?x4 ?y4 blank))
+	(does tiger (move ?x2 ?y2)))
+
+;;Killing position 4, the tiger enters the 4th place of a longline with two dogs beside and no dogs at 2th place. 
+
+(<= (killdogs ?x3 ?y3 ?x5 ?y5)
+	(longline ?x1 ?y1 ?x2 ?y2 ?x3 ?y3 ?x4 ?y4 ?x5 ?y5)
+	(true (cell ?x3 ?y3 dog))
+	(true (cell ?x5 ?y5 dog))
+	(true (cell ?x2 ?y2 blank))
+	(true (cell ?x4 ?y4 blank))
+	(does tiger (move ?x4 ?y4)))
+
+;; update the dogkilled counter
+
+(<= (next (dogkilled ?y))
+	(killdogs ?x1 ?y1 ?x2 ?y2)
+	(true (dogkilled ?x))
+	(succ2 ?x ?y))
+
+(<= (next (dogkilled ?y))
+	(killdogs ?x1 ?y1 ?x2 ?y2)
+	(killdogs ?x3 ?y3 ?x4 ?y4)
+	(or (distinct ?x1 ?x3) (distinct ?y1 ?y3))
+	(true (dogkilled ?x))
+	(succ4 ?x ?y))
+
+(<= (next (dogkilled ?y))
+	(killdogs ?x1 ?y1 ?x2 ?y2)
+	(killdogs ?x3 ?y3 ?x4 ?y4)
+	(killdogs ?x5 ?y5 ?x6 ?y6)
+	(or (distinct ?x1 ?x3) (distinct ?y1 ?y3))
+	(or (distinct ?x1 ?x5) (distinct ?y1 ?y5))
+	(or (distinct ?x3 ?x5) (distinct ?y3 ?y5))
+	(true (dogkilled ?x))
+	(succ6 ?x ?y))
+
+(<= (next (dogkilled ?x))
+	(true (dogkilled ?x)))
+
+;;If a dog is killed then its position will be blank.
+(<= (next (cell ?x ?y blank))
+	(killdog ?x ?y))
+
+;;Tiger moved to the new position.
+(<= (next (cell ?x ?y tiger))
+	(does tiger (move ?x ?y)))
+
+;;The old position of tiger will become blank.
+(<= (next (cell ?x ?y blank))
+	(true (cell ?x ?y tiger))
+ 	(true (control tiger)))
+
+;;If a dog is not killed, then its position will remain the same.
+(<= (next (cell ?x ?y dog))
+	(true (cell ?x ?y dog))
+	(not (killdog ?x ?y))
+	(true (control tiger)))
+
+;;If a position is blank and it is not where the tiger will move to then it will remain blank. 
+(<= (next (cell ?x ?y blank))
+	(true (cell ?x ?y blank))
+	(does tiger (move ?m ?n))
+	(or (distinct ?x  ?m) (distinct ?y  ?n)))
+
+
+;; Dog moves
+
+(<= (next (cell ?x ?y blank))
+	(does dog (move ?x ?y ?m ?n)))
+
+(<= (next (cell ?m ?n dog))
+	(does dog (move ?x ?y ?m ?n)))
+
+(<= (next (cell ?x ?y dog))
+	(true (cell ?x ?y dog))
+	(does dog (move ?x1 ?y1 ?m ?n))
+	(or (distinct ?x  ?x1) (distinct ?y  ?y1)))
+
+(<= (next (cell ?x ?y blank))
+	(true (cell ?x ?y blank))
+	(does dog (move ?x1 ?y1 ?m ?n))
+	(or (distinct ?x  ?m) (distinct ?y  ?n)))
+
+( <= (next (cell ?x ?y tiger))
+	(true (cell ?x ?y tiger))
+	(true (control dog)))
+
+
+;;  Terminal and Goal
+;; Tiger wins if it kills at least 6 dogs. Dog wins if Tiger is totally surrounded. 
+;; Due to potential infinite playing, we add a round counter 
+
+( <= tigeralive 
+	(true (cell ?x ?y tiger))
+	(links ?x ?y ?m ?n)
+	(true (cell ?m ?n blank)))
+
+(<= terminal 
+	(true (dogkilled 6)))
+(<= terminal
+	(not tigeralive))
+(<= terminal
+	(true (round 50)))
+	
+(<= (goal tiger 100)
+	(true (dogkilled 6)))
+(<= (goal dog 0)
+	(true (dogkilled 6)))
+(<= (goal dog 100) 
+	(not tigeralive))
+(<= (goal tiger 0) 
+	(not tigeralive))
+
+(<= (goal tiger 50) 
+	tigeralive
+	(not (true (dogkilled 6))))
+(<= (goal dog 50) 
+	tigeralive
+	(not (true (dogkilled 6))))
+
+;; Static features
+
+(<= (link ?x ?y ?m ?y) 
+	(succx ?x ?m)
+	(yaxis ?y))
+
+(<= (link ?x ?y ?x ?n)
+	(succy ?y ?n)
+	(xaxis ?x))
+
+(<= (link ?x ?y ?m ?n)
+	(center ?x ?y)
+	(or (succx ?x ?m) (succx ?m ?x))
+	(or (succy ?y ?n) (succy ?n ?y)) )
+
+(<= (links ?x ?y ?m ?n) 
+	(or (link ?x ?y ?m ?n) (link ?m ?n ?x ?y)))
+
+;; A longline consists of five positions in one line; longline reverses the order of longline. 
+
+(<= (longline 1 ?y 2 ?y 3 ?y 4 ?y 5 ?y) 
+	(yaxis ?y))
+(<= (longline ?x a ?x b ?x c ?x d ?x e) 
+	(xaxis ?x))
+(longline 1 a 2 b 3 c 4 d 5 e)
+(longline 1 e 2 d 3 c 4 b 5 a)
+
+;; A shortline consists of three positions. There are only three cases to be considered. 
+
+(shortline 1 c 2 b 3 a)
+(shortline 1 c 2 d 3 e)
+(shortline 3 a 4 b 5 c)
+(shortline 3 e 4 d 5 c)
+
+
+(xaxis 1)
+(xaxis 2)
+(xaxis 3)
+(xaxis 4)
+(xaxis 5)
+(yaxis a)
+(yaxis b)
+(yaxis c)
+(yaxis d)
+(yaxis e)
+(succx 1 2)
+(succx 2 3)
+(succx 3 4)
+(succx 4 5)
+(succy a b)
+(succy b c)
+(succy c d)
+(succy d e)
+(center 2 b)
+(center 2 d)
+(center 4 b)
+(center 4 d)
+
+(succ2 0 2)
+(succ2 2 4)
+(succ2 4 6)
+(succ4 0 4)
+(succ4 2 6)
+(succ4 4 8)
+(succ6 0 6)
+(succ6 2 8)
+(succ6 4 10)
+
+(succd 0 1)
+(succd 1 2)
+(succd 2 3)
+(succd 3 4)
+(succd 4 5)
+(succd 5 6)
+(succd 6 7)
+(succd 7 8)
+(succd 8 9)
+(succd 9 10)
+(succd 10 11)
+(succd 11 12)
+(succd 12 13)
+(succd 13 14)
+(succd 14 15)
+(succd 15 16)
+(succd 16 17)
+(succd 17 18)
+(succd 18 19)
+(succd 19 20)
+(succd 20 21)
+(succd 21 22)
+(succd 22 23)
+(succd 23 24)
+(succd 24 25)
+(succd 25 26)
+(succd 26 27)
+(succd 27 28)
+(succd 28 29)
+(succd 29 30)
+(succd 30 31)
+(succd 31 32)
+(succd 32 33)
+(succd 33 34)
+(succd 34 35)
+(succd 35 36)
+(succd 36 37)
+(succd 37 38)
+(succd 38 39)
+(succd 39 40)
+(succd 40 41)
+(succd 41 42)
+(succd 42 43)
+(succd 43 44)
+(succd 44 45)
+(succd 45 46)
+(succd 46 47)
+(succd 47 48)
+(succd 48 49)
+(succd 49 50)
