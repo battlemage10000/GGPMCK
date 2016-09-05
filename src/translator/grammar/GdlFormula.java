@@ -54,10 +54,10 @@ public class GdlFormula implements GdlNode, LparseNode {
 	public GdlType getType() {
 		if (atom.charAt(0) == '?') {
 			return GdlType.VARIABLE;
-		//} else if (children.isEmpty()) {
-			//return GdlType.CONSTANT;
+			// } else if (children.isEmpty()) {
+			// return GdlType.CONSTANT;
 		} else {
-			//return GdlType.FUNCTION;
+			// return GdlType.FUNCTION;
 			return GdlType.FORMULA;
 		}
 	}
@@ -67,7 +67,8 @@ public class GdlFormula implements GdlNode, LparseNode {
 
 		switch (getType()) {
 		case FORMULA:
-			if (getAtom().equals("not")) {
+			if(!getChildren().isEmpty()){
+				if (getAtom().equals("not")) {
 				lparse.append("t1(");
 			} else {
 				lparse.append(getAtom() + "(");
@@ -83,6 +84,9 @@ public class GdlFormula implements GdlNode, LparseNode {
 			// Facts
 			if (getParent().getType() == GdlType.ROOT) {
 				lparse.append(".\n");
+			}
+			}else{
+				lparse.append(getAtom());
 			}
 			break;
 		case VARIABLE:
