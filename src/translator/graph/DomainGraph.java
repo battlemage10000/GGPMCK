@@ -135,7 +135,12 @@ public class DomainGraph {
 						+ "]\",color=blue]");
 			} else if (node.getFunctionArity() > 0) {
 				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/"
-						+ node.getFunctionArity() + "\",color=red]");
+						+ node.getFunctionArity() + "\",");
+				if(node.getType() == GdlType.FORMULA){
+					dot.append("color=red]");
+				}else{
+					dot.append("color=orange]");
+				}
 				// Add subgraph that links functor to function parameters
 				dot.append(System.lineSeparator() + "subgraph {");
 				for (int i = 1; i <= node.getFunctionArity(); i++) {
@@ -144,7 +149,12 @@ public class DomainGraph {
 				}
 				dot.append(System.lineSeparator() + "}");
 			} else {
-				dot.append(" [label=\"" + node.getTerm() + "\",color=green]");
+				dot.append(" [label=\"" + node.getTerm() + "\",");
+				if(node.getType() == GdlType.FORMULA){
+					dot.append("color=red]");
+				}else{
+					dot.append("color=green]");
+				}
 			}
 		}
 
