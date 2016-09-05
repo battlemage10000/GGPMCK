@@ -11,6 +11,7 @@ import java.util.List;
 
 import translator.MckTranslator.GdlType;
 import translator.grammar.Gdl;
+import translator.grammar.GdlFormula;
 import translator.grammar.GdlNode;
 import translator.grammar.GdlRule;
 import translator.grammar.GdlTerm;
@@ -131,7 +132,11 @@ public class GdlParser {
 					scopedVariable = true;
 					token = "?" + scopeNumber + "_" + token;
 				}
-				newNode = new GdlTerm(token, parent);
+				if(parent.getType() == GdlType.CLAUSE || parent.getType() == GdlType.ROOT){
+					newNode = new GdlFormula(token, parent);
+				} else {
+					newNode = new GdlTerm(token, parent);
+				}
 				parent.getChildren().add(newNode);
 				if (openBracket) {
 					parent = newNode;

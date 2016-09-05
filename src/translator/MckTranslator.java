@@ -32,24 +32,29 @@ public class MckTranslator {
 		Queue<GdlNode> queue = new LinkedList<GdlNode>();
 		queue.addAll(root.getChildren());
 
-		while (!queue.isEmpty()) {
-			GdlNode node = queue.remove();
-			if (node.getType() == GdlType.FUNCTION && !node.getAtom().equals(GDL_NOT)) {
-				graph.addFunction(node.getAtom(), node.getChildren().size());
+		for (GdlNode node : root) {
+			if ((node.getType() == GdlType.FUNCTION || node.getType() == GdlType.FORMULA)
+					&& !node.getAtom().equals(GDL_NOT)) {
+				if (node.getType() == GdlType.FUNCTION) {
+					graph.addFunction(node.getAtom(), node.getChildren().size());
+				} else if (node.getType() == GdlType.FORMULA) {
+					graph.addFormula(node.getAtom(), node.getChildren().size());
+				} else {
+					continue;
+				}
 
 				for (int i = 0; i < node.getChildren().size(); i++) {
 					GdlNode childNode = node.getChildren().get(i);
-					if (childNode.getType() == GdlType.CONSTANT) {
-						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), 0, false);
-					} else if (childNode.getType() == GdlType.FUNCTION) {
-						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), childNode.getChildren().size(), true);
-					} else {
+					if (childNode.getType() == GdlType.VARIABLE) {
 						if (variableMap.containsKey(childNode.getAtom())) {
 							DomainGraph.Term varLink = variableMap.get(childNode.getAtom());
 							graph.addEdge(varLink.getTerm(), varLink.getArity(), node.getAtom(), i + 1);
 						} else {
 							variableMap.put(childNode.getAtom(), new DomainGraph.Term(node.getAtom(), i + 1));
 						}
+					} else {
+						graph.addEdge(node.getAtom(), i + 1, childNode.getAtom(), childNode.getChildren().size(),
+								childNode.getType());
 					}
 				}
 			}
@@ -72,7 +77,6 @@ public class MckTranslator {
 				return true;
 			}
 		}
-
 		return false;
 	}
 
@@ -145,9 +149,7 @@ public class MckTranslator {
 			while (!subClauses.isEmpty()) {
 				String subClause = subClauses.remove();
 				for (String term : domain) {
-
 					subClausesAlt.add(subClause.replace(variable, term));
-
 				}
 			}
 		}
@@ -160,138 +162,136 @@ public class MckTranslator {
 		return groundedClauses.toString();
 	}
 
-	
 	public static String MCK_INIT = "INIT";
 	public static String MCK_STOP = "STOP";
 	public static String MCK_ROLE_PREFIX = "R_";
 	public static String MCK_MOVE_PREFIX = "M_";
-	
-	public static String formatMckNode(GdlNode node){
+
+	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
-		
+
 		sb.append(node.getAtom());
-		for(GdlNode child : node.getChildren()){
+		for (GdlNode child : node.getChildren()) {
 			sb.append("_" + formatMckNode(child));
 		}
-		
+
 		return sb.toString();
 	}
-	
-	
+
 	public static String toMck(GdlNode root) {
 		ArrayList<String> AT = new ArrayList<String>();
 		ArrayList<String> ATf = new ArrayList<String>();
 		HashMap<String, List<String>> ATd = new HashMap<String, List<String>>();
 		ArrayList<String> ATi = new ArrayList<String>();
-		
-		for(GdlNode node : root){
-			if(node.getType() != GdlType.ROOT && node.getType() != GdlType.CLAUSE){	
-				switch(node.getAtom()){
+
+		for (GdlNode node : root) {
+			if (node.getType() != GdlType.ROOT && node.getType() != GdlType.CLAUSE) {
+				switch (node.getAtom()) {
 				case GDL_NOT:
 				case GDL_LEGAL:
 					break;
 				case GDL_TRUE:
 				case GDL_NEXT:
-					if(!ATf.contains(formatMckNode(node.getChildren().get(0)))){
+					if (!ATf.contains(formatMckNode(node.getChildren().get(0)))) {
 						ATf.add(formatMckNode(node.getChildren().get(0)));
 					}
 					break;
 				case GDL_DOES:
 					String role = formatMckNode(node.getChildren().get(0));
 					String move = formatMckNode(node.getChildren().get(1));
-					if(!ATd.containsKey(role)){
+					if (!ATd.containsKey(role)) {
 						ATd.put(role, new ArrayList<String>());
 					}
-					if(!ATd.get(role).contains(move)){
+					if (!ATd.get(role).contains(move)) {
 						ATd.get(role).add(move);
 					}
 					break;
 				case GDL_INIT:
-					if(!ATi.contains(formatMckNode(node.getChildren().get(0)))){
+					if (!ATi.contains(formatMckNode(node.getChildren().get(0)))) {
 						ATi.add(formatMckNode(node.getChildren().get(0)));
 					}
 					break;
 				default:
-					if(!AT.contains(formatMckNode(node))){
+					if (!AT.contains(formatMckNode(node))) {
 						AT.add(formatMckNode(node));
 					}
 				}
 			}
 		}
-		
+
 		StringBuilder sb = new StringBuilder();
 		sb.append("-- MCK file generated using MckTranslator from a GGP game description");
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
-		
+
 		// Environment Variables
 		sb.append(System.lineSeparator() + "-- Environment Variables");
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator() + "-- AT:");
-		for(String node : AT){
+		for (String node : AT) {
 			sb.append(System.lineSeparator() + node + " : Bool");
 		}
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator() + "-- ATf:");
-		for(String node : ATf){
+		for (String node : ATf) {
 			sb.append(System.lineSeparator() + node + " : Bool");
 			sb.append(System.lineSeparator() + node + "_old : Bool");
 		}
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator() + "-- ATd:");
-		for(String role : ATd.keySet()){
+		for (String role : ATd.keySet()) {
 			sb.append(System.lineSeparator() + "type Act_" + role + "={");
-			for(String move : ATd.get(role)){
+			for (String move : ATd.get(role)) {
 				sb.append(MCK_MOVE_PREFIX + move + ", ");
 			}
-			sb.append(MCK_INIT + ", " + MCK_STOP + "}"); 
+			sb.append(MCK_INIT + ", " + MCK_STOP + "}");
 			sb.append(System.lineSeparator() + "did_" + role + " : Act_" + role);
 		}
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
-		
+
 		// Initial Conditions
 		sb.append(System.lineSeparator() + "-- Initial Conditions");
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator() + "init_cond = ");
-		for(String node : AT){
+		for (String node : AT) {
 			sb.append(System.lineSeparator() + node + " == ");
-			if(ATi.contains(node)){
+			if (ATi.contains(node)) {
 				sb.append("True");
-			}else{
+			} else {
 				sb.append("False");
 			}
 			sb.append(" /\\ ");
 		}
-		for(String role : ATd.keySet()){
+		for (String role : ATd.keySet()) {
 			sb.append(System.lineSeparator() + "did_" + role + " == " + MCK_INIT);
 			sb.append(" /\\ ");
 		}
 		sb.delete(sb.length() - 4, sb.length()); // Remove last conjunction
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
-		
+
 		// Agent Protocols
 		sb.append(System.lineSeparator() + "-- Agent Protocols");
 		sb.append(System.lineSeparator());
-		
-		for(String role : ATd.keySet()){
+
+		for (String role : ATd.keySet()) {
 			sb.append(System.lineSeparator() + "protocol \"" + role + "\" (");
 			sb.append(")");
 			sb.append(System.lineSeparator() + "begin do neg terminal ->");
 			sb.append(System.lineSeparator() + "  if  ");
-			for(String move : ATd.get(role)){
+			for (String move : ATd.get(role)) {
 				sb.append(move + " -> " + MCK_MOVE_PREFIX + move);
 				sb.append(System.lineSeparator() + "  []  ");
 			}
-			sb.delete(sb.length()-7, sb.length());
+			sb.delete(sb.length() - 7, sb.length());
 			sb.append(System.lineSeparator() + "  fi  od");
 			sb.append(System.lineSeparator() + "end");
-			
+
 		}
-		
+
 		sb.append(System.lineSeparator());
-		for(String role : ATd.keySet()){
+		for (String role : ATd.keySet()) {
 			sb.append(System.lineSeparator() + "agent " + MCK_ROLE_PREFIX + role + " \"" + role + "\" (");
 			sb.append(")");
 		}
@@ -301,40 +301,39 @@ public class MckTranslator {
 		// State Transitions
 		sb.append(System.lineSeparator() + "-- State Transitions");
 		sb.append(System.lineSeparator());
-		for(String role : ATd.keySet()){
+		for (String role : ATd.keySet()) {
 			sb.append(System.lineSeparator() + "if  ");
-			for(String move : ATd.get(role)){
-				sb.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + " -> did_" + role + " := " + MCK_MOVE_PREFIX + move);
+			for (String move : ATd.get(role)) {
+				sb.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + " -> did_" + role + " := "
+						+ MCK_MOVE_PREFIX + move);
 				sb.append(System.lineSeparator() + "[]  ");
 			}
 			sb.append("otherwise -> did_" + role + " := " + MCK_STOP);
 			sb.append(System.lineSeparator() + "fi;");
 		}
-		
-		
-		//TODO: Add more to state transition section
+
+		// TODO: Add more to state transition section
 		sb.append(System.lineSeparator());
 		sb.append(System.lineSeparator());
-		
+
 		// Specification
 		sb.append("-- Specification");
 		sb.append(System.lineSeparator());
 		sb.append("spec_spr = AG(");
 		for (String role : ATd.keySet()) {
 			for (String move : ATd.get(role)) {
-				sb.append("(legal_" + role + "_" + move + " => Knows " + MCK_ROLE_PREFIX + role + " legal_" + role + "_" + move + ")");
+				sb.append("(legal_" + role + "_" + move + " => Knows " + MCK_ROLE_PREFIX + role + " legal_" + role + "_"
+						+ move + ")");
 				sb.append(" /\\ ");
 			}
 		}
 		sb.delete(sb.length() - 4, sb.length());
 		sb.append(")");
 		sb.append(System.lineSeparator());
-		
+
 		return sb.toString();
 	}
-	
-	
-	
+
 	public static List<String> findBoolVarsForMck(GdlNode root) {
 		ArrayList<String> boolVars = new ArrayList<String>();
 
@@ -390,7 +389,7 @@ public class MckTranslator {
 	 * TODO: takes a parse tree and returns MCK equivalent TODO: rewrite to
 	 * follow steps in mck paper
 	 */
-	public static String toMckOld(GdlNode root){
+	public static String toMckOld(GdlNode root) {
 		Map<String, List<String>> roleToMoveMap = findMovesForMck(root);
 		List<String> boolVars = findBoolVarsForMck(root);
 
@@ -517,7 +516,7 @@ public class MckTranslator {
 		lparse.append("{true(V1):base(V1)}.\n");
 		lparse.append("1={does(V2, V3):input(V2, V3)} :- role(V2).\n");
 
-		lparse.append(((ParseNode) root).toLparse());
+		lparse.append(((LparseNode) root).toLparse());
 
 		return lparse.toString();
 	}
@@ -555,8 +554,8 @@ public class MckTranslator {
 		case CLAUSE:
 			System.out.println(prefix + "CLAUSE " + root.getAtom());
 			break;
-		case RELATION:
-			System.out.println(prefix + "RELATION " + root.getAtom());
+		case FORMULA:
+			System.out.println(prefix + "FORMULA " + root.getAtom());
 			break;
 		case FUNCTION:
 			System.out.println(prefix + "FUNCTION " + root.getAtom());
@@ -600,7 +599,7 @@ public class MckTranslator {
 	}
 
 	public enum GdlType {
-		ROOT, CLAUSE, RELATION, FUNCTION, CONSTANT, VARIABLE
+		ROOT, CLAUSE, FORMULA, FUNCTION, CONSTANT, VARIABLE
 	}
 
 	/**
@@ -674,6 +673,7 @@ public class MckTranslator {
 				}
 				lparse.append(".\n");
 				break;
+			case FORMULA:
 			case FUNCTION:
 				if (getAtom().equals("not")) {
 					lparse.append("t1(");
@@ -727,6 +727,7 @@ public class MckTranslator {
 				}
 				lparse.append(".\n");
 				break;
+			case FORMULA:
 			case FUNCTION:
 				// base and inputs
 				if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {

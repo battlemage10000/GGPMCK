@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+import translator.MckTranslator.GdlType;
+
 public class DomainGraph {
 	private Map<Term, ArrayList<Term>> adjacencyMap;
 
@@ -64,7 +66,7 @@ public class DomainGraph {
 	}
 
 	public void addFunction(String term, int functionArity) {
-		Term function = new Term(term, functionArity, true);
+		Term function = new Term(term, functionArity, true, GdlType.FUNCTION);
 		if (!adjacencyMap.containsKey(function)) {
 			adjacencyMap.put(function, new ArrayList<Term>());
 		} else {
@@ -78,15 +80,36 @@ public class DomainGraph {
 		}
 	}
 
-	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity, boolean toFunction) {
+	public void addFormula(String term, int formulaArity) {
+		Term formula = new Term(term, formulaArity, true, GdlType.FORMULA);
+		if (!adjacencyMap.containsKey(formula)) {
+			adjacencyMap.put(formula, new ArrayList<Term>());
+		} else {
+			adjacencyMap.put(formula, adjacencyMap.get(formula));
+		}
+		for (int i = 1; i <= formulaArity; i++) {
+			Term parameter = new Term(term, i);
+			if (!adjacencyMap.containsKey(parameter)) {
+				addTerm(term, i);
+			}
+		}
+	}
+
+	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity, GdlType type) {
+		boolean toFunction = false;
+		if (type != GdlType.CONSTANT) {
+			toFunction = true;
+		}
 		Term from = new Term(fromTerm, fromArity);
-		Term to = new Term(toTerm, toArity, toFunction);
+		Term to = new Term(toTerm, toArity, toFunction, type);
 		if (!adjacencyMap.containsKey(from)) {
 			addTerm(fromTerm, fromArity);
 		}
 		if (!adjacencyMap.containsKey(to)) {
-			if (toFunction) {
+			if (type == GdlType.FUNCTION) {
 				addFunction(toTerm, toArity);
+			} else if (type == GdlType.FORMULA) {
+				addFormula(toTerm, toArity);
 			} else {
 				addTerm(toTerm, toArity);
 			}
@@ -97,7 +120,7 @@ public class DomainGraph {
 	}
 
 	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity) {
-		addEdge(fromTerm, fromArity, toTerm, toArity, false);
+		addEdge(fromTerm, fromArity, toTerm, toArity, GdlType.CONSTANT);
 	}
 
 	public String dotEncodedGraph() {
@@ -179,6 +202,7 @@ public class DomainGraph {
 		private int arity;
 		private int functionArity;
 		boolean visited;
+		private GdlType type;
 
 		public Term(String term, int arity) {
 			this.term = term;
@@ -186,17 +210,22 @@ public class DomainGraph {
 			this.functionArity = 0;
 		}
 
-		public Term(String term, int arity, boolean function) {
+		public Term(String term, int arity, boolean function, GdlType type) {
+			this.term = term;
+			this.type = type;
 			if (function) {
-				this.term = term;
 				this.arity = 0;
 				this.functionArity = arity;
 			} else {
-				this.term = term;
 				this.arity = arity;
 				this.functionArity = 0;
 			}
 		}
+
+		/*
+		 * public Term(String term, int arity, boolean function){ this(term,
+		 * arity, function, GdlType.FUNCTION); }
+		 */
 
 		public boolean isConstant() {
 			if (arity == 0 && functionArity == 0) {
@@ -216,6 +245,10 @@ public class DomainGraph {
 
 		public int getFunctionArity() {
 			return functionArity;
+		}
+
+		public GdlType getType() {
+			return type;
 		}
 
 		@Override
