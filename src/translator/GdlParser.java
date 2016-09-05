@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import translator.MckTranslator.GdlType;
-import translator.MckTranslator.ParseNode;
+import translator.grammar.Gdl;
 import translator.grammar.GdlNode;
 import translator.grammar.GdlRule;
 import translator.grammar.GdlTerm;
@@ -100,10 +100,9 @@ public class GdlParser {
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
 	public static GdlNode expandParseTree(List<String> tokens) {
-		GdlNode root = new ParseNode("", null, GdlType.ROOT);
+		GdlNode root = new Gdl();
 
 		GdlNode parent = root;
-		// boolean functionName = false;
 		boolean openBracket = false;
 		boolean scopedVariable = false;
 		int scopeNumber = 1;

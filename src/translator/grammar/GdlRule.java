@@ -13,7 +13,7 @@ public class GdlRule implements GdlNode, LparseNode {
 
 	private final String atom = MckTranslator.GDL_CLAUSE;
 	private GdlNode parent;
-	private ArrayList<GdlNode> children;
+	private final ArrayList<GdlNode> children;
 
 	public GdlRule(GdlNode parent) {
 		this.parent = parent;

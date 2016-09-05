@@ -11,9 +11,9 @@ import translator.MckTranslator.GdlType;
 
 public class GdlTerm implements GdlNode, LparseNode {
 
-	private String atom;
+	private final String atom;
 	private GdlNode parent;
-	private ArrayList<GdlNode> children;
+	private final ArrayList<GdlNode> children;
 
 	public GdlTerm(String atom, GdlNode parent) {
 		this.atom = atom;
