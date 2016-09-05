@@ -149,14 +149,14 @@ public class MckTranslator {
 			while (!subClauses.isEmpty()) {
 				String subClause = subClauses.remove();
 				for (String term : domain) {
-					subClausesAlt.add(subClause.replace(variable, term));
+					String nextTerm = subClause.replace(variable, term);
+					if(nextTerm.contains("?")){
+						subClausesAlt.add(nextTerm);
+					}else{
+						groundedClauses.append(nextTerm);
+					}
 				}
 			}
-		}
-
-		StringBuilder groundedClauses = new StringBuilder();
-		for (String subClause : subClausesAlt) {
-			groundedClauses.append(subClause);
 		}
 
 		return groundedClauses.toString();
