@@ -136,7 +136,8 @@ public class MckTranslator {
 	 *         of clause
 	 */
 	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap) {
-
+		StringBuilder groundedClauses = new StringBuilder();
+		
 		Queue<String> subClauses = new LinkedList<String>();
 		Queue<String> subClausesAlt = new LinkedList<String>();
 		subClausesAlt.add(gdlClause);
@@ -149,14 +150,14 @@ public class MckTranslator {
 			while (!subClauses.isEmpty()) {
 				String subClause = subClauses.remove();
 				for (String term : domain) {
-					subClausesAlt.add(subClause.replace(variable, term));
+					String nextTerm = subClause.replace(variable, term);
+					if(nextTerm.contains("?")){
+						subClausesAlt.add(nextTerm);
+					}else{
+						groundedClauses.append(nextTerm);
+					}
 				}
 			}
-		}
-
-		StringBuilder groundedClauses = new StringBuilder();
-		for (String subClause : subClausesAlt) {
-			groundedClauses.append(subClause);
 		}
 
 		return groundedClauses.toString();
