@@ -136,7 +136,8 @@ public class MckTranslator {
 	 *         of clause
 	 */
 	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap) {
-
+		StringBuilder groundedClauses = new StringBuilder();
+		
 		Queue<String> subClauses = new LinkedList<String>();
 		Queue<String> subClausesAlt = new LinkedList<String>();
 		subClausesAlt.add(gdlClause);
