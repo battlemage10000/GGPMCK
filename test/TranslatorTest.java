@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class MckTranslatorTest {
+public class TranslatorTest {
 	
 	String emptyGdlPath = "test/gdlii/empty.gdl";
 	String testGdlPath = "test/gdlii/testGame.gdl";

@@ -3,10 +3,10 @@ import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 import translator.graph.DomainGraph;
 
-public class DependencyGraphTest {
+public class GraphTest {
 	
 	@Test
-	public void graphTest(){
+	public void domainGraphTest(){
 		DomainGraph domainGraph = new DomainGraph();
 		domainGraph.addTerm("thing", 0);
 		domainGraph.addTerm("thing", 1);
