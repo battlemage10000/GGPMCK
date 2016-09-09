@@ -1,0 +1,119 @@
+(role red)
+
+(role blue)
+
+(init (round 1))
+
+(<= (legal red (choose_hand rock))
+   (role red))
+
+(<= (legal blue (choose_hand rock))
+   (role blue))
+
+(<= (legal red (choose_hand paper))
+   (role red))
+
+(<= (legal blue (choose_hand paper))
+   (role blue))
+
+(<= (legal red (choose_hand scissors))
+   (role red))
+
+(<= (legal blue (choose_hand scissors))
+   (role blue))
+
+(<= (next (round 2))
+   (true (round 1))
+   (true draw))
+
+(<= (next (round 3))
+   (true (round 2))
+   (true draw))
+
+(<= (next draw)
+   (does red (choose_hand rock))
+   (does blue (choose_hand rock)))
+
+(<= (next draw)
+   (does red (choose_hand paper))
+   (does blue (choose_hand paper)))
+
+(<= (next draw)
+   (does red (choose_hand scissors))
+   (does blue (choose_hand scissors)))
+
+(<= (next (win red))
+   (does red (choose_hand rock))
+   (does blue (choose_hand scissors)))
+
+(<= (next (win red))
+   (does red (choose_hand paper))
+   (does blue (choose_hand rock)))
+
+(<= (next (win red))
+   (does red (choose_hand scissors))
+   (does blue (choose_hand paper)))
+
+(<= (next (win blue))
+   (does blue (choose_hand rock))
+   (does red (choose_hand scissors)))
+
+(<= (next (win blue))
+   (does blue (choose_hand paper))
+   (does red (choose_hand rock)))
+
+(<= (next (win blue))
+   (does blue (choose_hand scissors))
+   (does red (choose_hand paper)))
+
+(<= terminal
+   (true (win red)))
+
+(<= terminal
+   (true (win blue)))
+
+(<= terminal
+   (true (round 3)))
+
+(<= (goal red 100)
+   (true (win red)))
+
+(<= (goal blue 100)
+   (true (win blue)))
+
+(<= (goal red 50)
+   (true draw))
+
+(<= (goal blue 50)
+   (true draw))
+
+(<= (goal red 0)
+   (true (win blue)))
+
+(<= (goal blue 0)
+   (true (win red)))
+
+(base (round 1))
+
+(base (round 2))
+
+(base (round 3))
+
+(base (win red))
+
+(base (win blue))
+
+(base draw)
+
+(input red (choose_hand rock))
+
+(input red (choose_hand paper))
+
+(input red (choose_hand scissors))
+
+(input blue (choose_hand rock))
+
+(input blue (choose_hand paper))
+
+(input blue (choose_hand scissors))
+
