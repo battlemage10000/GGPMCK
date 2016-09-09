@@ -2,8 +2,18 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 import translator.graph.DomainGraph;
+import translator.graph.DependencyGraph;
 
 public class GraphTest {
+	
+	@Test
+	public void dependencyGraphTest(){
+		DependencyGraph graph = new DependencyGraph();
+		graph.addEdge("goal", "win");
+		
+		assertThat(graph.getMap().keySet(), hasItems(new DependencyGraph.Term("goal"), new DependencyGraph.Term("win")));
+	
+	}
 	
 	@Test
 	public void domainGraphTest(){

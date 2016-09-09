@@ -96,7 +96,7 @@ public class TranslatorTest {
 		
 		String groundedClauses = MckTranslator.groundClause(GdlParser.expandParseTree(tokens), domainMap);
 		
-		assertThat(groundedClauses, is(" (<= (goal red 100) (true (win red))) (<= (goal blue 100) (true (win blue)))"));
+		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))"+System.lineSeparator()+"(<= (goal blue 100) (true (win blue)))"+System.lineSeparator()));
 	}
 	
 	@Test
@@ -114,7 +114,7 @@ public class TranslatorTest {
 		for(GdlNode node : root){
 			sb.append(node.getAtom() + " ");
 		}
-		assertThat(sb.toString(), is(" <= goal ?player___1 100 true win ?player___1 "));
+		assertThat(sb.toString(), is(" <= goal ?1_?player 100 true win ?1_?player "));
 	}
 	
 	//@Test

@@ -78,7 +78,7 @@ public class Gdl implements GdlNode, LparseNode {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (GdlNode node : getChildren()) {
-			sb.append(System.lineSeparator() + node.toString());
+			sb.append(node.toString() + System.lineSeparator());
 		}
 		return sb.toString();
 	}
