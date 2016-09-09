@@ -127,20 +127,12 @@ public class MckTranslator {
 				}
 			}
 		}
-		return groundClause(clauseNode.toString(), constantMap);
-	}
 
-	/**
-	 * 
-	 * @return string with grounded clause which can be expanded into parse tree
-	 *         of clause
-	 */
-	private static String groundClause(String gdlClause, Map<String, List<String>> constantMap) {
 		StringBuilder groundedClauses = new StringBuilder();
-		
+
 		Queue<String> subClauses = new LinkedList<String>();
 		Queue<String> subClausesAlt = new LinkedList<String>();
-		subClausesAlt.add(gdlClause);
+		subClausesAlt.add(clauseNode.toString());
 		for (String variable : constantMap.keySet()) {
 			subClauses = subClausesAlt;
 			subClausesAlt = new LinkedList<String>();
@@ -151,9 +143,9 @@ public class MckTranslator {
 				String subClause = subClauses.remove();
 				for (String term : domain) {
 					String nextTerm = subClause.replace(variable, term);
-					if(nextTerm.contains("?")){
+					if (nextTerm.contains("?")) {
 						subClausesAlt.add(nextTerm);
-					}else{
+					} else {
 						groundedClauses.append(nextTerm);
 					}
 				}
