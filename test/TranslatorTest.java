@@ -17,8 +17,8 @@ public class TranslatorTest {
 	static final String testGoals = "(<= (goal ?player 100) (true (win ?player))) (<= (goal red 50) (true (draw))) (<= (goal blue 50) (true (draw))) (<= (goal red 0) (true (not (win blue)))) (<= (goal blue 0) (true (not (win red))))";
 	static final String testGoalGrounding = "(<= (goal ?player 100) (true (win ?player)))";
 
-	static final String testGdlPath = "test/gdlii/dependencyTestGame.gdl";
-	static final String groundedTestGdlPath = "test/gdlii/dependencyTestGroundedGame.gdl";
+	static final String testGdlPath = "test/gdlii/paperScissorsRock.kif";
+	static final String groundedTestGdlPath = "test/gdlii/paperScissorsRock.ground.kif";
 
 	@Test
 	public void testSimpleDomainGraph() {
