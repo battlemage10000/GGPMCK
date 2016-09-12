@@ -24,8 +24,12 @@ public class DependencyGraph {
 		}
 	}
 
-	public ArrayList<String> getNeighbour(String term) {
+	public ArrayList<String> getNeighbours(String term) {
 		return adjacencyMap.get(term);
+	}
+	
+	public int getStratum(String term){
+		return stratumMap.get(term);
 	}
 
 	public void addEdge(String fromTerm, String toTerm) {
@@ -35,14 +39,17 @@ public class DependencyGraph {
 		if (!hasTerm(toTerm)) {
 			addTerm(toTerm);
 		}
-		//Term to = new Term(toTerm);
-		if (!getNeighbour(fromTerm).contains(toTerm)) {
-			getNeighbour(fromTerm).add(toTerm);
+		if (!getNeighbours(fromTerm).contains(toTerm)) {
+			getNeighbours(fromTerm).add(toTerm);
 		}
 	}
 
-	public Map<String, ArrayList<String>> getMap() {
+	public Map<String, ArrayList<String>> getDependencyMap() {
 		return adjacencyMap;
+	}
+	
+	public Map<String, Integer> getStratumMap(){
+		return stratumMap;
 	}
 
 	public String dotEncodedGraph() {

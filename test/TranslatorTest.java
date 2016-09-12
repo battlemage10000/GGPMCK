@@ -34,7 +34,7 @@ public class TranslatorTest {
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
 		Map<String, ArrayList<String>> dependencyMap = MckTranslator.constructDependencyGraph(root)
-				.getMap();
+				.getDependencyMap();
 
 		assertThat(dependencyMap.keySet(), hasItem("goal"));
 		//assertThat(domainMap.keySet(), hasItem(not(new DomainGraph.Term("?1_?player", 0))));

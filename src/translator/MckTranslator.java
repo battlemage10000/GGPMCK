@@ -22,29 +22,39 @@ public class MckTranslator {
 	public static final String GDL_CLAUSE = "<=";
 	public static final String GDL_NOT = "not";
 	public static final String GDL_BASE = "base";
+	public static final String GDL_INPUT = "input";
 
-	
+	/**
+	 * Constructs a dependency graph used to order rules for mck translation
+	 * The structure is a variation on the dependency graph defined for stratisfied Datalog
+	 * rules in the GDL Spec for GGP paper
+	 * @param root
+	 * @return
+	 */
 	public static DependencyGraph constructDependencyGraph(GdlNode root) {
 		DependencyGraph graph = new DependencyGraph();
-		
+
 		for (GdlNode node : root) {
-			if(node.getType() == GdlType.CLAUSE){
-				for(int i=1; i < node.getChildren().size(); i++){
-					GdlNode toNode = node.getChildren().get(i);
-					if(toNode.getAtom().equals(GDL_NOT)){
-						toNode = toNode.getChildren().get(0);
+			if (node.getType() == GdlType.CLAUSE) {
+				GdlNode headNode = node.getChildren().get(0);
+				if (!headNode.getAtom().equals(GDL_BASE) && !headNode.getAtom().equals(GDL_INPUT)) {
+					for (int i = 1; i < node.getChildren().size(); i++) {
+						GdlNode toNode = node.getChildren().get(i);
+						if (toNode.getAtom().equals(GDL_NOT)) {
+							toNode = toNode.getChildren().get(0);
+						}
+						if (toNode.getAtom().equals(GDL_TRUE)) {
+							toNode = toNode.getChildren().get(0);
+						}
+						graph.addEdge(headNode.getAtom(), toNode.getAtom());
 					}
-					if(toNode.getAtom().equals(GDL_TRUE)){
-						graph.addEdge(toNode.getAtom(), toNode.getChildren().get(0).getAtom());
-					}
-					graph.addEdge(node.getChildren().get(0).getAtom(), toNode.getAtom());
 				}
 			}
 		}
-		
+
 		return graph;
 	}
-	
+
 	/**
 	 * Follows the domain graph definition in the ggp book
 	 */
