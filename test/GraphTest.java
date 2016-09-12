@@ -11,8 +11,9 @@ public class GraphTest {
 		DependencyGraph graph = new DependencyGraph();
 		graph.addEdge("goal", "win");
 		
-		assertThat(graph.getMap().keySet(), hasItems(new DependencyGraph.Term("goal"), new DependencyGraph.Term("win")));
-	
+		assertThat(graph.getMap().keySet(), hasItems("goal", "win"));
+		
+		System.out.println(graph.dotEncodedGraph());
 	}
 	
 	@Test

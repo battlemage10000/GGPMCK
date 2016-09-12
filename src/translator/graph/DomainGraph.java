@@ -48,7 +48,7 @@ public class DomainGraph {
 		return domain;
 	}
 
-	public Map<Term, ArrayList<Term>> getDomainMap() {
+	public Map<Term, ArrayList<Term>> getMap() {
 		Map<Term, ArrayList<Term>> domainMap = new HashMap<Term, ArrayList<Term>>();
 
 		for (Term term : adjacencyMap.keySet()) {

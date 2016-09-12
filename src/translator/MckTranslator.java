@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import translator.grammar.GdlNode;
+import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 
 /**
@@ -22,15 +23,34 @@ public class MckTranslator {
 	public static final String GDL_NOT = "not";
 	public static final String GDL_BASE = "base";
 
+	
+	public static DependencyGraph constructDependencyGraph(GdlNode root) {
+		DependencyGraph graph = new DependencyGraph();
+		
+		for (GdlNode node : root) {
+			if(node.getType() == GdlType.CLAUSE){
+				for(int i=1; i < node.getChildren().size(); i++){
+					GdlNode toNode = node.getChildren().get(i);
+					if(toNode.getAtom().equals(GDL_NOT)){
+						toNode = toNode.getChildren().get(0);
+					}
+					if(toNode.getAtom().equals(GDL_TRUE)){
+						graph.addEdge(toNode.getAtom(), toNode.getChildren().get(0).getAtom());
+					}
+					graph.addEdge(node.getChildren().get(0).getAtom(), toNode.getAtom());
+				}
+			}
+		}
+		
+		return graph;
+	}
+	
 	/**
 	 * Follows the domain graph definition in the ggp book
 	 */
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
-
-		Queue<GdlNode> queue = new LinkedList<GdlNode>();
-		queue.addAll(root.getChildren());
 
 		for (GdlNode node : root) {
 			if ((node.getType() == GdlType.FUNCTION || node.getType() == GdlType.FORMULA)
@@ -58,7 +78,6 @@ public class MckTranslator {
 					}
 				}
 			}
-			queue.addAll(node.getChildren());
 		}
 
 		graph.addEdge("base", 1, "true", 1);
@@ -87,7 +106,7 @@ public class MckTranslator {
 			if (!isVariableInTree(clause)) { // No variables is already ground
 				groundedRoot.getChildren().add(clause);
 			} else {
-				String groundedClauseString = groundClause(clause, domainGraph.getDomainMap());
+				String groundedClauseString = groundClause(clause, domainGraph.getMap());
 
 				GdlNode clauseTree = new ParseNode(); // Default root node if
 														// parseString throws

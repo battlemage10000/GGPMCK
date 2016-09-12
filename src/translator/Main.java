@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import translator.grammar.GdlNode;
+import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 
 public class Main extends MckTranslator {
@@ -26,6 +27,7 @@ public class Main extends MckTranslator {
 		boolean outputMckSwitch = false;
 		boolean outputLparseSwitch = false;
 		boolean outputDotSwitch = false;
+		boolean outputDepDotSwitch = false;
 		boolean prettyPrintSwitch = false;
 		boolean parseTreeSwitch = false;
 		boolean parseTreeTypesSwitch = false;
@@ -66,6 +68,9 @@ public class Main extends MckTranslator {
 			case "--to-dot":
 				outputDotSwitch = true;
 				break;
+			case "--to-dep-dot":
+				outputDepDotSwitch = true;
+				break;
 			case "--pretty":
 				prettyPrintSwitch = true;
 				break;
@@ -96,7 +101,8 @@ public class Main extends MckTranslator {
 			System.out.println("  -o --output   path to output file (default: stdout)");
 			System.out.println("  --to-mck      output file is in mck format (default)");
 			System.out.println("  --to-lparse   output file is in lparse format");
-			System.out.println("  --to-dot      output dependency graph in dot format. Use with --ground");
+			System.out.println("  --to-dot      output domain graph in dot format. Use with --ground");
+			System.out.println("  --to-dep-dot  output dependency graph in dot format");
 			System.out.println("  --pretty      formatted gdl. Use with --ground");
 			System.out.println("  -g --ground   use internal grounder");
 			System.out.println("  -d --debug    manually select outputs in debug mode");
@@ -120,6 +126,11 @@ public class Main extends MckTranslator {
 						System.out.println(domain.dotEncodedGraph());
 					}
 					root = groundGdl(root, domain);
+				}
+				
+				if(outputDepDotSwitch){
+					DependencyGraph graph = constructDependencyGraph(root);
+					System.out.println(graph.dotEncodedGraph());
 				}
 
 				// Print parse tree for debugging

@@ -5,6 +5,7 @@ import org.junit.Test;
 import translator.GdlParser;
 import translator.MckTranslator;
 import translator.grammar.GdlNode;
+import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 import java.util.Map;
 import java.util.HashMap;
@@ -20,6 +21,27 @@ public class TranslatorTest {
 	static final String testGdlPath = "test/gdlii/paperScissorsRock.kif";
 	static final String groundedTestGdlPath = "test/gdlii/paperScissorsRock.ground.kif";
 
+	
+	@Test
+	public void testSimpleDependencyGraph(){
+		List<String> tokens = null;
+		try {
+			tokens = GdlParser.tokenizeString(testGoals);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		GdlNode root = GdlParser.expandParseTree(tokens);
+
+		Map<String, ArrayList<String>> dependencyMap = MckTranslator.constructDependencyGraph(root)
+				.getMap();
+
+		assertThat(dependencyMap.keySet(), hasItem("goal"));
+		//assertThat(domainMap.keySet(), hasItem(not(new DomainGraph.Term("?1_?player", 0))));
+		//assertThat(domainMap.get(new DomainGraph.Term("goal", 1)).size(), is(2));
+		//assertThat(domainMap.get(new DomainGraph.Term("goal", 2)).size(), is(3));
+	}
+	
 	@Test
 	public void testSimpleDomainGraph() {
 		List<String> tokens = null;
@@ -32,7 +54,7 @@ public class TranslatorTest {
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
 		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = MckTranslator.constructDomainGraph(root)
-				.getDomainMap();
+				.getMap();
 
 		assertThat(domainMap.keySet(), hasItems(new DomainGraph.Term("goal", 0)));
 		assertThat(domainMap.keySet(), hasItem(not(new DomainGraph.Term("?1_?player", 0))));
@@ -163,6 +185,7 @@ public class TranslatorTest {
 			List<String> tokens = GdlParser.tokenizeFile(testGdlPath);
 			GdlNode root = GdlParser.expandParseTree(tokens);
 			String lparse = MckTranslator.toLparse(root);
+			System.out.println(lparse);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
