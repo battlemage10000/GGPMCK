@@ -3,6 +3,7 @@ package translator;
 import java.io.*;
 import java.util.*;
 
+import translator.grammar.Gdl;
 import translator.grammar.GdlNode;
 import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
@@ -45,7 +46,7 @@ public class MckTranslator {
 							toNode = toNode.getChildren().get(0);
 						}
 						if (toNode.getAtom().equals(GDL_TRUE)) {
-							toNode = toNode.getChildren().get(0);
+							// toNode = toNode.getChildren().get(0);
 						}
 						graph.addEdge(headNode.getAtom(), toNode.getAtom());
 					}
@@ -191,14 +192,60 @@ public class MckTranslator {
 	public static String MCK_MOVE_PREFIX = "M_";
 	public static String MCK_ACTION_PREFIX = "Act_";
 
+	public static GdlNode orderGdlRules(GdlNode root, DependencyGraph graph) {
+		int stratum = 0;
+		ArrayList<GdlNode> unordered = new ArrayList<GdlNode>();
+		ArrayList<GdlNode> unorderedAlt = new ArrayList<GdlNode>();
+		unordered.addAll(root.getChildren());
+		
+		root = new Gdl();
+		
+		while (!unordered.isEmpty()) {
+			for (GdlNode node : unordered) {
+				GdlNode headNode = node.getChildren().get(0);
+				if (graph.getStratum(headNode.getAtom()) <= stratum) {
+					root.getChildren().add(node);
+				} else {
+					unorderedAlt.add(node);
+				}
+			}
+			stratum++;
+			unordered.addAll(unorderedAlt);
+			unorderedAlt = new ArrayList<GdlNode>();
+		}
+
+		return root;
+	}
+
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 
-		sb.append(node.getAtom());
-		for (GdlNode child : node.getChildren()) {
-			sb.append("_" + formatMckNode(child));
+		if (node.getAtom().equals(GDL_NOT)) {
+			sb.append("neg ");
+		} else {
+			sb.append(node.getAtom() + "_");
 		}
+		for (GdlNode child : node.getChildren()) {
+			sb.append(formatMckNode(child) + "_");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
+	}
 
+	public static String formatClause(GdlNode clause) {
+		StringBuilder sb = new StringBuilder();
+		GdlNode headNode = clause.getChildren().get(0);
+
+		sb.append("if (");
+		for (int i = 1; i < clause.getChildren().size(); i++) {
+			sb.append(formatMckNode(clause.getChildren().get(i)) + " /\\ ");
+		}
+		sb.delete(sb.length() - 4, sb.length());
+		sb.append(") ");
+
+		sb.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " = True");
+		sb.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " = False");
+		sb.append(System.lineSeparator() + "fi;");
 		return sb.toString();
 	}
 
@@ -216,13 +263,12 @@ public class MckTranslator {
 				case GDL_NOT:
 					// if
 					// (!AT.contains(formatMckNode(node.getChildren().get(0))))
-					// {
-					// AT.add(formatMckNode(node.getChildren().get(0)));
-					// }
+					// { AT.add(formatMckNode(node.getChildren().get(0))); }
 					break;
 				case GDL_BASE:
 				case GDL_INPUT:
 				case GDL_ROLE:
+					// Skip these predicates due to redundancy
 					break;
 				case GDL_TRUE:
 				case GDL_NEXT:
@@ -274,12 +320,13 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATd:");
 		for (String role : ATd.keySet()) {
-			mck.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + "={");
+			mck.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
 			for (String move : ATd.get(role)) {
 				mck.append(MCK_MOVE_PREFIX + move + ", ");
 			}
 			mck.append(MCK_INIT + ", " + MCK_STOP + "}");
 			mck.append(System.lineSeparator() + "did_" + role + " : " + MCK_ACTION_PREFIX + role);
+			mck.append(System.lineSeparator());
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
@@ -319,7 +366,7 @@ public class MckTranslator {
 			mck.append(System.lineSeparator() + "begin do neg terminal ->");
 			mck.append(System.lineSeparator() + "  if  ");
 			for (String move : ATd.get(role)) {
-				mck.append(move + " -> " + MCK_MOVE_PREFIX + move);
+				mck.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
 				mck.append(System.lineSeparator() + "  []  ");
 			}
 			mck.delete(mck.length() - 7, mck.length());
@@ -345,18 +392,27 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + "transitions");
 		mck.append(System.lineSeparator() + "begin");
 		mck.append(System.lineSeparator());
-		
-		for (String role : ATd.keySet()) {
-			mck.append(System.lineSeparator() + "if  ");
-			for (String move : ATd.get(role)) {
-				mck.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + " -> did_" + role + " := "
-						+ MCK_MOVE_PREFIX + move);
-				mck.append(System.lineSeparator() + "[]  ");
+
+		//root = orderGdlRules(root, constructDependencyGraph(root));
+
+		for (GdlNode clause : root.getChildren()) {
+			if (clause.getType() == GdlType.CLAUSE) {
+				mck.append(System.lineSeparator() + formatClause(clause));
 			}
-			mck.append("otherwise -> did_" + role + " := " + MCK_STOP);
-			mck.append(System.lineSeparator() + "fi;");
 		}
-		
+
+		// for (String role : ATd.keySet()) {
+		// mck.append(System.lineSeparator() + "if ");
+		// for (String move : ATd.get(role)) {
+		// mck.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + "
+		// -> did_" + role + " := "
+		// + MCK_MOVE_PREFIX + move);
+		// mck.append(System.lineSeparator() + "[] ");
+		// }
+		// mck.append("otherwise -> did_" + role + " := " + MCK_STOP);
+		// mck.append(System.lineSeparator() + "fi;");
+		// }
+
 		// TODO: Add more to state transition section
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "end");

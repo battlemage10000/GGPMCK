@@ -27,9 +27,13 @@ public class DependencyGraph {
 	public ArrayList<String> getNeighbours(String term) {
 		return adjacencyMap.get(term);
 	}
-	
-	public int getStratum(String term){
-		return stratumMap.get(term);
+
+	public int getStratum(String term) {
+		if (stratumMap.containsKey(term)) {
+			return stratumMap.get(term);
+		} else {
+			return -2;
+		}
 	}
 
 	public void addEdge(String fromTerm, String toTerm) {
@@ -47,8 +51,8 @@ public class DependencyGraph {
 	public Map<String, ArrayList<String>> getDependencyMap() {
 		return adjacencyMap;
 	}
-	
-	public Map<String, Integer> getStratumMap(){
+
+	public Map<String, Integer> getStratumMap() {
 		return stratumMap;
 	}
 
@@ -59,7 +63,7 @@ public class DependencyGraph {
 
 		// Declare nodes and assign attributes
 		for (String from : adjacencyMap.keySet()) {
-			dot.append(System.lineSeparator() + from + " [label=\"" + from + " " + stratumMap.get(from)+ "\"]");
+			dot.append(System.lineSeparator() + from + " [label=\"" + from + " " + stratumMap.get(from) + "\"]");
 		}
 		dot.append(System.lineSeparator());
 
@@ -75,43 +79,43 @@ public class DependencyGraph {
 		return dot.toString();
 	}
 
-	public void computeStratum(){
+	public void computeStratum() {
 		LinkedList<String> unset = new LinkedList<String>();
 		LinkedList<String> unsetAlt = new LinkedList<String>();
-		for(String key : adjacencyMap.keySet()){
-			if(adjacencyMap.get(key).isEmpty()){
-				stratumMap.put(key, new Integer(0));
+		for (String key : adjacencyMap.keySet()) {
+			if (adjacencyMap.get(key).isEmpty()) {
+				stratumMap.put(key, Integer.valueOf(0));
 			} else {
-				stratumMap.put(key, new Integer(-1));
+				stratumMap.put(key, Integer.valueOf(-1));
 				unset.add(key);
 			}
 		}
-		
+
 		boolean end = false;
 		boolean changed = false;
-		while(!end){
-			for(String from : adjacencyMap.keySet()){
+		while (!end) {
+			for (String from : adjacencyMap.keySet()) {
 				boolean unknownDep = false;
 				int newStratum = -1;
-				for(String to : adjacencyMap.get(from)){
-					if(from.equals(to)){
+				for (String to : adjacencyMap.get(from)) {
+					if (from.equals(to)) {
 						continue;
-					}else if(stratumMap.get(to) < 0){
+					} else if (stratumMap.get(to) < 0) {
 						unsetAlt.add(from);
 						unknownDep = true;
 						break;
-					}else if(stratumMap.get(to) > newStratum){
+					} else if (stratumMap.get(to) > newStratum) {
 						newStratum = stratumMap.get(to);
 					}
 				}
-				if(!unknownDep){
+				if (!unknownDep) {
 					stratumMap.put(from, newStratum + 1);
 					changed = true;
 				}
 			}
-			if(unsetAlt.isEmpty()){
+			if (unsetAlt.isEmpty()) {
 				end = true;
-			}else if(!changed){
+			} else if (!changed) {
 				end = true;
 			} else {
 				unset = unsetAlt;
@@ -120,7 +124,7 @@ public class DependencyGraph {
 			}
 		}
 	}
-	
+
 	@Deprecated
 	public static class Term {
 		private final String term;
