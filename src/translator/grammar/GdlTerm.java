@@ -16,7 +16,7 @@ public class GdlTerm implements GdlNode, LparseNode {
 	private final ArrayList<GdlNode> children;
 
 	public GdlTerm(String atom, GdlNode parent) {
-		this.atom = atom;
+		this.atom = atom.intern();
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
 	}

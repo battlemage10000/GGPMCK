@@ -13,6 +13,7 @@ import translator.MckTranslator.GdlType;
 import translator.grammar.Gdl;
 import translator.grammar.GdlFormula;
 import translator.grammar.GdlNode;
+import translator.grammar.GdlNodeFactory;
 import translator.grammar.GdlRule;
 import translator.grammar.GdlTerm;
 
@@ -101,7 +102,7 @@ public class GdlParser {
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
 	 */
 	public static GdlNode expandParseTree(List<String> tokens) {
-		GdlNode root = new Gdl();
+		GdlNode root = GdlNodeFactory.createGdl();
 
 		GdlNode parent = root;
 		boolean openBracket = false;
@@ -120,7 +121,7 @@ public class GdlParser {
 				}
 				break;
 			case MckTranslator.GDL_CLAUSE:
-				GdlNode newNode = new GdlRule(parent);
+				GdlNode newNode = GdlNodeFactory.createGdlRule(parent);
 				parent.getChildren().add(newNode);
 				if (openBracket) {
 					parent = newNode;
@@ -133,9 +134,9 @@ public class GdlParser {
 					token = "?" + scopeNumber + "_" + token;
 				}
 				if(parent.getType() == GdlType.CLAUSE || parent.getType() == GdlType.ROOT){
-					newNode = new GdlFormula(token, parent);
+					newNode = GdlNodeFactory.createGdlFormula(token, parent);
 				} else {
-					newNode = new GdlTerm(token, parent);
+					newNode = GdlNodeFactory.createGdlTerm(token, parent);
 				}
 				parent.getChildren().add(newNode);
 				if (openBracket) {

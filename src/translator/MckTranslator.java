@@ -3,8 +3,8 @@ package translator;
 import java.io.*;
 import java.util.*;
 
-import translator.grammar.Gdl;
 import translator.grammar.GdlNode;
+import translator.grammar.GdlNodeFactory;
 import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 
@@ -192,55 +192,70 @@ public class MckTranslator {
 	public static String MCK_MOVE_PREFIX = "M_";
 	public static String MCK_ACTION_PREFIX = "Act_";
 
-	public static GdlNode orderGdlRules(GdlNode root, DependencyGraph graph) {
-		GdlNode orderedRoot = new Gdl();
-		int stratum = 0;
+	public static String orderGdlRules(GdlNode root) {
+		DependencyGraph graph = constructDependencyGraph(root);
+		graph.computeStratum();
+		Map<String, Integer> stratumMap = graph.getStratumMap();
 		ArrayList<GdlNode> unordered = new ArrayList<GdlNode>();
 		ArrayList<GdlNode> unorderedAlt = new ArrayList<GdlNode>();
 		unordered.addAll(root.getChildren());
-		
+		StringBuilder ordered = new StringBuilder();
+		int stratum = -2;
+
 		while (!unordered.isEmpty()) {
 			for (GdlNode node : unordered) {
-				GdlNode headNode = node.getChildren().get(0);
-				if (graph.getStratum(headNode.getAtom()) <= stratum) {
-					orderedRoot.getChildren().add(node);
+				if (stratumMap.get(node.getChildren().get(0).getAtom()) == null
+						|| stratumMap.get(node.getChildren().get(0).getAtom()) == stratum) {
+					ordered.append(node.toString());
 				} else {
 					unorderedAlt.add(node);
 				}
 			}
 			stratum++;
-			unordered.addAll(unorderedAlt);
+			unordered = unorderedAlt;
 			unorderedAlt = new ArrayList<GdlNode>();
 		}
 
-		return orderedRoot;
+		return ordered.toString();
 	}
 
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 
-		if (node.getAtom().equals(GDL_NOT)) {
-			sb.append("neg ");
+		if (node.getAtom().equals(GDL_DOES)) {
+			sb.append("did_" + node.getChildren().get(0));
+			sb.append(" == " + formatMckNode(node.getChildren().get(1)));
 		} else {
-			sb.append(node.getAtom() + "_");
+			if (node.getAtom().equals(GDL_NOT)) {
+				sb.append("neg ");
+			} else if (node.getAtom().equals(GDL_TRUE) || node.getAtom().equals(GDL_NEXT)) {
+
+			} else {
+				sb.append(node.getAtom() + "_");
+			}
+			for (GdlNode child : node.getChildren()) {
+				sb.append(formatMckNode(child) + "_");
+			}
+			sb.deleteCharAt(sb.length() - 1);
 		}
-		for (GdlNode child : node.getChildren()) {
-			sb.append(formatMckNode(child) + "_");
-		}
-		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
 	}
 
-	public static String formatClause(GdlNode clause) {
+	public static String formatClause(GdlNode headNode, List<GdlNode> bodyList) {
 		StringBuilder sb = new StringBuilder();
-		GdlNode headNode = clause.getChildren().get(0);
 
-		sb.append("if (");
-		for (int i = 1; i < clause.getChildren().size(); i++) {
-			sb.append(formatMckNode(clause.getChildren().get(i)) + " /\\ ");
+		sb.append("if ");
+		if (!bodyList.isEmpty()) {
+			for (GdlNode clause : bodyList) {
+				sb.append("(");
+				for (int i = 1; i < clause.getChildren().size(); i++) {
+					sb.append(formatMckNode(clause.getChildren().get(i)) + " /\\ ");
+				}
+				sb.delete(sb.length() - 4, sb.length());
+				sb.append(")  \\/ ");
+			}
+			sb.delete(sb.length() - 4, sb.length());
 		}
-		sb.delete(sb.length() - 4, sb.length());
-		sb.append(") ");
 
 		sb.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " = True");
 		sb.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " = False");
@@ -392,9 +407,18 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + "begin");
 		mck.append(System.lineSeparator());
 
+		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
+		GdlNode repeatHead = GdlNodeFactory.createGdl();
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE) {
-				mck.append(System.lineSeparator() + formatClause(clause));
+				if (clause.getChildren().get(0).equals(repeatHead)) {
+					repeatHeadList.add(clause);
+				} else {
+					mck.append(System.lineSeparator() + formatClause(repeatHead, repeatHeadList));
+					repeatHead = clause.getChildren().get(0);
+					repeatHeadList = new ArrayList<GdlNode>();
+					repeatHeadList.add(clause);
+				}
 			}
 		}
 

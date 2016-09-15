@@ -16,7 +16,7 @@ public class GdlFormula implements GdlNode, LparseNode {
 	private final ArrayList<GdlNode> children;
 
 	public GdlFormula(String atom, GdlNode parent) {
-		this.atom = atom;
+		this.atom = atom.intern();
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
 	}
@@ -54,10 +54,7 @@ public class GdlFormula implements GdlNode, LparseNode {
 	public GdlType getType() {
 		if (atom.charAt(0) == '?') {
 			return GdlType.VARIABLE;
-			// } else if (children.isEmpty()) {
-			// return GdlType.CONSTANT;
 		} else {
-			// return GdlType.FUNCTION;
 			return GdlType.FORMULA;
 		}
 	}
