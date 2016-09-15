@@ -84,9 +84,9 @@ public class DependencyGraph {
 		LinkedList<String> unsetAlt = new LinkedList<String>();
 		for (String key : adjacencyMap.keySet()) {
 			if (adjacencyMap.get(key).isEmpty()) {
-				stratumMap.put(key, Integer.valueOf(0));
+				stratumMap.put(key, 0);
 			} else {
-				stratumMap.put(key, Integer.valueOf(-1));
+				stratumMap.put(key, -1);
 				unset.add(key);
 			}
 		}

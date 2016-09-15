@@ -12,7 +12,7 @@ import translator.MckTranslator.GdlType;
 public class GdlTerm implements GdlNode, LparseNode {
 
 	private final String atom;
-	private GdlNode parent;
+	private final GdlNode parent;
 	private final ArrayList<GdlNode> children;
 
 	public GdlTerm(String atom, GdlNode parent) {
@@ -46,7 +46,6 @@ public class GdlTerm implements GdlNode, LparseNode {
 				iterator.add(node);
 			}
 		}
-
 		return iterator.iterator();
 	}
 

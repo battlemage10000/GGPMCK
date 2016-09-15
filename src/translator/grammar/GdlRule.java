@@ -11,8 +11,7 @@ import translator.MckTranslator.GdlType;
 
 public class GdlRule implements GdlNode, LparseNode {
 
-	private final String atom = MckTranslator.GDL_CLAUSE;
-	private GdlNode parent;
+	private final GdlNode parent;
 	private final ArrayList<GdlNode> children;
 
 	public GdlRule(GdlNode parent) {
@@ -124,6 +123,6 @@ public class GdlRule implements GdlNode, LparseNode {
 
 	@Override
 	public int hashCode() {
-		return atom.hashCode();
+		return getAtom().hashCode();
 	}
 }

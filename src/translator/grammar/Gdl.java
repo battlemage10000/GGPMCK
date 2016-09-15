@@ -10,7 +10,7 @@ import translator.MckTranslator;
 import translator.MckTranslator.GdlType;
 
 public class Gdl implements GdlNode, LparseNode {
-	public final ArrayList<GdlNode> children = new ArrayList<GdlNode>();
+	private final ArrayList<GdlNode> children = new ArrayList<GdlNode>();
 
 	@Override
 	public Iterator<GdlNode> iterator() {

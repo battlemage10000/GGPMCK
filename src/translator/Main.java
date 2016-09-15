@@ -151,6 +151,7 @@ public class Main extends MckTranslator {
 				if (outputLparseSwitch) {
 					translation = toLparse(root);
 				} else {
+					root = orderGdlRules(root, constructDependencyGraph(root));
 					translation = toMck(root);
 				}
 

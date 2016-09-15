@@ -193,18 +193,17 @@ public class MckTranslator {
 	public static String MCK_ACTION_PREFIX = "Act_";
 
 	public static GdlNode orderGdlRules(GdlNode root, DependencyGraph graph) {
+		GdlNode orderedRoot = new Gdl();
 		int stratum = 0;
 		ArrayList<GdlNode> unordered = new ArrayList<GdlNode>();
 		ArrayList<GdlNode> unorderedAlt = new ArrayList<GdlNode>();
 		unordered.addAll(root.getChildren());
 		
-		root = new Gdl();
-		
 		while (!unordered.isEmpty()) {
 			for (GdlNode node : unordered) {
 				GdlNode headNode = node.getChildren().get(0);
 				if (graph.getStratum(headNode.getAtom()) <= stratum) {
-					root.getChildren().add(node);
+					orderedRoot.getChildren().add(node);
 				} else {
 					unorderedAlt.add(node);
 				}
@@ -214,7 +213,7 @@ public class MckTranslator {
 			unorderedAlt = new ArrayList<GdlNode>();
 		}
 
-		return root;
+		return orderedRoot;
 	}
 
 	public static String formatMckNode(GdlNode node) {
@@ -392,8 +391,6 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + "transitions");
 		mck.append(System.lineSeparator() + "begin");
 		mck.append(System.lineSeparator());
-
-		//root = orderGdlRules(root, constructDependencyGraph(root));
 
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE) {

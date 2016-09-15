@@ -12,7 +12,7 @@ import translator.MckTranslator.GdlType;
 public class GdlFormula implements GdlNode, LparseNode {
 
 	private final String atom;
-	private GdlNode parent;
+	private final GdlNode parent;
 	private final ArrayList<GdlNode> children;
 
 	public GdlFormula(String atom, GdlNode parent) {
