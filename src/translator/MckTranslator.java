@@ -5,6 +5,7 @@ import java.util.*;
 
 import translator.grammar.GdlNode;
 import translator.grammar.GdlNodeFactory;
+import translator.grammar.GdlRule;
 import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 
@@ -193,17 +194,37 @@ public class MckTranslator {
 	public static String MCK_ACTION_PREFIX = "Act_";
 
 	public static String orderGdlRules(GdlNode root) {
+		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
+			@Override
+			public int compare(GdlNode fromHead, GdlNode toHead) {
+				if (fromHead.getType() == GdlType.CLAUSE) {
+					fromHead = fromHead.getChildren().get(0);
+				}
+				if (toHead.getType() == GdlType.CLAUSE) {
+					toHead = toHead.getChildren().get(0);
+				}
+				if (fromHead.toString().hashCode() < toHead.toString().hashCode()) {
+					return -1;
+				} else if (fromHead.toString().hashCode() > toHead.toString().hashCode()) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+		};
+		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(gdlHeadComparator);
+		PriorityQueue<GdlNode> unorderedAlt = new PriorityQueue<GdlNode>(gdlHeadComparator);
+		unordered.addAll(root.getChildren());
+
 		DependencyGraph graph = constructDependencyGraph(root);
 		graph.computeStratum();
 		Map<String, Integer> stratumMap = graph.getStratumMap();
-		ArrayList<GdlNode> unordered = new ArrayList<GdlNode>();
-		ArrayList<GdlNode> unorderedAlt = new ArrayList<GdlNode>();
-		unordered.addAll(root.getChildren());
 		StringBuilder ordered = new StringBuilder();
 		int stratum = -2;
 
 		while (!unordered.isEmpty()) {
-			for (GdlNode node : unordered) {
+			while (!unordered.isEmpty()) {
+				GdlNode node = unordered.remove();
 				if (stratumMap.get(node.getChildren().get(0).getAtom()) == null
 						|| stratumMap.get(node.getChildren().get(0).getAtom()) == stratum) {
 					ordered.append(node.toString());
@@ -213,7 +234,7 @@ public class MckTranslator {
 			}
 			stratum++;
 			unordered = unorderedAlt;
-			unorderedAlt = new ArrayList<GdlNode>();
+			unorderedAlt = new PriorityQueue<GdlNode>(gdlHeadComparator);
 		}
 
 		return ordered.toString();
@@ -271,14 +292,8 @@ public class MckTranslator {
 
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.FORMULA) {
-				// if (node.getType() != GdlType.ROOT && node.getType() !=
-				// GdlType.CLAUSE) {
 				switch (node.getAtom()) {
 				case GDL_NOT:
-					// if
-					// (!AT.contains(formatMckNode(node.getChildren().get(0))))
-					// { AT.add(formatMckNode(node.getChildren().get(0))); }
-					break;
 				case GDL_BASE:
 				case GDL_INPUT:
 				case GDL_ROLE:
@@ -411,7 +426,7 @@ public class MckTranslator {
 		GdlNode repeatHead = GdlNodeFactory.createGdl();
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE) {
-				if (clause.getChildren().get(0).equals(repeatHead)) {
+				if (clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
 					repeatHeadList.add(clause);
 				} else {
 					mck.append(System.lineSeparator() + formatClause(repeatHead, repeatHeadList));
