@@ -5,9 +5,10 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import translator.grammar.GdlNode;
-import translator.graph.DependencyGraph;
-import translator.graph.DomainGraph;
+import util.GdlParser;
+import util.grammar.GdlNode;
+import util.graph.DependencyGraph;
+import util.graph.DomainGraph;
 
 public class Main extends MckTranslator {
 	/**

@@ -1,8 +1,9 @@
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
-import translator.graph.DomainGraph;
-import translator.graph.DependencyGraph;
+
+import util.graph.DependencyGraph;
+import util.graph.DomainGraph;
 
 public class GraphTest {
 	

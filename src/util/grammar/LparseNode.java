@@ -1,4 +1,4 @@
-package translator.grammar;
+package util.grammar;
 
 public interface LparseNode {
 	public String toLparse();

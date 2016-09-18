@@ -1,4 +1,4 @@
-package translator.graph;
+package util.graph;
 
 import java.util.Map;
 import java.util.HashMap;

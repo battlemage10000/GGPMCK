@@ -1,4 +1,4 @@
-package translator;
+package util;
 
 import java.io.File;
 import java.io.FileReader;
@@ -9,9 +9,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import translator.grammar.GdlNode.GdlType;
-import translator.grammar.GdlNode;
-import translator.grammar.GdlNodeFactory;
+import util.grammar.GdlNode;
+import util.grammar.GdlNodeFactory;
+import util.grammar.GdlNode.GdlType;
 
 public class GdlParser {
 

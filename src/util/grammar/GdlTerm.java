@@ -1,33 +1,27 @@
-package translator.grammar;
+package util.grammar;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import translator.grammar.GdlNode;
+import util.grammar.GdlNode;
 
-public class GdlRule implements GdlNode, LparseNode {
+public class GdlTerm implements GdlNode, LparseNode {
 
+	private final String atom;
 	private final GdlNode parent;
 	private final ArrayList<GdlNode> children;
 
-	public GdlRule(GdlNode parent) {
+	public GdlTerm(String atom, GdlNode parent) {
+		this.atom = atom.intern();
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
 	}
 
-	public GdlNode getHead() {
-		return children.get(0);
-	}
-
-	public ArrayList<GdlNode> getBody() {
-		return (ArrayList<GdlNode>) children.subList(1, children.size() - 1);
-	}
-
 	@Override
 	public String getAtom() {
-		return GDL_CLAUSE;
+		return atom;
 	}
 
 	@Override
@@ -50,28 +44,50 @@ public class GdlRule implements GdlNode, LparseNode {
 				iterator.add(node);
 			}
 		}
-
 		return iterator.iterator();
 	}
 
 	@Override
 	public GdlType getType() {
-		return GdlType.CLAUSE;
+		if (atom.charAt(0) == '?') {
+			return GdlType.VARIABLE;
+		} else if (children.isEmpty()) {
+			return GdlType.CONSTANT;
+		} else {
+			return GdlType.FUNCTION;
+		}
 	}
 
 	public String toLparse() {
 		StringBuilder lparse = new StringBuilder();
 
-		lparse.append(((LparseNode) getChildren().get(0)).toLparse());// head
-		if (getChildren().size() > 1) {
-			lparse.append(" :- ");
-			for (int i = 1; i < getChildren().size() - 1; i++) {
+		switch (getType()) {
+		case FUNCTION:
+			if (getAtom().equals("not")) {
+				lparse.append("t1(");
+			} else {
+				lparse.append(getAtom() + "(");
+			}
+			// Parameters
+			for (int i = 0; i < getChildren().size() - 1; i++) {
 				lparse.append(((LparseNode) getChildren().get(i)).toLparse());
 				lparse.append(", ");
 			}
 			lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparse());
+			lparse.append(")");
+
+			// Facts
+			if (getParent().getType() == GdlType.ROOT) {
+				lparse.append(".\n");
+			}
+			break;
+		case VARIABLE:
+			lparse.append(getAtom().replace("?", "V"));
+			break;
+		default:
+			lparse.append(getAtom());
+			break;
 		}
-		lparse.append(".\n");
 
 		return lparse.toString();
 	}
@@ -86,17 +102,34 @@ public class GdlRule implements GdlNode, LparseNode {
 	public String toLparseWithBaseInput() {
 		StringBuilder lparse = new StringBuilder();
 
-		lparse.append(((LparseNode) getChildren().get(0)).toLparseWithBaseInput());// head
-		if (getChildren().size() > 1) {
-			lparse.append(" :- ");
-			for (int i = 1; i < getChildren().size() - 1; i++) {
+		switch (getType()) {
+		case FUNCTION:
+			// base and inputs
+			if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
+				lparse.append("input(");
+			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)) {
+				lparse.append("base(");
+			} else if (getAtom().equals("not")) {
+				lparse.append("t1(");
+			} else {
+				lparse.append(getAtom() + "(");
+			}
+			// Parameters
+			for (int i = 0; i < getChildren().size() - 1; i++) {
 				lparse.append(((LparseNode) getChildren().get(i)).toLparseWithBaseInput());
 				lparse.append(", ");
 			}
 			lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparseWithBaseInput());
-		}
-		lparse.append(".\n");
+			lparse.append(")");
 
+			// Facts
+			if (getParent().getType() == GdlType.ROOT) {
+				lparse.append(".\n");
+			}
+			break;
+		default:
+			lparse.append(toLparse());
+		}
 		return lparse.toString();
 	}
 
@@ -121,6 +154,6 @@ public class GdlRule implements GdlNode, LparseNode {
 
 	@Override
 	public int hashCode() {
-		return getAtom().hashCode();
+		return atom.hashCode();
 	}
 }

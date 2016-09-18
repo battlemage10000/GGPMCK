@@ -2,10 +2,11 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
-import translator.GdlParser;
 import translator.MckTranslator;
-import translator.grammar.GdlNode;
-import translator.graph.DomainGraph;
+import util.GdlParser;
+import util.grammar.GdlNode;
+import util.graph.DomainGraph;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;

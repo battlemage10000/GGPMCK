@@ -1,4 +1,4 @@
-package translator.grammar;
+package util.grammar;
 
 public class GdlNodeFactory {
 	// private static final HashMap<String, GdlNode> termMap = new

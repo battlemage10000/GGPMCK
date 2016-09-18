@@ -1,10 +1,11 @@
-package translator.graph;
+package util.graph;
 
 import java.util.Map;
+
+import util.grammar.GdlNode.GdlType;
+
 import java.util.HashMap;
 import java.util.ArrayList;
-
-import translator.grammar.GdlNode.GdlType;
 
 public class DomainGraph {
 	private Map<Term, ArrayList<Term>> adjacencyMap;

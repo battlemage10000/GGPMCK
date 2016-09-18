@@ -1,11 +1,11 @@
-package translator.grammar;
+package util.grammar;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import translator.grammar.GdlNode;
+import util.grammar.GdlNode;
 
 public class Gdl implements GdlNode, LparseNode {
 	private final ArrayList<GdlNode> children = new ArrayList<GdlNode>();
