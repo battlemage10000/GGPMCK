@@ -23,6 +23,7 @@ public class Main extends MckTranslator {
 		boolean outputFileSwitch = false;
 		boolean outputFileToken = false;
 		boolean groundSwitch = false;
+		boolean orderedSwitch = false;
 		boolean debugSwitch = false;
 		boolean outputMckSwitch = false;
 		boolean outputLparseSwitch = false;
@@ -54,6 +55,9 @@ public class Main extends MckTranslator {
 			case "-g":
 			case "--ground":
 				groundSwitch = true;
+				break;
+			case "--ordered":
+				orderedSwitch = true;
 				break;
 			case "-d":
 			case "--debug":
@@ -106,6 +110,7 @@ public class Main extends MckTranslator {
 			System.out.println("  --pretty      formatted gdl. Use with --ground");
 			System.out.println("  -g --ground   use internal grounder");
 			System.out.println("  -d --debug    manually select outputs in debug mode");
+			System.out.println("  --ordered     order the gdl rules (default true for --to-mck)");
 			System.out.println("  --parse-tree  print parse tree for debug");
 			System.out.println("  --parse-types print parse tree type for debug");
 		} else {
@@ -128,6 +133,11 @@ public class Main extends MckTranslator {
 					root = groundGdl(root, domain);
 				}
 
+				// Order rules by stratum
+				if (orderedSwitch || !outputLparseSwitch) {
+					root = GdlParser.parseString(orderGdlRules(root));
+				}
+				
 				if (outputDepDotSwitch) {
 					DependencyGraph graph = constructDependencyGraph(root);
 					System.out.println(graph.dotEncodedGraph());
@@ -151,7 +161,7 @@ public class Main extends MckTranslator {
 				if (outputLparseSwitch) {
 					translation = toLparse(root);
 				} else {
-					root = GdlParser.parseString(orderGdlRules(root));
+					//root = GdlParser.parseString(orderGdlRules(root));
 					translation = toMck(root);
 				}
 

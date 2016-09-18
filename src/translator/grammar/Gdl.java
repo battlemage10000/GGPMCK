@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import translator.LparseNode;
 import translator.grammar.GdlNode;
 
 public class Gdl implements GdlNode, LparseNode {

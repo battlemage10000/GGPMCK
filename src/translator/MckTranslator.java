@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import translator.grammar.GdlNode;
+import translator.grammar.LparseNode;
 import translator.grammar.GdlNode.GdlType;
 import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
