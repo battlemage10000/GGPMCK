@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 
 import translator.grammar.GdlNode;
-import translator.grammar.GdlNodeFactory;
-import translator.grammar.GdlRule;
 import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 
@@ -402,6 +400,11 @@ public class MckTranslator {
 			mck.append(System.lineSeparator());
 		}
 		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- ATs:");
+		for (String seen : ATs) {
+			mck.append(System.lineSeparator() + seen + " : Bool");
+		}
+		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
 
 		// Initial Conditions
@@ -433,6 +436,9 @@ public class MckTranslator {
 			mck.append(System.lineSeparator() + "agent " + MCK_ROLE_PREFIX + role + " \"" + role + "\" (");
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + ", ");
+			}
+			for (String seen : ATs) {
+				mck.append(seen + ", ");
 			}
 			mck.append("did_" + role);
 			mck.append(")");
@@ -491,10 +497,13 @@ public class MckTranslator {
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + " : Bool, ");
 			}
+			for (String seen : ATs) {
+				mck.append(seen + " : observable Bool, ");
+			}
 			mck.append("did_" + role + " : observable " + MCK_ACTION_PREFIX + role);
 			mck.append(")");
 			mck.append(System.lineSeparator() + "begin");
-			mck.append(System.lineSeparator() + "  do neg terminal ->");
+			//mck.append(System.lineSeparator() + "  do neg terminal ->");
 			mck.append(System.lineSeparator() + "    if  ");
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
@@ -502,7 +511,7 @@ public class MckTranslator {
 			}
 			mck.delete(mck.length() - 9, mck.length());
 			mck.append(System.lineSeparator() + "    fi");
-			mck.append(System.lineSeparator() + "  od");
+			//mck.append(System.lineSeparator() + "  od");
 			mck.append(System.lineSeparator() + "end");
 		}
 		mck.append(System.lineSeparator());
