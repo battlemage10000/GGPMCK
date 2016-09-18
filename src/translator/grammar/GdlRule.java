@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import translator.LparseNode;
-import translator.MckTranslator.GdlType;
+import translator.grammar.GdlNode;
 
 public class GdlRule implements GdlNode, LparseNode {
 

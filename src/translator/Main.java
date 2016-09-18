@@ -127,8 +127,8 @@ public class Main extends MckTranslator {
 					}
 					root = groundGdl(root, domain);
 				}
-				
-				if(outputDepDotSwitch){
+
+				if (outputDepDotSwitch) {
 					DependencyGraph graph = constructDependencyGraph(root);
 					System.out.println(graph.dotEncodedGraph());
 				}

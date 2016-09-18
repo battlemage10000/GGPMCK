@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import translator.LparseNode;
-import translator.MckTranslator.GdlType;
+import translator.grammar.GdlNode;
 
 public class GdlTerm implements GdlNode, LparseNode {
 
@@ -108,8 +108,7 @@ public class GdlTerm implements GdlNode, LparseNode {
 			// base and inputs
 			if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
 				lparse.append("input(");
-			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE)
-					|| getAtom().equals(GDL_NEXT)) {
+			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)) {
 				lparse.append("base(");
 			} else if (getAtom().equals("not")) {
 				lparse.append("t1(");

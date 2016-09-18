@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import translator.grammar.GdlNode;
+import translator.grammar.GdlNode.GdlType;
 import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 
@@ -11,7 +12,6 @@ import translator.graph.DomainGraph;
  * Translates GDL-II in infix notation to MCK
  */
 public class MckTranslator {
-
 
 	/**
 	 * Constructs a dependency graph used to order rules for mck translation The
@@ -179,8 +179,8 @@ public class MckTranslator {
 	public static String MCK_ROLE_PREFIX = "R_";
 	public static String MCK_MOVE_PREFIX = "M_";
 	public static String MCK_ACTION_PREFIX = "Act_";
-	//public static String MCK_TRUE = "True";
-	//public static String MCK_FALSE = "False";
+	// public static String MCK_TRUE = "True";
+	// public static String MCK_FALSE = "False";
 
 	public static String orderGdlRules(GdlNode root) {
 		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
@@ -232,13 +232,15 @@ public class MckTranslator {
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 
-		//if (node.getAtom().equals(GdlNode.GDL_DISTINCT)) {
-		//	if (node.getChildren().get(0).toString().equals(node.getChildren().get(1).toString())) {
-		//		sb.append(MCK_FALSE);
-		//	} else {
-		//		sb.append(MCK_TRUE);
-		//	}
-		//} else 
+		// if (node.getAtom().equals(GdlNode.GDL_DISTINCT)) {
+		// if
+		// (node.getChildren().get(0).toString().equals(node.getChildren().get(1).toString()))
+		// {
+		// sb.append(MCK_FALSE);
+		// } else {
+		// sb.append(MCK_TRUE);
+		// }
+		// } else
 		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
 			sb.append("did_" + node.getChildren().get(0));
 			sb.append(" == " + MCK_MOVE_PREFIX + formatMckNode(node.getChildren().get(1)));
@@ -264,39 +266,39 @@ public class MckTranslator {
 		}
 
 		StringBuilder mckNode = new StringBuilder();
-		//boolean containsTrue = false;
+		// boolean containsTrue = false;
 		mckNode.append("if ");
 		for (GdlNode clause : bodyList) {
-			//boolean containsFalse = false;
+			// boolean containsFalse = false;
 			StringBuilder mckSubNode = new StringBuilder();
 			mckSubNode.append("(");
 			for (int i = 1; i < clause.getChildren().size(); i++) {
 				String mckFormatted = formatMckNode(clause.getChildren().get(i));
-				//if (mckFormatted.equals(MCK_FALSE)) {
-				//	containsFalse = true;
-				//	break;
-				//} else if (!mckFormatted.equals(MCK_TRUE)) {
-					mckSubNode.append(mckFormatted + " /\\ ");
-				//}
+				// if (mckFormatted.equals(MCK_FALSE)) {
+				// containsFalse = true;
+				// break;
+				// } else if (!mckFormatted.equals(MCK_TRUE)) {
+				mckSubNode.append(mckFormatted + " /\\ ");
+				// }
 
 			}
 
-			//if (!containsFalse) {
-				mckSubNode.delete(mckSubNode.length() - 4, mckSubNode.length());
-				mckSubNode.append(")");
-				mckNode.append(mckSubNode.toString() + " \\/ ");
-			//}
+			// if (!containsFalse) {
+			mckSubNode.delete(mckSubNode.length() - 4, mckSubNode.length());
+			mckSubNode.append(")");
+			mckNode.append(mckSubNode.toString() + " \\/ ");
+			// }
 		}
-		//if(containsTrue){
-		//	return formatMckNode(headNode) + " := True;";
-		//}
-		
+		// if(containsTrue){
+		// return formatMckNode(headNode) + " := True;";
+		// }
+
 		mckNode.delete(mckNode.length() - 4, mckNode.length());
 
 		mckNode.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := True");
 		mckNode.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := False");
 		mckNode.append(System.lineSeparator() + "fi;");
-		
+
 		return mckNode.toString();
 	}
 
@@ -371,9 +373,9 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- AT:");
 		for (String node : AT) {
-			//if (!node.equals(MCK_TRUE) && !node.equals(MCK_FALSE)) {
-				mck.append(System.lineSeparator() + node + " : Bool");
-			//}
+			// if (!node.equals(MCK_TRUE) && !node.equals(MCK_FALSE)) {
+			mck.append(System.lineSeparator() + node + " : Bool");
+			// }
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATf:");
@@ -491,7 +493,7 @@ public class MckTranslator {
 			mck.append("did_" + role + " : observable " + MCK_ACTION_PREFIX + role);
 			mck.append(")");
 			mck.append(System.lineSeparator() + "begin");
-			//mck.append(System.lineSeparator() + "  do neg terminal ->");
+			// mck.append(System.lineSeparator() + " do neg terminal ->");
 			mck.append(System.lineSeparator() + "    if  ");
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
@@ -499,7 +501,7 @@ public class MckTranslator {
 			}
 			mck.delete(mck.length() - 9, mck.length());
 			mck.append(System.lineSeparator() + "    fi");
-			//mck.append(System.lineSeparator() + "  od");
+			// mck.append(System.lineSeparator() + " od");
 			mck.append(System.lineSeparator() + "end");
 		}
 		mck.append(System.lineSeparator());
@@ -541,7 +543,8 @@ public class MckTranslator {
 		Map<String, List<String>> roleToMoveMap = new HashMap<String, List<String>>();
 
 		for (GdlNode clause : root.getChildren()) {
-			if (clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GdlNode.GDL_LEGAL)) {
+			if (clause.getType() == GdlType.CLAUSE
+					&& (clause.getChildren().get(0).getAtom()).equals(GdlNode.GDL_LEGAL)) {
 				GdlNode legal = clause.getChildren().get(0);
 				String role = legal.getChildren().get(0).toString();
 				String move = legal.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
@@ -771,9 +774,9 @@ public class MckTranslator {
 		}
 	}
 
-	public enum GdlType {
-		ROOT, CLAUSE, FORMULA, FUNCTION, CONSTANT, VARIABLE
-	}
+	// public enum GdlType {
+	// ROOT, CLAUSE, FORMULA, FUNCTION, CONSTANT, VARIABLE
+	// }
 
 	/**
 	 * Inner class that represents one node in the parse tree where the
@@ -905,7 +908,8 @@ public class MckTranslator {
 				// base and inputs
 				if (getAtom().equals(GdlNode.GDL_DOES) || getAtom().equals(GdlNode.GDL_LEGAL)) {
 					lparse.append("input(");
-				} else if (getAtom().equals(GdlNode.GDL_INIT) || getAtom().equals(GdlNode.GDL_TRUE) || getAtom().equals(GdlNode.GDL_NEXT)) {
+				} else if (getAtom().equals(GdlNode.GDL_INIT) || getAtom().equals(GdlNode.GDL_TRUE)
+						|| getAtom().equals(GdlNode.GDL_NEXT)) {
 					lparse.append("base(");
 				} else if (getAtom().equals("not")) {
 					lparse.append("t1(");

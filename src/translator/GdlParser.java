@@ -9,7 +9,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import translator.MckTranslator.GdlType;
+import translator.grammar.GdlNode.GdlType;
 import translator.grammar.GdlNode;
 import translator.grammar.GdlNodeFactory;
 
@@ -129,7 +129,7 @@ public class GdlParser {
 					scopedVariable = true;
 					token = "?" + scopeNumber + "_" + token;
 				}
-				if(parent.getType() == GdlType.CLAUSE || parent.getType() == GdlType.ROOT){
+				if (parent.getType() == GdlType.CLAUSE || parent.getType() == GdlType.ROOT) {
 					newNode = GdlNodeFactory.createGdlFormula(token, parent);
 				} else {
 					newNode = GdlNodeFactory.createGdlTerm(token, parent);

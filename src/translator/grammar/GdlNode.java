@@ -1,11 +1,12 @@
 package translator.grammar;
 
-import translator.MckTranslator.GdlType;
-
 import java.util.ArrayList;
 
 public interface GdlNode extends Iterable<GdlNode> {
-	
+
+	public enum GdlType {
+		ROOT, CLAUSE, FORMULA, FUNCTION, CONSTANT, VARIABLE
+	}
 
 	public static final String GDL_ROLE = "role";
 	public static final String GDL_LEGAL = "legal";
@@ -19,8 +20,7 @@ public interface GdlNode extends Iterable<GdlNode> {
 	public static final String GDL_BASE = "base";
 	public static final String GDL_INPUT = "input";
 	public static final String GDL_DISTINCT = "distinct";
-	
-	
+
 	public String getAtom();
 
 	public GdlType getType();

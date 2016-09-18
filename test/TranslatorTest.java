@@ -5,7 +5,6 @@ import org.junit.Test;
 import translator.GdlParser;
 import translator.MckTranslator;
 import translator.grammar.GdlNode;
-import translator.graph.DependencyGraph;
 import translator.graph.DomainGraph;
 import java.util.Map;
 import java.util.HashMap;
@@ -141,7 +140,7 @@ public class TranslatorTest {
 					assertThat(node.getChildren().isEmpty(), is(false));
 					break;
 				case CLAUSE:
-					assertThat(node.getParent().getType(), is(MckTranslator.GdlType.ROOT));
+					assertThat(node.getParent().getType(), is(GdlNode.GdlType.ROOT));
 					break;
 				default:
 				}

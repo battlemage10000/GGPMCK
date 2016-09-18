@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-import translator.MckTranslator.GdlType;
+import translator.grammar.GdlNode.GdlType;
 
 public class DomainGraph {
 	private Map<Term, ArrayList<Term>> adjacencyMap;

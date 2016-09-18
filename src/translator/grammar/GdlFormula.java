@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import translator.LparseNode;
-import translator.MckTranslator.GdlType;
+import translator.grammar.GdlNode;
 
 public class GdlFormula implements GdlNode, LparseNode {
 
@@ -63,25 +63,25 @@ public class GdlFormula implements GdlNode, LparseNode {
 
 		switch (getType()) {
 		case FORMULA:
-			if(!getChildren().isEmpty()){
+			if (!getChildren().isEmpty()) {
 				if (getAtom().equals("not")) {
-				lparse.append("t1(");
-			} else {
-				lparse.append(getAtom() + "(");
-			}
-			// Parameters
-			for (int i = 0; i < getChildren().size() - 1; i++) {
-				lparse.append(((LparseNode) getChildren().get(i)).toLparse());
-				lparse.append(", ");
-			}
-			lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparse());
-			lparse.append(")");
+					lparse.append("t1(");
+				} else {
+					lparse.append(getAtom() + "(");
+				}
+				// Parameters
+				for (int i = 0; i < getChildren().size() - 1; i++) {
+					lparse.append(((LparseNode) getChildren().get(i)).toLparse());
+					lparse.append(", ");
+				}
+				lparse.append(((LparseNode) getChildren().get(getChildren().size() - 1)).toLparse());
+				lparse.append(")");
 
-			// Facts
-			if (getParent().getType() == GdlType.ROOT) {
-				lparse.append(".\n");
-			}
-			}else{
+				// Facts
+				if (getParent().getType() == GdlType.ROOT) {
+					lparse.append(".\n");
+				}
+			} else {
 				lparse.append(getAtom());
 			}
 			break;
@@ -111,8 +111,7 @@ public class GdlFormula implements GdlNode, LparseNode {
 			// base and inputs
 			if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
 				lparse.append("input(");
-			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE)
-					|| getAtom().equals(GDL_NEXT)) {
+			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)) {
 				lparse.append("base(");
 			} else if (getAtom().equals("not")) {
 				lparse.append("t1(");
