@@ -10,12 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import translator.MckTranslator.GdlType;
-import translator.grammar.Gdl;
-import translator.grammar.GdlFormula;
 import translator.grammar.GdlNode;
 import translator.grammar.GdlNodeFactory;
-import translator.grammar.GdlRule;
-import translator.grammar.GdlTerm;
 
 public class GdlParser {
 
@@ -120,7 +116,7 @@ public class GdlParser {
 					scopeNumber++;
 				}
 				break;
-			case MckTranslator.GDL_CLAUSE:
+			case GdlNode.GDL_CLAUSE:
 				GdlNode newNode = GdlNodeFactory.createGdlRule(parent);
 				parent.getChildren().add(newNode);
 				if (openBracket) {

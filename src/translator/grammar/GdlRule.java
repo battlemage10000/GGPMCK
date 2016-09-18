@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import translator.LparseNode;
-import translator.MckTranslator;
 import translator.MckTranslator.GdlType;
 
 public class GdlRule implements GdlNode, LparseNode {
@@ -29,7 +28,7 @@ public class GdlRule implements GdlNode, LparseNode {
 
 	@Override
 	public String getAtom() {
-		return MckTranslator.GDL_CLAUSE;
+		return GDL_CLAUSE;
 	}
 
 	@Override

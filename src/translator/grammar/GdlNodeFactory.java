@@ -1,9 +1,7 @@
 package translator.grammar;
 
-import java.util.HashMap;
-
 public class GdlNodeFactory {
-	private static final HashMap<String, GdlNode> termMap = new HashMap<String, GdlNode>();
+	//private static final HashMap<String, GdlNode> termMap = new HashMap<String, GdlNode>();
 
 	public static GdlNode createGdl() {
 		return new Gdl();

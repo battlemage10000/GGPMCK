@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import translator.LparseNode;
-import translator.MckTranslator;
 import translator.MckTranslator.GdlType;
 
 public class Gdl implements GdlNode, LparseNode {
@@ -33,9 +32,9 @@ public class Gdl implements GdlNode, LparseNode {
 		for (GdlNode clause : getChildren()) {
 			lparse.append(((LparseNode) clause).toLparse());
 			if (clause.getType() == GdlType.CLAUSE) {
-				if (clause.getChildren().get(0).getAtom().equals(MckTranslator.GDL_INIT)
-						|| clause.getChildren().get(0).getAtom().equals(MckTranslator.GDL_NEXT)
-						|| clause.getChildren().get(0).getAtom().equals(MckTranslator.GDL_LEGAL)) {
+				if (clause.getChildren().get(0).getAtom().equals(GDL_INIT)
+						|| clause.getChildren().get(0).getAtom().equals(GDL_NEXT)
+						|| clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)) {
 					lparse.append(((LparseNode) clause).toLparseWithBaseInput());
 				}
 			}

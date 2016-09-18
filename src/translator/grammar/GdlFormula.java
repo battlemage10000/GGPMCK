@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import translator.LparseNode;
-import translator.MckTranslator;
 import translator.MckTranslator.GdlType;
 
 public class GdlFormula implements GdlNode, LparseNode {
@@ -110,10 +109,10 @@ public class GdlFormula implements GdlNode, LparseNode {
 		switch (getType()) {
 		case FORMULA:
 			// base and inputs
-			if (getAtom().equals(MckTranslator.GDL_DOES) || getAtom().equals(MckTranslator.GDL_LEGAL)) {
+			if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
 				lparse.append("input(");
-			} else if (getAtom().equals(MckTranslator.GDL_INIT) || getAtom().equals(MckTranslator.GDL_TRUE)
-					|| getAtom().equals(MckTranslator.GDL_NEXT)) {
+			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE)
+					|| getAtom().equals(GDL_NEXT)) {
 				lparse.append("base(");
 			} else if (getAtom().equals("not")) {
 				lparse.append("t1(");

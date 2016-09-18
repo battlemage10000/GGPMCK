@@ -12,18 +12,6 @@ import translator.graph.DomainGraph;
  */
 public class MckTranslator {
 
-	public static final String GDL_ROLE = "role";
-	public static final String GDL_LEGAL = "legal";
-	public static final String GDL_DOES = "does";
-	public static final String GDL_INIT = "init";
-	public static final String GDL_TRUE = "true";
-	public static final String GDL_NEXT = "next";
-	public static final String GDL_SEES = "sees";
-	public static final String GDL_CLAUSE = "<=";
-	public static final String GDL_NOT = "not";
-	public static final String GDL_BASE = "base";
-	public static final String GDL_INPUT = "input";
-	public static final String GDL_DISTINCT = "distinct";
 
 	/**
 	 * Constructs a dependency graph used to order rules for mck translation The
@@ -39,13 +27,13 @@ public class MckTranslator {
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.CLAUSE) {
 				GdlNode headNode = node.getChildren().get(0);
-				if (!headNode.getAtom().equals(GDL_BASE) && !headNode.getAtom().equals(GDL_INPUT)) {
+				if (!headNode.getAtom().equals(GdlNode.GDL_BASE) && !headNode.getAtom().equals(GdlNode.GDL_INPUT)) {
 					for (int i = 1; i < node.getChildren().size(); i++) {
 						GdlNode toNode = node.getChildren().get(i);
-						if (toNode.getAtom().equals(GDL_NOT)) {
+						if (toNode.getAtom().equals(GdlNode.GDL_NOT)) {
 							toNode = toNode.getChildren().get(0);
 						}
-						if (toNode.getAtom().equals(GDL_TRUE)) {
+						if (toNode.getAtom().equals(GdlNode.GDL_TRUE)) {
 							// toNode = toNode.getChildren().get(0);
 						}
 						graph.addEdge(headNode.getAtom(), toNode.getAtom());
@@ -66,7 +54,7 @@ public class MckTranslator {
 
 		for (GdlNode node : root) {
 			if ((node.getType() == GdlType.FUNCTION || node.getType() == GdlType.FORMULA)
-					&& !node.getAtom().equals(GDL_NOT)) {
+					&& !node.getAtom().equals(GdlNode.GDL_NOT)) {
 				if (node.getType() == GdlType.FUNCTION) {
 					graph.addFunction(node.getAtom(), node.getChildren().size());
 				} else if (node.getType() == GdlType.FORMULA) {
@@ -244,20 +232,20 @@ public class MckTranslator {
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 
-		//if (node.getAtom().equals(GDL_DISTINCT)) {
+		//if (node.getAtom().equals(GdlNode.GDL_DISTINCT)) {
 		//	if (node.getChildren().get(0).toString().equals(node.getChildren().get(1).toString())) {
 		//		sb.append(MCK_FALSE);
 		//	} else {
 		//		sb.append(MCK_TRUE);
 		//	}
 		//} else 
-		if (node.getAtom().equals(GDL_DOES)) {
+		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
 			sb.append("did_" + node.getChildren().get(0));
 			sb.append(" == " + MCK_MOVE_PREFIX + formatMckNode(node.getChildren().get(1)));
 		} else {
-			if (node.getAtom().equals(GDL_NOT)) {
+			if (node.getAtom().equals(GdlNode.GDL_NOT)) {
 				sb.append("neg ");
-			} else if (node.getAtom().equals(GDL_TRUE) || node.getAtom().equals(GDL_NEXT)) {
+			} else if (node.getAtom().equals(GdlNode.GDL_TRUE) || node.getAtom().equals(GdlNode.GDL_NEXT)) {
 
 			} else {
 				sb.append(node.getAtom() + "_");
@@ -322,13 +310,13 @@ public class MckTranslator {
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.FORMULA) {
 				switch (node.getAtom()) {
-				case GDL_NOT:
-				case GDL_BASE:
-				case GDL_INPUT:
-				case GDL_ROLE:
+				case GdlNode.GDL_NOT:
+				case GdlNode.GDL_BASE:
+				case GdlNode.GDL_INPUT:
+				case GdlNode.GDL_ROLE:
 					// Skip these predicates due to redundancy
 					break;
-				case GDL_SEES:
+				case GdlNode.GDL_SEES:
 					if (!ATs.contains(formatMckNode(node))) {
 						ATs.add(formatMckNode(node));
 					}
@@ -336,13 +324,13 @@ public class MckTranslator {
 						AT.add(formatMckNode(node));
 					}
 					break;
-				case GDL_TRUE:
-				case GDL_NEXT:
+				case GdlNode.GDL_TRUE:
+				case GdlNode.GDL_NEXT:
 					if (!ATf.contains(formatMckNode(node.getChildren().get(0)))) {
 						ATf.add(formatMckNode(node.getChildren().get(0)));
 					}
 					break;
-				case GDL_DOES:
+				case GdlNode.GDL_DOES:
 					String role = formatMckNode(node.getChildren().get(0));
 					String move = formatMckNode(node.getChildren().get(1));
 					if (!ATd.containsKey(role)) {
@@ -352,7 +340,7 @@ public class MckTranslator {
 						ATd.get(role).add(move);
 					}
 					break;
-				case GDL_INIT:
+				case GdlNode.GDL_INIT:
 					if (!ATi.contains(formatMckNode(node.getChildren().get(0)))) {
 						ATi.add(formatMckNode(node.getChildren().get(0)));
 					}
@@ -532,14 +520,14 @@ public class MckTranslator {
 			case "<=":
 				childrenQueue.addAll(node.getChildren());
 				break;
-			case GDL_LEGAL:
+			case GdlNode.GDL_LEGAL:
 				String move = node.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
 				boolVars.add(move);
 				boolVars.add(move + "_old");
 				boolVars.add("legal_" + node.getChildren().get(0).getAtom() + "_" + move);
 				boolVars.add("did_" + node.getChildren().get(0).getAtom() + "_" + move);
 				break;
-			case GDL_SEES:
+			case GdlNode.GDL_SEES:
 				move = node.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
 				boolVars.add("sees_" + node.getChildren().get(0).getAtom() + "_" + move);
 				break;
@@ -553,7 +541,7 @@ public class MckTranslator {
 		Map<String, List<String>> roleToMoveMap = new HashMap<String, List<String>>();
 
 		for (GdlNode clause : root.getChildren()) {
-			if (clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GDL_LEGAL)) {
+			if (clause.getType() == GdlType.CLAUSE && (clause.getChildren().get(0).getAtom()).equals(GdlNode.GDL_LEGAL)) {
 				GdlNode legal = clause.getChildren().get(0);
 				String role = legal.getChildren().get(0).toString();
 				String move = legal.getChildren().get(1).toString().replace("(", "").replace(")", "").replace(" ", "_");
@@ -838,9 +826,9 @@ public class MckTranslator {
 				for (GdlNode clause : getChildren()) {
 					lparse.append(((LparseNode) clause).toLparse());
 					if (clause.getType() == GdlType.CLAUSE) {
-						if (clause.getChildren().get(0).getAtom().equals(GDL_INIT)
-								|| clause.getChildren().get(0).getAtom().equals(GDL_NEXT)
-								|| clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)) {
+						if (clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INIT)
+								|| clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_NEXT)
+								|| clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_LEGAL)) {
 							lparse.append(((LparseNode) clause).toLparseWithBaseInput());
 						}
 					}
@@ -915,9 +903,9 @@ public class MckTranslator {
 			case FORMULA:
 			case FUNCTION:
 				// base and inputs
-				if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
+				if (getAtom().equals(GdlNode.GDL_DOES) || getAtom().equals(GdlNode.GDL_LEGAL)) {
 					lparse.append("input(");
-				} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)) {
+				} else if (getAtom().equals(GdlNode.GDL_INIT) || getAtom().equals(GdlNode.GDL_TRUE) || getAtom().equals(GdlNode.GDL_NEXT)) {
 					lparse.append("base(");
 				} else if (getAtom().equals("not")) {
 					lparse.append("t1(");
