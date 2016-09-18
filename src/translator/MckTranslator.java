@@ -25,6 +25,7 @@ public class MckTranslator {
 	public static final String GDL_NOT = "not";
 	public static final String GDL_BASE = "base";
 	public static final String GDL_INPUT = "input";
+	public static final String GDL_DISTINCT = "distinct";
 
 	/**
 	 * Constructs a dependency graph used to order rules for mck translation The
@@ -192,6 +193,8 @@ public class MckTranslator {
 	public static String MCK_ROLE_PREFIX = "R_";
 	public static String MCK_MOVE_PREFIX = "M_";
 	public static String MCK_ACTION_PREFIX = "Act_";
+	public static String MCK_TRUE = "True";
+	public static String MCK_FALSE = "False";
 
 	public static String orderGdlRules(GdlNode root) {
 		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
@@ -243,9 +246,15 @@ public class MckTranslator {
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 
-		if (node.getAtom().equals(GDL_DOES)) {
+		if (node.getAtom().equals(GDL_DISTINCT)) {
+			if (node.getChildren().get(0).toString().equals(node.getChildren().get(1).toString())) {
+				sb.append(MCK_FALSE);
+			} else {
+				sb.append(MCK_TRUE);
+			}
+		} else if (node.getAtom().equals(GDL_DOES)) {
 			sb.append("did_" + node.getChildren().get(0));
-			sb.append(" == " + formatMckNode(node.getChildren().get(1)));
+			sb.append(" == " + MCK_MOVE_PREFIX + formatMckNode(node.getChildren().get(1)));
 		} else {
 			if (node.getAtom().equals(GDL_NOT)) {
 				sb.append("neg ");
@@ -278,8 +287,8 @@ public class MckTranslator {
 			sb.delete(sb.length() - 4, sb.length());
 		}
 
-		sb.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " = True");
-		sb.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " = False");
+		sb.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := True");
+		sb.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := False");
 		sb.append(System.lineSeparator() + "fi;");
 		return sb.toString();
 	}
@@ -336,9 +345,19 @@ public class MckTranslator {
 		// Environment Variables
 		mck.append(System.lineSeparator() + "-- Environment Variables");
 		mck.append(System.lineSeparator());
+		for(String role : ATd.keySet()){
+			mck.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
+			for (String move : ATd.get(role)) {
+				mck.append(MCK_MOVE_PREFIX + move + ", ");
+			}
+			mck.append(MCK_INIT + ", " + MCK_STOP + "}");
+		}
+		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- AT:");
 		for (String node : AT) {
-			mck.append(System.lineSeparator() + node + " : Bool");
+			if (!node.equals(MCK_TRUE) && !node.equals(MCK_FALSE)) {
+				mck.append(System.lineSeparator() + node + " : Bool");
+			}
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATf:");
@@ -349,11 +368,6 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATd:");
 		for (String role : ATd.keySet()) {
-			mck.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
-			for (String move : ATd.get(role)) {
-				mck.append(MCK_MOVE_PREFIX + move + ", ");
-			}
-			mck.append(MCK_INIT + ", " + MCK_STOP + "}");
 			mck.append(System.lineSeparator() + "did_" + role + " : " + MCK_ACTION_PREFIX + role);
 			mck.append(System.lineSeparator());
 		}
@@ -381,41 +395,21 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
 
-		// Agent Protocols
-		mck.append(System.lineSeparator() + "-- Agent Protocols");
+		// Agent Declaration
+		mck.append(System.lineSeparator() + "-- Agent Declaration");
 		mck.append(System.lineSeparator());
 
-		for (String role : ATd.keySet()) {
-			mck.append(System.lineSeparator() + "protocol \"" + role + "\" (");
-			for (String move : ATd.get(role)) {
-				mck.append(System.lineSeparator() + "legal_" + role + "_" + move + " Bool,");
-			}
-			mck.append(System.lineSeparator() + "did_" + role + " observable " + MCK_ACTION_PREFIX + role);
-			mck.append(System.lineSeparator() + ")");
-			mck.append(System.lineSeparator() + "begin do neg terminal ->");
-			mck.append(System.lineSeparator() + "  if  ");
-			for (String move : ATd.get(role)) {
-				mck.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
-				mck.append(System.lineSeparator() + "  []  ");
-			}
-			mck.delete(mck.length() - 7, mck.length());
-			mck.append(System.lineSeparator() + "  fi  od");
-			mck.append(System.lineSeparator() + "end");
-
-		}
-
-		mck.append(System.lineSeparator());
 		for (String role : ATd.keySet()) {
 			mck.append(System.lineSeparator() + "agent " + MCK_ROLE_PREFIX + role + " \"" + role + "\" (");
 			for (String move : ATd.get(role)) {
-				mck.append(System.lineSeparator() + "legal_" + role + "_" + move + " Bool,");
+				mck.append("legal_" + role + "_" + move + ", ");
 			}
-			mck.append(System.lineSeparator() + "did_" + role + " observable " + MCK_ACTION_PREFIX + role);
-			mck.append(System.lineSeparator() + ")");
+			mck.append("did_" + role);
+			mck.append(")");
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
-
+		
 		// State Transitions
 		mck.append(System.lineSeparator() + "-- State Transitions");
 		mck.append(System.lineSeparator() + "transitions");
@@ -423,34 +417,22 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 
 		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
-		GdlNode repeatHead = GdlNodeFactory.createGdl();
+		GdlNode repeatHead = null;
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE) {
-				if (clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
+				if (repeatHead != null && clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
 					repeatHeadList.add(clause);
 				} else {
-					mck.append(System.lineSeparator() + formatClause(repeatHead, repeatHeadList));
+					if(repeatHead != null){
+						mck.append(System.lineSeparator() + formatClause(repeatHead, repeatHeadList));
+					}
 					repeatHead = clause.getChildren().get(0);
 					repeatHeadList = new ArrayList<GdlNode>();
 					repeatHeadList.add(clause);
 				}
 			}
 		}
-
-		// for (String role : ATd.keySet()) {
-		// mck.append(System.lineSeparator() + "if ");
-		// for (String move : ATd.get(role)) {
-		// mck.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + "
-		// -> did_" + role + " := "
-		// + MCK_MOVE_PREFIX + move);
-		// mck.append(System.lineSeparator() + "[] ");
-		// }
-		// mck.append("otherwise -> did_" + role + " := " + MCK_STOP);
-		// mck.append(System.lineSeparator() + "fi;");
-		// }
-
-		// TODO: Add more to state transition section
-		mck.append(System.lineSeparator());
+		mck.deleteCharAt(mck.length() - 1);
 		mck.append(System.lineSeparator() + "end");
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
@@ -469,7 +451,32 @@ public class MckTranslator {
 		mck.delete(mck.length() - 4, mck.length());
 		mck.append(")");
 		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator());
 
+		// Protocol Declaration
+		mck.append(System.lineSeparator() + "-- Protocol Declaration");
+		mck.append(System.lineSeparator());
+		for (String role : ATd.keySet()) {
+			mck.append(System.lineSeparator() + "protocol \"" + role + "\" (");
+			for (String move : ATd.get(role)) {
+				mck.append("legal_" + role + "_" + move + " : Bool, ");
+			}
+			mck.append("did_" + role + " : observable " + MCK_ACTION_PREFIX + role);
+			mck.append(")");
+			mck.append(System.lineSeparator() + "begin");
+			mck.append(System.lineSeparator() + "  do neg terminal ->");
+			mck.append(System.lineSeparator() + "    if  ");
+			for (String move : ATd.get(role)) {
+				mck.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
+				mck.append(System.lineSeparator() + "    []  ");
+			}
+			mck.delete(mck.length() - 9, mck.length());
+			mck.append(System.lineSeparator() + "    fi");
+			mck.append(System.lineSeparator() + "  od");
+			mck.append(System.lineSeparator() + "end");
+		}
+		mck.append(System.lineSeparator());
+		
 		return mck.toString();
 	}
 
