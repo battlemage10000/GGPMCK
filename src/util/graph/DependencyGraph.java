@@ -1,6 +1,9 @@
 package util.graph;
 
 import java.util.Map;
+
+import util.grammar.GdlNode;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ArrayList;
@@ -19,6 +22,9 @@ public class DependencyGraph {
 	}
 
 	public void addTerm(String term) {
+		//if (term.equals(GdlNode.GDL_TRUE)) {
+		//	term = GdlNode.GDL_TRUE + "_old";
+		//}
 		if (!hasTerm(term)) {
 			adjacencyMap.put(term, new ArrayList<String>());
 		}

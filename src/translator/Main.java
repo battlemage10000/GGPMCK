@@ -10,7 +10,7 @@ import util.grammar.GdlNode;
 import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
 
-public class Main extends MckTranslator {
+public class Main {
 	/**
 	 * Can be used from the command line by moving to the build directory and
 	 * using java translator.MckTranslator path/to/game.gdl or java -jar
@@ -127,47 +127,47 @@ public class Main extends MckTranslator {
 
 				// Use internal grounder
 				if (groundSwitch) {
-					DomainGraph domain = constructDomainGraph(root);
+					DomainGraph domain = GdlParser.constructDomainGraph(root);
 					if (outputDotSwitch) {
 						System.out.println(domain.dotEncodedGraph());
 					}
-					root = groundGdl(root, domain);
+					root = GdlParser.groundGdl(root, domain);
 				}
 
 				// Order rules by stratum
 				if (orderedSwitch || !outputLparseSwitch) {
-					root = GdlParser.parseString(orderGdlRules(root));
+					root = GdlParser.parseString(MckTranslator.orderGdlRules(root));
 				}
 				
 				if (outputDepDotSwitch) {
-					DependencyGraph graph = constructDependencyGraph(root);
+					DependencyGraph graph = GdlParser.constructDependencyGraph(root);
 					System.out.println(graph.dotEncodedGraph());
 				}
 
 				// Print parse tree for debugging
 				if (parseTreeSwitch) {
-					printParseTree(root);
+					GdlParser.printParseTree(root);
 				}
 
 				// Print parse tree types for debugging
 				if (parseTreeTypesSwitch) {
-					printParseTreeTypes(root);
+					GdlParser.printParseTreeTypes(root);
 				}
 
 				if (prettyPrintSwitch) {
-					prettyPrint(root);
+					GdlParser.prettyPrint(root);
 				}
 
 				String translation;
 				if (outputLparseSwitch) {
-					translation = toLparse(root);
+					translation = GdlParser.toLparse(root);
 				} else {
 					//root = GdlParser.parseString(orderGdlRules(root));
-					translation = toMck(root);
+					translation = MckTranslator.toMck(root);
 				}
 
 				if (outputFileSwitch) {
-					saveFile(translation, outputFilePath);
+					GdlParser.saveFile(translation, outputFilePath);
 				} else if (!debugSwitch || outputLparseSwitch || outputMckSwitch) {
 					System.out.println(translation);
 				}
