@@ -2,7 +2,6 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
-import translator.MckTranslator;
 import util.GdlParser;
 import util.grammar.GdlNode;
 import util.graph.DomainGraph;
@@ -33,7 +32,7 @@ public class TranslatorTest {
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
-		Map<String, ArrayList<String>> dependencyMap = MckTranslator.constructDependencyGraph(root)
+		Map<String, ArrayList<String>> dependencyMap = GdlParser.constructDependencyGraph(root)
 				.getDependencyMap();
 
 		assertThat(dependencyMap.keySet(), hasItem("goal"));
@@ -53,7 +52,7 @@ public class TranslatorTest {
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
-		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = MckTranslator.constructDomainGraph(root)
+		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = GdlParser.constructDomainGraph(root)
 				.getMap();
 
 		assertThat(domainMap.keySet(), hasItems(new DomainGraph.Term("goal", 0)));
@@ -74,10 +73,10 @@ public class TranslatorTest {
 		}
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
-		DomainGraph domainGraph = MckTranslator.constructDomainGraph(root);
-		GdlNode groundedRoot = MckTranslator.groundGdl(root, domainGraph);
+		DomainGraph domainGraph = GdlParser.constructDomainGraph(root);
+		GdlNode groundedRoot = GdlParser.groundGdl(root, domainGraph);
 
-		assertThat(MckTranslator.isVariableInTree(groundedRoot), is(false));
+		assertThat(GdlParser.isVariableInTree(groundedRoot), is(false));
 	}
 
 	@Test
@@ -96,7 +95,7 @@ public class TranslatorTest {
 			e.printStackTrace();
 		}
 
-		String groundedClauses = MckTranslator.groundClause(GdlParser.expandParseTree(tokens), domainMap);
+		String groundedClauses = GdlParser.groundClause(GdlParser.expandParseTree(tokens), domainMap);
 
 		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))" + System.lineSeparator()
 				+ "(<= (goal blue 100) (true (win blue)))" + System.lineSeparator()));
@@ -159,14 +158,14 @@ public class TranslatorTest {
 		try {
 			List<String> tokens = GdlParser.tokenizeFile(groundedTestGdlPath);
 			GdlNode root = GdlParser.expandParseTree(tokens);
-			MckTranslator.saveFile(root.toString(), "build/testGameAfterParse.gdl");
+			GdlParser.saveFile(root.toString(), "build/testGameAfterParse.gdl");
 
 			// Check that gdlTokenizer, expandParseTree, ParseNode.toString and
 			// saveFile are doing their job
 			List<String> tokensAfterSave = GdlParser.tokenizeFile("build/testGameAfterParse.gdl");
 			assertThat(tokens, is(tokensAfterSave));
 
-			MckTranslator.saveFile(GdlParser.expandParseTree(tokensAfterSave).toString(),
+			GdlParser.saveFile(GdlParser.expandParseTree(tokensAfterSave).toString(),
 					"build/testGameAfterParseTwice.gdl");
 			List<String> tokensAfterSaveTwice = GdlParser.tokenizeFile("build/testGameAfterParseTwice.gdl");
 			assertThat(tokensAfterSave, is(tokensAfterSaveTwice));
@@ -184,7 +183,7 @@ public class TranslatorTest {
 		try {
 			List<String> tokens = GdlParser.tokenizeFile(testGdlPath);
 			GdlNode root = GdlParser.expandParseTree(tokens);
-			String lparse = MckTranslator.toLparse(root);
+			String lparse = GdlParser.toLparse(root);
 			System.out.println(lparse);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();

@@ -22,9 +22,6 @@ public class DependencyGraph {
 	}
 
 	public void addTerm(String term) {
-		//if (term.equals(GdlNode.GDL_TRUE)) {
-		//	term = GdlNode.GDL_TRUE + "_old";
-		//}
 		if (!hasTerm(term)) {
 			adjacencyMap.put(term, new ArrayList<String>());
 		}
@@ -85,8 +82,39 @@ public class DependencyGraph {
 		return dot.toString();
 	}
 
+	public void addOldValue (String node, String child) {
+		//if(node.equals(GdlNode.GDL_NEXT)){
+		//	addEdge(GdlNode.GDL_NEXT, child + "_old");
+		//} else if(node.equals(GdlNode.GDL_SEES)){
+		//	addEdge(GdlNode.GDL_SEES, child + "_old");
+		//} else {
+		//	addEdge(node + "_old", child + "_old");
+		//}
+		if(child.equals(GdlNode.GDL_TRUE)){
+			addEdge(node, GdlNode.GDL_TRUE + "_old");
+			adjacencyMap.get(node).remove(GdlNode.GDL_TRUE);
+		}
+		for (String grandChild : adjacencyMap.get(child)) {
+			addOldValue (child, grandChild);
+		}
+	}
+	
 	public void computeStratum() {
 		LinkedList<String> unset = new LinkedList<String>();
+		unset.addAll(adjacencyMap.get(GdlNode.GDL_NEXT));
+		while (!unset.isEmpty()) {
+			String toNode = unset.remove(0);
+			addOldValue(GdlNode.GDL_NEXT, toNode);
+		}
+		unset.addAll(adjacencyMap.get(GdlNode.GDL_SEES));
+		while (!unset.isEmpty()) {
+			String toNode = unset.remove(0);
+			addOldValue(GdlNode.GDL_SEES, toNode);
+		}
+		
+		addEdge(GdlNode.GDL_TRUE, GdlNode.GDL_NEXT);
+		
+		unset = new LinkedList<String>();
 		LinkedList<String> unsetAlt = new LinkedList<String>();
 		for (String key : adjacencyMap.keySet()) {
 			if (adjacencyMap.get(key).isEmpty()) {
@@ -115,7 +143,11 @@ public class DependencyGraph {
 					}
 				}
 				if (!unknownDep) {
-					stratumMap.put(from, newStratum + 1);
+					if (from.equals(GdlNode.GDL_NEXT)) {
+						stratumMap.put(from, newStratum + 2);
+					} else {
+						stratumMap.put(from, newStratum + 1);
+					}
 					changed = true;
 				}
 			}
@@ -128,37 +160,6 @@ public class DependencyGraph {
 				unsetAlt = new LinkedList<String>();
 				changed = false;
 			}
-		}
-	}
-
-	@Deprecated
-	public static class Term {
-		private final String term;
-
-		public Term(String term) {
-			this.term = term;
-		}
-
-		public String getTerm() {
-			return this.term;
-		}
-
-		@Override
-		public int hashCode() {
-			return term.hashCode();
-		}
-
-		@Override
-		public String toString() {
-			return term;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj != null && obj instanceof Term && ((Term) obj).getTerm().equals(this.term)) {
-				return true;
-			}
-			return false;
 		}
 	}
 }

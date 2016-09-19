@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import translator.MckTranslator.ParseNode;
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
 import util.grammar.LparseNode;
