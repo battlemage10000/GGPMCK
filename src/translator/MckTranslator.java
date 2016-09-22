@@ -124,8 +124,8 @@ public class MckTranslator {
 		ArrayList<String> AT = new ArrayList<String>();
 		ArrayList<String> ATf = new ArrayList<String>();
 		HashMap<String, List<String>> ATd = new HashMap<String, List<String>>();
+		HashMap<String, List<String>> ATs = new HashMap<String, List<String>>();
 		ArrayList<String> ATi = new ArrayList<String>();
-		ArrayList<String> ATs = new ArrayList<String>();
 
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.FORMULA) {
@@ -138,12 +138,24 @@ public class MckTranslator {
 					// Skip these predicates due to redundancy
 					break;
 				case GdlNode.GDL_SEES:
-					if (!ATs.contains(formatMckNode(node))) {
-						ATs.add(formatMckNode(node));
-					}
+					//if (!ATs.contains(formatMckNode(node))) {
+					//	ATs.add(formatMckNode(node));
+					//}
 					// if (!AT.contains(formatMckNode(node))) {
 					// AT.add(formatMckNode(node));
 					// }
+					//break;
+					//if (!AT.contains(formatMckNode(node))) {
+					//	AT.add(formatMckNode(node));
+					//}
+					String roleS = formatMckNode(node.getChildren().get(0));
+					String sees = formatMckNode(node.getChildren().get(1));
+					if (!ATs.containsKey(roleS)) {
+						ATs.put(roleS, new ArrayList<String>());
+					}
+					if (!ATs.get(roleS).contains(sees)) {
+						ATs.get(roleS).add(sees);
+					}
 					break;
 				case GdlNode.GDL_TRUE:
 				case GdlNode.GDL_NEXT:
@@ -210,8 +222,10 @@ public class MckTranslator {
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATs:");
-		for (String seen : ATs) {
-			mck.append(System.lineSeparator() + seen + " : Bool");
+		for (String roleS : ATs.keySet()) {
+			for (String move : ATs.get(roleS)) {
+				mck.append(System.lineSeparator() + roleS + "_" + move + " : Bool");
+			}
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
@@ -224,9 +238,9 @@ public class MckTranslator {
 			if (node.length() >= 5 && node.substring(0, 5).equals(GdlNode.GDL_LEGAL)) {
 				mck.append(System.lineSeparator() + node + " == ");
 				// if (ATi.contains(node)) {
-				mck.append("True");
+				// mck.append("True");
 				// } else {
-				// mck.append("False");
+				mck.append("False");
 				// }
 				mck.append(" /\\ ");
 			} else {
@@ -256,8 +270,8 @@ public class MckTranslator {
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + ", ");
 			}
-			for (String seen : ATs) {
-				mck.append(seen + ", ");
+			for (String move : ATs.get(role)) {
+				mck.append(role + "_" + move + ", ");
 			}
 			mck.append(MCK_DOES_PREFIX + role);
 			mck.append(")");
@@ -335,8 +349,8 @@ public class MckTranslator {
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + " : Bool, ");
 			}
-			for (String seen : ATs) {
-				mck.append(seen + " : observable Bool, ");
+			for (String sees : ATs.get(role)) {
+				mck.append(role + "_" + sees + " : observable Bool, ");
 			}
 			mck.append(MCK_DOES_PREFIX + role + " : observable " + MCK_ACTION_PREFIX + role);
 			mck.append(")");
