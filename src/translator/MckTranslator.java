@@ -91,7 +91,8 @@ public class MckTranslator {
 		return sb.toString();
 	}
 
-	public static String formatClause(ArrayList<String> ATf, DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) {
+	public static String formatClause(ArrayList<String> ATf, DependencyGraph graph, GdlNode headNode,
+			List<GdlNode> bodyList) {
 		if (bodyList.isEmpty() || headNode.toString().equals("")) {
 			return "";
 		}
@@ -103,7 +104,8 @@ public class MckTranslator {
 			mckSubNode.append("(");
 			for (int i = 1; i < clause.getChildren().size(); i++) {
 				String mckFormatted = formatMckNode(clause.getChildren().get(i));
-				if (ATf.contains(mckFormatted) && graph.getStratum(headNode.getAtom()) <= graph.getStratum(GdlNode.GDL_NEXT)) {
+				if (ATf.contains(mckFormatted)
+						&& graph.getStratum(headNode.getAtom()) <= graph.getStratum(GdlNode.GDL_NEXT)) {
 					mckSubNode.append(mckFormatted + "_old /\\ ");
 				} else {
 					mckSubNode.append(mckFormatted + " /\\ ");
@@ -138,16 +140,16 @@ public class MckTranslator {
 					// Skip these predicates due to redundancy
 					break;
 				case GdlNode.GDL_SEES:
-					//if (!ATs.contains(formatMckNode(node))) {
-					//	ATs.add(formatMckNode(node));
-					//}
+					// if (!ATs.contains(formatMckNode(node))) {
+					// ATs.add(formatMckNode(node));
+					// }
 					// if (!AT.contains(formatMckNode(node))) {
 					// AT.add(formatMckNode(node));
 					// }
-					//break;
-					//if (!AT.contains(formatMckNode(node))) {
-					//	AT.add(formatMckNode(node));
-					//}
+					// break;
+					// if (!AT.contains(formatMckNode(node))) {
+					// AT.add(formatMckNode(node));
+					// }
 					String roleS = formatMckNode(node.getChildren().get(0));
 					String sees = formatMckNode(node.getChildren().get(1));
 					if (!ATs.containsKey(roleS)) {
@@ -222,9 +224,9 @@ public class MckTranslator {
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATs:");
-		for (String roleS : ATs.keySet()) {
-			for (String move : ATs.get(roleS)) {
-				mck.append(System.lineSeparator() + roleS + "_" + move + " : Bool");
+		for (String role : ATs.keySet()) {
+			for (String move : ATs.get(role)) {
+				mck.append(System.lineSeparator() + "sees_" + role + "_" + move + " : Bool");
 			}
 		}
 		mck.append(System.lineSeparator());
@@ -242,6 +244,14 @@ public class MckTranslator {
 				// } else {
 				mck.append("False");
 				// }
+				mck.append(" /\\ ");
+			} else if (node.length() >= 8 && node.substring(0, 8).equals(GdlNode.GDL_DISTINCT)) {
+				mck.append(System.lineSeparator() + node + " == ");
+				if (node.substring(9, 9 + (node.length() - 9) / 2).equals(node.substring(9 + (node.length() - 9) / 2 + 1))) {
+					mck.append("False");
+				} else {
+					mck.append("True");
+				}
 				mck.append(" /\\ ");
 			} else {
 				mck.append(System.lineSeparator() + node + " == ");
@@ -271,7 +281,7 @@ public class MckTranslator {
 				mck.append("legal_" + role + "_" + move + ", ");
 			}
 			for (String move : ATs.get(role)) {
-				mck.append(role + "_" + move + ", ");
+				mck.append("sees_" + role + "_" + move + ", ");
 			}
 			mck.append(MCK_DOES_PREFIX + role);
 			mck.append(")");
@@ -297,7 +307,7 @@ public class MckTranslator {
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
-		
+
 		for (String trueNode : ATf) {
 			mck.append(System.lineSeparator() + trueNode + "_old" + " := " + trueNode + ";");
 		}
@@ -312,7 +322,8 @@ public class MckTranslator {
 					repeatHeadList.add(clause);
 				} else {
 					if (repeatHead != null) {
-						mck.append(System.lineSeparator() + formatClause(ATf, GdlParser.constructDependencyGraph(root), repeatHead, repeatHeadList));
+						mck.append(System.lineSeparator() + formatClause(ATf, GdlParser.constructDependencyGraph(root),
+								repeatHead, repeatHeadList));
 					}
 					repeatHead = clause.getChildren().get(0);
 					repeatHeadList = new ArrayList<GdlNode>();
@@ -350,7 +361,7 @@ public class MckTranslator {
 				mck.append("legal_" + role + "_" + move + " : Bool, ");
 			}
 			for (String sees : ATs.get(role)) {
-				mck.append(role + "_" + sees + " : observable Bool, ");
+				mck.append("sees_" + role + "_" + sees + " : observable Bool, ");
 			}
 			mck.append(MCK_DOES_PREFIX + role + " : observable " + MCK_ACTION_PREFIX + role);
 			mck.append(")");
