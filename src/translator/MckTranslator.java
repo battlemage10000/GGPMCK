@@ -47,7 +47,7 @@ public class MckTranslator {
 		unordered.addAll(root.getChildren());
 
 		DependencyGraph graph = GdlParser.constructDependencyGraph(root);
-		graph.computeStratum();
+		//graph.computeStratum();
 		Map<String, Integer> stratumMap = graph.getStratumMap();
 		StringBuilder ordered = new StringBuilder();
 		int stratum = -2;
@@ -243,7 +243,6 @@ public class MckTranslator {
 				// mck.append("True");
 				// } else {
 				mck.append("False");
-				// }
 				mck.append(" /\\ ");
 			} else if (node.length() >= 8 && node.substring(0, 8).equals(GdlNode.GDL_DISTINCT)) {
 				mck.append(System.lineSeparator() + node + " == ");

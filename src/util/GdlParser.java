@@ -179,23 +179,59 @@ public class GdlParser {
 
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.CLAUSE) {
-				GdlNode headNode = node.getChildren().get(0);
-				if (!headNode.getAtom().equals(GdlNode.GDL_BASE) && !headNode.getAtom().equals(GdlNode.GDL_INPUT)) {
+				String headNodeString = node.getChildren().get(0).getAtom();
+				switch (headNodeString) {
+				case GdlNode.GDL_BASE:
+				case GdlNode.GDL_INPUT:
+					break;
+					// Skip base and input clauses
+				case GdlNode.GDL_NEXT:
+					headNodeString = formatGdlNode(node.getChildren().get(0).getChildren().get(0));
+				default:
 					for (int i = 1; i < node.getChildren().size(); i++) {
+						boolean isNextTrue = false;
 						GdlNode toNode = node.getChildren().get(i);
-						if (toNode.getAtom().equals(GdlNode.GDL_NOT)) {
+						while (toNode.getAtom().equals(GdlNode.GDL_NOT)
+								|| toNode.getAtom().equals(GdlNode.GDL_TRUE)
+								|| toNode.getAtom().equals(GdlNode.GDL_NEXT)) {
+							if(toNode.getAtom().equals(GdlNode.GDL_TRUE) || toNode.getAtom().equals(GdlNode.GDL_NEXT)){
+								isNextTrue = true;
+							}
 							toNode = toNode.getChildren().get(0);
 						}
-						if (toNode.getAtom().equals(GdlNode.GDL_TRUE)) {
-							//toNode = GdlNodeFactory.createGdlFormula(GdlNode.GDL_NEXT, null);
+						String toNodeString = toNode.getAtom();
+						if (isNextTrue) {
+							toNodeString = formatGdlNode(toNode);
 						}
-						graph.addEdge(headNode.getAtom(), toNode.getAtom());
+							//if(!headNodeString.equals(formatGdlNode(toNode))){
+							//	graph.addEdge(headNodeString, formatGdlNode(toNode));
+							//}
+						//}
+						//else {
+						//	if (!headNodeString.equals(toNode.getAtom())) {
+						//		graph.addEdge(headNodeString, toNode.getAtom());
+						//	}
+						//}
+						if(!headNodeString.equals(toNodeString)){
+							graph.addEdge(headNodeString, toNodeString);
+						}
 					}
 				}
 			}
 		}
 
 		return graph;
+	}
+	
+	public static String formatGdlNode(GdlNode node){
+		StringBuilder sb = new StringBuilder();
+		sb.append(node.getAtom());
+		if(!node.getChildren().isEmpty()){
+			for(GdlNode child : node.getChildren()){
+				sb.append("_" + formatGdlNode(child));
+			}
+		}
+		return sb.toString();
 	}
 
 	/**

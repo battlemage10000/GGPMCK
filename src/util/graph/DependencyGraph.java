@@ -23,7 +23,7 @@ public class DependencyGraph {
 
 	public void addTerm(String term) {
 		if (!hasTerm(term)) {
-			adjacencyMap.put(term, new ArrayList<String>());
+			adjacencyMap.put(term.intern(), new ArrayList<String>());
 		}
 	}
 
@@ -82,83 +82,86 @@ public class DependencyGraph {
 		return dot.toString();
 	}
 
-	public void addOldValue (String node, String child) {
-		//if(node.equals(GdlNode.GDL_NEXT)){
-		//	addEdge(GdlNode.GDL_NEXT, child + "_old");
-		//} else if(node.equals(GdlNode.GDL_SEES)){
-		//	addEdge(GdlNode.GDL_SEES, child + "_old");
-		//} else {
-		//	addEdge(node + "_old", child + "_old");
-		//}
-		if(child.equals(GdlNode.GDL_TRUE)){
+	public void addOldValue(String node, String child) {
+		if (child.equals(GdlNode.GDL_TRUE)) {
 			addEdge(node, GdlNode.GDL_TRUE + "_old");
 			adjacencyMap.get(node).remove(GdlNode.GDL_TRUE);
 		}
 		for (String grandChild : adjacencyMap.get(child)) {
-			addOldValue (child, grandChild);
+			addOldValue(child, grandChild);
 		}
 	}
-	
+
 	public void computeStratum() {
-		LinkedList<String> unset = new LinkedList<String>();
-		unset.addAll(adjacencyMap.get(GdlNode.GDL_NEXT));
-		while (!unset.isEmpty()) {
-			String toNode = unset.remove(0);
-			addOldValue(GdlNode.GDL_NEXT, toNode);
-		}
-		unset.addAll(adjacencyMap.get(GdlNode.GDL_SEES));
-		while (!unset.isEmpty()) {
-			String toNode = unset.remove(0);
-			addOldValue(GdlNode.GDL_SEES, toNode);
-		}
-		
-		addEdge(GdlNode.GDL_TRUE, GdlNode.GDL_NEXT);
-		
-		unset = new LinkedList<String>();
-		LinkedList<String> unsetAlt = new LinkedList<String>();
+		LinkedList<String> unstratified = new LinkedList<String>();
+		LinkedList<String> unstratifiedAlt = new LinkedList<String>();
+
 		for (String key : adjacencyMap.keySet()) {
 			if (adjacencyMap.get(key).isEmpty()) {
 				stratumMap.put(key, 0);
 			} else {
 				stratumMap.put(key, -1);
-				unset.add(key);
+				unstratified.add(key);
 			}
 		}
 
-		boolean end = false;
-		boolean changed = false;
-		while (!end) {
-			for (String from : adjacencyMap.keySet()) {
-				boolean unknownDep = false;
-				int newStratum = -1;
+		ArrayList<String> oldifyList = new ArrayList<String>();
+		boolean hasCycle = false;
+		while (true) {
+			boolean changed = false;
+			for (String from : unstratified) {
+				// Head of clause
+				boolean unstratDep = false;
+				int newStratum = 0;
 				for (String to : adjacencyMap.get(from)) {
+					// Body of clause
 					if (from.equals(to)) {
 						continue;
 					} else if (stratumMap.get(to) < 0) {
-						unsetAlt.add(from);
-						unknownDep = true;
-						break;
+						if (oldifyList.contains(to)) {
+							continue;
+						} else if (hasCycle) {
+							oldifyList.add(to);
+							hasCycle = false;
+						} else {
+							if (!unstratifiedAlt.contains(from)) {
+								unstratifiedAlt.add(from);
+							}
+							unstratDep = true;
+							//break;
+						}
 					} else if (stratumMap.get(to) > newStratum) {
 						newStratum = stratumMap.get(to);
 					}
 				}
-				if (!unknownDep) {
-					if (from.equals(GdlNode.GDL_NEXT)) {
-						stratumMap.put(from, newStratum + 2);
-					} else {
-						stratumMap.put(from, newStratum + 1);
+				if (!unstratDep) {
+					ArrayList<String> bodyList = adjacencyMap.get(from);
+					adjacencyMap.put(from, new ArrayList<String>());
+					for (String to : bodyList) {
+						if (oldifyList.contains(to)) {
+							addEdge(from, to + "_old");
+							stratumMap.put(to + "_old", 0);
+						}else {
+							addEdge(from, to);
+						}
 					}
+					if (oldifyList.contains(from)) {
+						oldifyList.remove(from);
+					}
+					stratumMap.put(from, newStratum + 1);
 					changed = true;
 				}
 			}
-			if (unsetAlt.isEmpty()) {
-				end = true;
+			// End of unstratified entries
+			if (unstratifiedAlt.isEmpty()) {
+				break;
 			} else if (!changed) {
-				end = true;
+				// Graph contains a cycle
+				hasCycle = true;
 			} else {
-				unset = unsetAlt;
-				unsetAlt = new LinkedList<String>();
-				changed = false;
+				unstratified = unstratifiedAlt;
+				unstratifiedAlt = new LinkedList<String>();
+				hasCycle = false;
 			}
 		}
 	}
