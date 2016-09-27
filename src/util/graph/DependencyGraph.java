@@ -82,13 +82,17 @@ public class DependencyGraph {
 		return dot.toString();
 	}
 
-	public void addOldValue(String node, String child) {
-		if (child.equals(GdlNode.GDL_TRUE)) {
-			addEdge(node, GdlNode.GDL_TRUE + "_old");
-			adjacencyMap.get(node).remove(GdlNode.GDL_TRUE);
+	public void addOldValueForSees(String node, String child) {
+		if (child.length() >= 5 && child.substring(0, 5).equals("true_") && !child.substring(child.length()-4).equals("_old")) {
+			adjacencyMap.get(node).remove(child);
+			addEdge(node, child + "_old");
+			stratumMap.put(child + "_old", 0);
 		}
-		for (String grandChild : adjacencyMap.get(child)) {
-			addOldValue(child, grandChild);
+		ArrayList<String> grandChildList = adjacencyMap.get(child);
+		adjacencyMap.put(child, new ArrayList<String>());
+		for (String grandChild : grandChildList) {
+			adjacencyMap.get(child).add(grandChild);
+			addOldValueForSees(child, grandChild);
 		}
 	}
 
@@ -120,7 +124,7 @@ public class DependencyGraph {
 					} else if (stratumMap.get(to) < 0) {
 						if (oldifyList.contains(to)) {
 							continue;
-						} else if (hasCycle) {
+						} else if (hasCycle && to.substring(0, 5).equals("true_")) {
 							oldifyList.add(to);
 							hasCycle = false;
 						} else {
@@ -128,7 +132,6 @@ public class DependencyGraph {
 								unstratifiedAlt.add(from);
 							}
 							unstratDep = true;
-							//break;
 						}
 					} else if (stratumMap.get(to) > newStratum) {
 						newStratum = stratumMap.get(to);
@@ -163,6 +166,12 @@ public class DependencyGraph {
 				unstratifiedAlt = new LinkedList<String>();
 				hasCycle = false;
 			}
+		}
+
+		if (adjacencyMap.containsKey(GdlNode.GDL_SEES)) {
+			//for (String child : adjacencyMap.get(GdlNode.GDL_SEES)) {
+				addOldValueForSees("", GdlNode.GDL_SEES);
+			//}
 		}
 	}
 }

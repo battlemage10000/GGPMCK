@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.UTFDataFormatException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,6 +73,9 @@ public class GdlParser {
 			case SEMICOLON:
 				// start of comment
 				comment = true;
+				break;
+			case '+':
+				sb.append("plus");
 				break;
 			default:
 				// all other characters, usually part of atoms
@@ -186,7 +190,7 @@ public class GdlParser {
 					break;
 					// Skip base and input clauses
 				case GdlNode.GDL_NEXT:
-					headNodeString = formatGdlNode(node.getChildren().get(0).getChildren().get(0));
+					headNodeString = "true_" + formatGdlNode(node.getChildren().get(0).getChildren().get(0));
 				default:
 					for (int i = 1; i < node.getChildren().size(); i++) {
 						boolean isNextTrue = false;
@@ -201,7 +205,7 @@ public class GdlParser {
 						}
 						String toNodeString = toNode.getAtom();
 						if (isNextTrue) {
-							toNodeString = formatGdlNode(toNode);
+							toNodeString = "true_" + formatGdlNode(toNode);
 						}
 							//if(!headNodeString.equals(formatGdlNode(toNode))){
 							//	graph.addEdge(headNodeString, formatGdlNode(toNode));

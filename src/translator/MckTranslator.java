@@ -47,7 +47,7 @@ public class MckTranslator {
 		unordered.addAll(root.getChildren());
 
 		DependencyGraph graph = GdlParser.constructDependencyGraph(root);
-		//graph.computeStratum();
+		graph.computeStratum();
 		Map<String, Integer> stratumMap = graph.getStratumMap();
 		StringBuilder ordered = new StringBuilder();
 		int stratum = -2;
@@ -55,8 +55,12 @@ public class MckTranslator {
 		while (!unordered.isEmpty()) {
 			while (!unordered.isEmpty()) {
 				GdlNode node = unordered.remove();
-				if (stratumMap.get(node.getChildren().get(0).getAtom()) == null
-						|| stratumMap.get(node.getChildren().get(0).getAtom()) == stratum) {
+				String nodeID = node.getChildren().get(0).getAtom();
+				if (nodeID.equals(GdlNode.GDL_TRUE) || nodeID.equals(GdlNode.GDL_NEXT)) {
+					nodeID = "true_" + GdlParser.formatGdlNode(node.getChildren().get(0).getChildren().get(0));
+				}
+				if (stratumMap.get(nodeID) == null
+						|| stratumMap.get(nodeID) == stratum) {
 					ordered.append(node.toString());
 				} else {
 					unorderedAlt.add(node);
@@ -104,8 +108,8 @@ public class MckTranslator {
 			mckSubNode.append("(");
 			for (int i = 1; i < clause.getChildren().size(); i++) {
 				String mckFormatted = formatMckNode(clause.getChildren().get(i));
-				if (ATf.contains(mckFormatted)
-						&& graph.getStratum(headNode.getAtom()) <= graph.getStratum(GdlNode.GDL_NEXT)) {
+				// TODO: change if statement to use added _old vars from graph
+				if (graph.getDependencyMap().keySet().contains(mckFormatted + "_old")) {
 					mckSubNode.append(mckFormatted + "_old /\\ ");
 				} else {
 					mckSubNode.append(mckFormatted + " /\\ ");
@@ -128,7 +132,14 @@ public class MckTranslator {
 		HashMap<String, List<String>> ATd = new HashMap<String, List<String>>();
 		HashMap<String, List<String>> ATs = new HashMap<String, List<String>>();
 		ArrayList<String> ATi = new ArrayList<String>();
-
+		DependencyGraph graph = GdlParser.constructDependencyGraph(root);
+		graph.computeStratum();
+		for(String old : graph.getDependencyMap().keySet()){
+			if (old.length() >= 5 && old.substring(old.length()-4).equals("_old")) {
+				ATf.add(old.substring(5));
+			}
+		}
+		
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.FORMULA) {
 				switch (node.getAtom()) {
@@ -140,16 +151,6 @@ public class MckTranslator {
 					// Skip these predicates due to redundancy
 					break;
 				case GdlNode.GDL_SEES:
-					// if (!ATs.contains(formatMckNode(node))) {
-					// ATs.add(formatMckNode(node));
-					// }
-					// if (!AT.contains(formatMckNode(node))) {
-					// AT.add(formatMckNode(node));
-					// }
-					// break;
-					// if (!AT.contains(formatMckNode(node))) {
-					// AT.add(formatMckNode(node));
-					// }
 					String roleS = formatMckNode(node.getChildren().get(0));
 					String sees = formatMckNode(node.getChildren().get(1));
 					if (!ATs.containsKey(roleS)) {
@@ -173,6 +174,9 @@ public class MckTranslator {
 					String move = formatMckNode(node.getChildren().get(1));
 					if (!ATd.containsKey(role)) {
 						ATd.put(role, new ArrayList<String>());
+					}
+					if (!ATs.containsKey(role)) {
+						ATs.put(role, new ArrayList<String>());
 					}
 					if (!ATd.get(role).contains(move)) {
 						ATd.get(role).add(move);
@@ -215,7 +219,7 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + "-- ATf:");
 		for (String node : ATf) {
 			mck.append(System.lineSeparator() + node + " : Bool");
-			mck.append(System.lineSeparator() + node + "_old : Bool");
+			//mck.append(System.lineSeparator() + node + "_old : Bool");
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- ATd:");
@@ -308,7 +312,9 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 
 		for (String trueNode : ATf) {
-			mck.append(System.lineSeparator() + trueNode + "_old" + " := " + trueNode + ";");
+			if(trueNode.length() >= 4 && trueNode.substring(trueNode.length()-4).equals("_old")){
+				mck.append(System.lineSeparator() + trueNode + " := " + trueNode.substring(0, trueNode.length() - 4) + ";");
+			}
 		}
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator());
@@ -321,7 +327,7 @@ public class MckTranslator {
 					repeatHeadList.add(clause);
 				} else {
 					if (repeatHead != null) {
-						mck.append(System.lineSeparator() + formatClause(ATf, GdlParser.constructDependencyGraph(root),
+						mck.append(System.lineSeparator() + formatClause(ATf, graph,
 								repeatHead, repeatHeadList));
 					}
 					repeatHead = clause.getChildren().get(0);
@@ -368,9 +374,9 @@ public class MckTranslator {
 			mck.append(System.lineSeparator() + "  if  ");
 			for (String move : ATd.get(role)) {
 				mck.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
-				mck.append(System.lineSeparator() + "    []  ");
+				mck.append(System.lineSeparator() + "  []  ");
 			}
-			mck.delete(mck.length() - 9, mck.length());
+			mck.delete(mck.length() - 7, mck.length());
 			mck.append(System.lineSeparator() + "  fi");
 			mck.append(System.lineSeparator() + "end");
 		}
