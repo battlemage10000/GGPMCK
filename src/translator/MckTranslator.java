@@ -97,8 +97,11 @@ public class MckTranslator {
 
 	public static String formatClause(ArrayList<String> ATf, DependencyGraph graph, GdlNode headNode,
 			List<GdlNode> bodyList) {
+		boolean sees = false;
 		if (bodyList.isEmpty() || headNode.toString().equals("")) {
 			return "";
+		} else if (headNode.getAtom().equals(GdlNode.GDL_SEES)) {
+			sees = true;
 		}
 
 		StringBuilder mckNode = new StringBuilder();
@@ -109,7 +112,8 @@ public class MckTranslator {
 			for (int i = 1; i < clause.getChildren().size(); i++) {
 				String mckFormatted = formatMckNode(clause.getChildren().get(i));
 				// TODO: change if statement to use added _old vars from graph
-				if (graph.getDependencyMap().keySet().contains(mckFormatted + "_old")) {
+				//if (graph.getDependencyMap().keySet().contains(mckFormatted + "_old")) {
+				if (sees && ATf.contains(mckFormatted)) {	
 					mckSubNode.append(mckFormatted + "_old /\\ ");
 				} else {
 					mckSubNode.append(mckFormatted + " /\\ ");
@@ -129,9 +133,9 @@ public class MckTranslator {
 	public static String toMck(GdlNode root) {
 		ArrayList<String> AT = new ArrayList<String>();
 		ArrayList<String> ATf = new ArrayList<String>();
+		ArrayList<String> ATi = new ArrayList<String>();
 		HashMap<String, List<String>> ATd = new HashMap<String, List<String>>();
 		HashMap<String, List<String>> ATs = new HashMap<String, List<String>>();
-		ArrayList<String> ATi = new ArrayList<String>();
 		DependencyGraph graph = GdlParser.constructDependencyGraph(root);
 		graph.computeStratum();
 		for(String old : graph.getDependencyMap().keySet()){

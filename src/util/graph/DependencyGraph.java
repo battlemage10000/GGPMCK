@@ -56,6 +56,9 @@ public class DependencyGraph {
 	}
 
 	public Map<String, Integer> getStratumMap() {
+		if(stratumMap.isEmpty()){
+			computeStratum();
+		}
 		return stratumMap;
 	}
 
