@@ -370,7 +370,7 @@ public class MckTranslator {
 		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
 		GdlNode repeatHead = null;
 		for (GdlNode clause : root.getChildren()) {
-			if (clause.getType() == GdlType.CLAUSE) {
+			if (clause.getType() == GdlType.CLAUSE && !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_BASE) && !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INPUT)) {
 				if (repeatHead != null && clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
 					repeatHeadList.add(clause);
 				} else {
@@ -389,15 +389,21 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 
 		// Specification
-		mck.append("-- Specification");
-		mck.append(System.lineSeparator());
-		mck.append("spec_spr = AG(");
+		mck.append(System.lineSeparator() + "-- Specification");
+		mck.append(System.lineSeparator() + "spec_spr = AG(");
 		for (String role : ATd.keySet()) {
 			for (String move : ATd.get(role)) {
 				mck.append("(legal_" + role + "_" + move + " => Knows " + MCK_ROLE_PREFIX + role + " legal_" + role
 						+ "_" + move + ")");
 				mck.append(" /\\ ");
 			}
+		}
+		mck.delete(mck.length() - 4, mck.length());
+		mck.append(")");
+		mck.append(System.lineSeparator() + "spec_spr = AG(");
+		for (String role : ATd.keySet()) {
+			mck.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_STOP + "))");
+			mck.append(" /\\ ");
 		}
 		mck.delete(mck.length() - 4, mck.length());
 		mck.append(")");
