@@ -6,7 +6,7 @@
 	
 	<!-- Properties -->
 	<property name="main.class" location="translator.MckTranslator" />
-	<property name="packages" location="translator" />
+	<property name="packages" location=",translator,util.*" />
 	<property name="source.dir" location="src" />
 	<property name="build.dir" location="build" />
 	<property name="resource.dir" location="res" />
