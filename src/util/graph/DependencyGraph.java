@@ -8,29 +8,51 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ArrayList;
 
+/**
+ * @author vedantds
+ *
+ */
 public class DependencyGraph {
 	private final Map<String, ArrayList<String>> adjacencyMap;
 	private final Map<String, Integer> stratumMap;
 
+	/**
+	 * 
+	 */
 	public DependencyGraph() {
 		adjacencyMap = new HashMap<String, ArrayList<String>>();
 		stratumMap = new HashMap<String, Integer>();
 	}
 
+	/**
+	 * @param term
+	 * @return
+	 */
 	public boolean hasTerm(String term) {
 		return adjacencyMap.containsKey(term);
 	}
 
+	/**
+	 * @param term
+	 */
 	public void addTerm(String term) {
 		if (!hasTerm(term)) {
 			adjacencyMap.put(term.intern(), new ArrayList<String>());
 		}
 	}
 
+	/**
+	 * @param term
+	 * @return
+	 */
 	public ArrayList<String> getNeighbours(String term) {
 		return adjacencyMap.get(term);
 	}
 
+	/**
+	 * @param term
+	 * @return
+	 */
 	public int getStratum(String term) {
 		if (stratumMap.containsKey(term)) {
 			return stratumMap.get(term);
@@ -39,6 +61,10 @@ public class DependencyGraph {
 		}
 	}
 
+	/**
+	 * @param fromTerm
+	 * @param toTerm
+	 */
 	public void addEdge(String fromTerm, String toTerm) {
 		if (!hasTerm(fromTerm)) {
 			addTerm(fromTerm);
@@ -51,17 +77,33 @@ public class DependencyGraph {
 		}
 	}
 
+	/**
+	 * @return
+	 */
 	public Map<String, ArrayList<String>> getDependencyMap() {
 		return adjacencyMap;
 	}
 
+	/**
+	 * @return
+	 */
 	public Map<String, Integer> getStratumMap() {
 		if(stratumMap.isEmpty()){
 			computeStratum();
 		}
 		return stratumMap;
 	}
+	
+	private String dotEncoded(String string){
+		if (string.contains("+")){
+			string.replace("+", "plus");
+		}
+		return string;
+	}
 
+	/**
+	 * @return
+	 */
 	public String dotEncodedGraph() {
 		computeStratum();
 		StringBuilder dot = new StringBuilder();
@@ -69,14 +111,14 @@ public class DependencyGraph {
 
 		// Declare nodes and assign attributes
 		for (String from : adjacencyMap.keySet()) {
-			dot.append(System.lineSeparator() + from + " [label=\"" + from + " " + stratumMap.get(from) + "\"]");
+			dot.append(System.lineSeparator() + dotEncoded(from) + " [label=\"" + from + " " + stratumMap.get(from) + "\"]");
 		}
 		dot.append(System.lineSeparator());
 
 		// Add edges
 		for (String from : adjacencyMap.keySet()) {
 			for (String to : adjacencyMap.get(from)) {
-				dot.append(System.lineSeparator() + from + " -> " + to);
+				dot.append(System.lineSeparator() + dotEncoded(from) + " -> " + dotEncoded(to));
 			}
 		}
 
@@ -85,6 +127,10 @@ public class DependencyGraph {
 		return dot.toString();
 	}
 
+	/**
+	 * @param node
+	 * @param child
+	 */
 	public void addOldValueForSees(String node, String child) {
 		if (child.length() >= 5 && child.substring(0, 5).equals("true_") && !child.substring(child.length()-4).equals("_old")) {
 			adjacencyMap.get(node).remove(child);
@@ -99,6 +145,9 @@ public class DependencyGraph {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void computeStratum() {
 		LinkedList<String> unstratified = new LinkedList<String>();
 		LinkedList<String> unstratifiedAlt = new LinkedList<String>();

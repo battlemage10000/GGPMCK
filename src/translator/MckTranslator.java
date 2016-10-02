@@ -15,6 +15,10 @@ import util.graph.DependencyGraph;
 /**
  * Translates GDL-II in infix notation to MCK
  */
+/**
+ * @author vedantds
+ *
+ */
 public class MckTranslator {
 	public static String MCK_INIT = "INIT";
 	public static String MCK_STOP = "STOP";
@@ -73,6 +77,10 @@ public class MckTranslator {
 		return ordered.toString();
 	}
 
+	/**
+	 * @param node
+	 * @return
+	 */
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
@@ -94,6 +102,13 @@ public class MckTranslator {
 		return sb.toString();
 	}
 
+	/**
+	 * @param ATf
+	 * @param graph
+	 * @param headNode
+	 * @param bodyList
+	 * @return
+	 */
 	public static String formatClause(ArrayList<String> ATf, DependencyGraph graph, GdlNode headNode,
 			List<GdlNode> bodyList) {
 		boolean sees = false;
@@ -130,6 +145,10 @@ public class MckTranslator {
 		return mckNode.toString();
 	}
 
+	/**
+	 * @param root
+	 * @return
+	 */
 	public static String toMck(GdlNode root) {
 		ArrayList<String> AT = new ArrayList<String>();
 		ArrayList<String> ATf = new ArrayList<String>();

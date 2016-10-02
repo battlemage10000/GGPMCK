@@ -14,8 +14,7 @@ public class Main {
 	/**
 	 * Can be used from the command line by moving to the build directory and
 	 * using java translator.MckTranslator path/to/game.gdl or java -jar
-	 * MckTranslator.jar path/to/game.gdl which will save output to
-	 * path/to/game.gdl.mck
+	 * MckTranslator.jar path/to/game.gdl which will output to terminal
 	 */
 	public static void main(String[] args) {
 		boolean helpSwitch = false;
@@ -109,7 +108,7 @@ public class Main {
 			System.out.println("  --to-dot      output domain graph in dot format. Use with --ground");
 			System.out.println("  --to-dep-dot  output dependency graph in dot format");
 			System.out.println("  --pretty      formatted gdl. Use with --ground");
-			System.out.println("  -g --ground   use internal grounder");
+			System.out.println("  -g --ground   use internal grounder(default)");
 			System.out.println("  -d --debug    manually select outputs in debug mode");
 			System.out.println("  --ordered     order the gdl rules (default true for --to-mck)");
 			System.out.println("  --parse-tree  print parse tree for debug");

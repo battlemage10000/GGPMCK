@@ -7,17 +7,34 @@ import util.grammar.GdlNode.GdlType;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+/**
+ * @author vedantds
+ *
+ */
 public class DomainGraph {
 	private Map<Term, ArrayList<Term>> adjacencyMap;
 
+	/**
+	 * 
+	 */
 	public DomainGraph() {
 		adjacencyMap = new HashMap<Term, ArrayList<Term>>();
 	}
 
+	/**
+	 * @param term
+	 * @param arity
+	 * @return
+	 */
 	public boolean hasTerm(String term, int arity) {
 		return adjacencyMap.containsKey(new Term(term, arity));
 	}
 
+	/**
+	 * @param term
+	 * @param arity
+	 * @return
+	 */
 	public ArrayList<Term> getNeighbours(String term, int arity) {
 		if (hasTerm(term, arity)) {
 			return adjacencyMap.get(new Term(term, arity));
@@ -26,6 +43,11 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @param term
+	 * @param arity
+	 * @return
+	 */
 	public ArrayList<Term> getDomain(String term, int arity) {
 		ArrayList<Term> domain = new ArrayList<Term>();
 		Term termObj = new Term(term, arity);
@@ -49,6 +71,9 @@ public class DomainGraph {
 		return domain;
 	}
 
+	/**
+	 * @return
+	 */
 	public Map<Term, ArrayList<Term>> getMap() {
 		Map<Term, ArrayList<Term>> domainMap = new HashMap<Term, ArrayList<Term>>();
 
@@ -59,6 +84,10 @@ public class DomainGraph {
 		return domainMap;
 	}
 
+	/**
+	 * @param term
+	 * @param arity
+	 */
 	public void addTerm(String term, int arity) {
 		Term newTerm = new Term(term, arity);
 		if (!adjacencyMap.containsKey(newTerm)) {
@@ -66,6 +95,10 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @param term
+	 * @param functionArity
+	 */
 	public void addFunction(String term, int functionArity) {
 		Term function = new Term(term, functionArity, true, GdlType.FUNCTION);
 		if (!adjacencyMap.containsKey(function)) {
@@ -81,6 +114,10 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @param term
+	 * @param formulaArity
+	 */
 	public void addFormula(String term, int formulaArity) {
 		Term formula = new Term(term, formulaArity, true, GdlType.FORMULA);
 		if (!adjacencyMap.containsKey(formula)) {
@@ -96,6 +133,13 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @param fromTerm
+	 * @param fromArity
+	 * @param toTerm
+	 * @param toArity
+	 * @param type
+	 */
 	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity, GdlType type) {
 		boolean toFunction = false;
 		if (type != GdlType.CONSTANT) {
@@ -120,40 +164,56 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @param fromTerm
+	 * @param fromArity
+	 * @param toTerm
+	 * @param toArity
+	 */
 	public void addEdge(String fromTerm, int fromArity, String toTerm, int toArity) {
 		addEdge(fromTerm, fromArity, toTerm, toArity, GdlType.CONSTANT);
 	}
 
+	private String dotEncoded(String string){
+		if (string.contains("+")){
+			string += "plus";
+		}
+		return string;
+	}
+	
+	/**
+	 * @return
+	 */
 	public String dotEncodedGraph() {
 		StringBuilder dot = new StringBuilder();
 
 		dot.append("strict digraph {");
 
 		for (Term node : adjacencyMap.keySet()) {
-			dot.append(System.lineSeparator() + "d_" + node.getTerm());
+			dot.append(System.lineSeparator() + "d_" + dotEncoded(node.getTerm()));
 			if (node.getArity() > 0) {
 				dot.append("_" + node.getArity() + " [label=\"" + node.getTerm() + "[" + node.getArity()
 						+ "]\",color=blue]");
 			} else if (node.getFunctionArity() > 0) {
 				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/"
 						+ node.getFunctionArity() + "\",");
-				if(node.getType() == GdlType.FORMULA){
+				if (node.getType() == GdlType.FORMULA) {
 					dot.append("color=red]");
-				}else{
+				} else {
 					dot.append("color=orange]");
 				}
 				// Add subgraph that links functor to function parameters
 				dot.append(System.lineSeparator() + "subgraph {");
 				for (int i = 1; i <= node.getFunctionArity(); i++) {
-					dot.append(System.lineSeparator() + "  d_" + node.getTerm() + "__" + node.getFunctionArity());
-					dot.append("  ->  d_" + node.getTerm() + "_" + i);
+					dot.append(System.lineSeparator() + "  d_" + dotEncoded(node.getTerm()) + "__" + node.getFunctionArity());
+					dot.append("  ->  d_" + dotEncoded(node.getTerm()) + "_" + i);
 				}
 				dot.append(System.lineSeparator() + "}");
 			} else {
 				dot.append(" [label=\"" + node.getTerm() + "\",");
-				if(node.getType() == GdlType.FORMULA){
+				if (node.getType() == GdlType.FORMULA) {
 					dot.append("color=red]");
-				}else{
+				} else {
 					dot.append("color=green]");
 				}
 			}
@@ -183,6 +243,9 @@ public class DomainGraph {
 		return dot.toString();
 	}
 
+	/**
+	 * 
+	 */
 	public void printGraph() {
 		for (Term from : adjacencyMap.keySet()) {
 			System.out.println("From : " + from.toString());
@@ -192,6 +255,10 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @param term
+	 * @param arity
+	 */
 	public void printFunction(String term, int arity) {
 		System.out.println("From : " + term + "[" + arity + "]");
 		for (Term to : getDomain(term, arity)) {
@@ -199,6 +266,9 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void printGraphDomains() {
 		for (Term from : adjacencyMap.keySet()) {
 			System.out.println("From : " + from.toString());
@@ -208,6 +278,10 @@ public class DomainGraph {
 		}
 	}
 
+	/**
+	 * @author vedantds
+	 *
+	 */
 	public static class Term {
 		private String term;
 		private int arity;
@@ -215,12 +289,22 @@ public class DomainGraph {
 		boolean visited;
 		private GdlType type;
 
+		/**
+		 * @param term
+		 * @param arity
+		 */
 		public Term(String term, int arity) {
 			this.term = term;
 			this.arity = arity;
 			this.functionArity = 0;
 		}
 
+		/**
+		 * @param term
+		 * @param arity
+		 * @param function
+		 * @param type
+		 */
 		public Term(String term, int arity, boolean function, GdlType type) {
 			this.term = term;
 			this.type = type;
@@ -233,11 +317,9 @@ public class DomainGraph {
 			}
 		}
 
-		/*
-		 * public Term(String term, int arity, boolean function){ this(term,
-		 * arity, function, GdlType.FUNCTION); }
+		/**
+		 * @return
 		 */
-
 		public boolean isConstant() {
 			if (arity == 0 && functionArity == 0) {
 				return true;
@@ -246,32 +328,53 @@ public class DomainGraph {
 			}
 		}
 
+		/**
+		 * @return
+		 */
 		public String getTerm() {
 			return term;
 		}
 
+		/**
+		 * @return
+		 */
 		public int getArity() {
 			return arity;
 		}
 
+		/**
+		 * @return
+		 */
 		public int getFunctionArity() {
 			return functionArity;
 		}
 
+		/**
+		 * @return
+		 */
 		public GdlType getType() {
 			return type;
 		}
 
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
 		@Override
 		public String toString() {
 			return term + "[" + arity + "]";
 		}
 
+		/* (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
 		@Override
 		public int hashCode() {
 			return toString().hashCode();
 		}
 
+		/* (non-Javadoc)
+		 * @see java.lang.Object#equals(java.lang.Object)
+		 */
 		@Override
 		public boolean equals(Object obj) {
 			if (obj != null && obj instanceof Term) {

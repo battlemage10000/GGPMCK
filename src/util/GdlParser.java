@@ -22,6 +22,10 @@ import util.grammar.GdlNode.GdlType;
 import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
 
+/**
+ * @author vedantds
+ *
+ */
 public class GdlParser {
 
 	public final static char SEMICOLON = ';';
@@ -34,14 +38,17 @@ public class GdlParser {
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
+	 * @param reader
+	 * @return tokens : List<String>
+	 * @throws IOException
 	 */
-	public static List<String> gdlTokenizer(Reader file) throws IOException {
+	public static List<String> gdlTokenizer(Reader reader) throws IOException {
 		List<String> tokens = new ArrayList<String>();
 
 		StringBuilder sb = new StringBuilder();
 		int character;
 		boolean comment = false;
-		while ((character = file.read()) != -1) {
+		while ((character = reader.read()) != -1) {
 			switch (character) {
 			case OPEN_P:
 			case CLOSE_P:
@@ -74,23 +81,38 @@ public class GdlParser {
 				// start of comment
 				comment = true;
 				break;
-			case '+':
-				sb.append("plus");
-				break;
+			//case '+':
+				//sb.append("plus");
+				//break;
+			//case '?':
+			//case '<':
+			//case '=':
+				//sb.append((char) character);
+				//break;
 			default:
 				// all other characters, usually part of atoms
-				sb.append((char) character);
+				//if (Character.isJavaIdentifierPart(character)) {
+					sb.append((char) character);
+				//} else {
+					//sb.append("u" + new String(Character.toChars(Integer.parseUnsignedInt(Integer.toUnsignedString(Character.getNumericValue(character), 16), 16))));
+				//}
 				break;
 			}
 		}
 
-		file.close();
+		reader.close();
 		return tokens;
 	}
 
 	/**
 	 * Overloaded method which doesn't require casting to Reader for common use
 	 * cases
+	 */
+	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 * @throws URISyntaxException
 	 */
 	public static List<String> tokenizeFile(String filePath) throws IOException, URISyntaxException {
 		try (FileReader fr = new FileReader(new File(filePath))) {
@@ -102,12 +124,21 @@ public class GdlParser {
 	 * Overloaded method which doesn't require casting to Reader for common use
 	 * cases
 	 */
+	/**
+	 * @param gdl
+	 * @return
+	 * @throws IOException
+	 */
 	public static List<String> tokenizeString(String gdl) throws IOException {
 		return gdlTokenizer(new StringReader(gdl));
 	}
 
 	/**
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
+	 */
+	/**
+	 * @param tokens
+	 * @return
 	 */
 	public static GdlNode expandParseTree(List<String> tokens) {
 		GdlNode root = GdlNodeFactory.createGdl();
@@ -157,6 +188,12 @@ public class GdlParser {
 		return root;
 	}
 
+	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
 	public static GdlNode parseFile(String filePath) throws IOException, URISyntaxException {
 		return expandParseTree(tokenizeFile(filePath));
 	}
@@ -164,6 +201,11 @@ public class GdlParser {
 	/**
 	 * Overloaded method which doesn't require casting to Reader for common use
 	 * cases
+	 */
+	/**
+	 * @param gdl
+	 * @return
+	 * @throws IOException
 	 */
 	public static GdlNode parseString(String gdl) throws IOException {
 		return expandParseTree(tokenizeString(gdl));
@@ -175,6 +217,10 @@ public class GdlParser {
 	 * structure is a variation on the dependency graph defined for stratisfied
 	 * Datalog rules in the GDL Spec for GGP paper
 	 * 
+	 * @param root
+	 * @return
+	 */
+	/**
 	 * @param root
 	 * @return
 	 */
@@ -207,15 +253,6 @@ public class GdlParser {
 						if (isNextTrue) {
 							toNodeString = "true_" + formatGdlNode(toNode);
 						}
-							//if(!headNodeString.equals(formatGdlNode(toNode))){
-							//	graph.addEdge(headNodeString, formatGdlNode(toNode));
-							//}
-						//}
-						//else {
-						//	if (!headNodeString.equals(toNode.getAtom())) {
-						//		graph.addEdge(headNodeString, toNode.getAtom());
-						//	}
-						//}
 						if(!headNodeString.equals(toNodeString)){
 							graph.addEdge(headNodeString, toNodeString);
 						}
@@ -227,6 +264,10 @@ public class GdlParser {
 		return graph;
 	}
 	
+	/**
+	 * @param node
+	 * @return
+	 */
 	public static String formatGdlNode(GdlNode node){
 		StringBuilder sb = new StringBuilder();
 		sb.append(node.getAtom());
@@ -240,6 +281,10 @@ public class GdlParser {
 
 	/**
 	 * Follows the domain graph definition in the ggp book
+	 */
+	/**
+	 * @param root
+	 * @return
 	 */
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
@@ -279,6 +324,10 @@ public class GdlParser {
 		return graph;
 	}
 
+	/**
+	 * @param node
+	 * @return
+	 */
 	public static boolean isVariableInTree(GdlNode node) {
 		if (node.getType() == GdlType.VARIABLE) {
 			return true;
@@ -292,6 +341,11 @@ public class GdlParser {
 		return false;
 	}
 
+	/**
+	 * @param root
+	 * @param domainGraph
+	 * @return
+	 */
 	public static GdlNode groundGdl(GdlNode root, DomainGraph domainGraph) {
 		GdlNode groundedRoot = GdlNodeFactory.createGdl();
 
@@ -318,6 +372,11 @@ public class GdlParser {
 		return groundedRoot;
 	}
 
+	/**
+	 * @param clauseNode
+	 * @param domainMap
+	 * @return
+	 */
 	public static String groundClause(GdlNode clauseNode,
 			Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap) {
 		Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
@@ -371,6 +430,10 @@ public class GdlParser {
 	/**
 	 * Save string to file.
 	 */
+	/**
+	 * @param text
+	 * @param filename
+	 */
 	public static void saveFile(String text, String filename) {
 		FileWriter writer = null;
 		try {
@@ -397,6 +460,10 @@ public class GdlParser {
 	/**
 	 * Outputs parse tree in lparse format
 	 */
+	/**
+	 * @param root
+	 * @return
+	 */
 	public static String toLparse(GdlNode root) {
 		StringBuilder lparse = new StringBuilder();
 
@@ -414,6 +481,11 @@ public class GdlParser {
 	 * @param root
 	 * @param indent
 	 */
+	/**
+	 * @param root
+	 * @param prefix
+	 * @param indent
+	 */
 	public static void printParseTree(GdlNode root, String prefix, String indent) {
 		System.out.println(prefix + root.getAtom());
 		if (!root.getChildren().isEmpty()) {
@@ -423,6 +495,9 @@ public class GdlParser {
 		}
 	}
 
+	/**
+	 * @param root
+	 */
 	public static void printParseTree(GdlNode root) {
 		printParseTree(root, ">", " -");
 	}
@@ -431,6 +506,11 @@ public class GdlParser {
 	 * Print the GdlType of the nodes of the tree
 	 * 
 	 * @param root
+	 * @param indent
+	 */
+	/**
+	 * @param root
+	 * @param prefix
 	 * @param indent
 	 */
 	public static void printParseTreeTypes(GdlNode root, String prefix, String indent) {
@@ -462,10 +542,16 @@ public class GdlParser {
 		}
 	}
 
+	/**
+	 * @param root
+	 */
 	public static void printParseTreeTypes(GdlNode root) {
 		printParseTreeTypes(root, ">", " -");
 	}
 
+	/**
+	 * @param root
+	 */
 	public static void prettyPrint(GdlNode root) {
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE) {
