@@ -96,7 +96,7 @@ public class DependencyGraph {
 	
 	private String dotEncoded(String string){
 		if (string.contains("+")){
-			string.replace("+", "plus");
+			string = string.replace("+", "plus");
 		}
 		return string;
 	}

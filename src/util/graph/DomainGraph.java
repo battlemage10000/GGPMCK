@@ -176,7 +176,7 @@ public class DomainGraph {
 
 	private String dotEncoded(String string){
 		if (string.contains("+")){
-			string += "plus";
+			string = string.replace("+", "plus");
 		}
 		return string;
 	}

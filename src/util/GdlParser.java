@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.UTFDataFormatException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +37,7 @@ public class GdlParser {
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
+	 * 
 	 * @param reader
 	 * @return tokens : List<String>
 	 * @throws IOException
@@ -81,21 +81,9 @@ public class GdlParser {
 				// start of comment
 				comment = true;
 				break;
-			//case '+':
-				//sb.append("plus");
-				//break;
-			//case '?':
-			//case '<':
-			//case '=':
-				//sb.append((char) character);
-				//break;
 			default:
 				// all other characters, usually part of atoms
-				//if (Character.isJavaIdentifierPart(character)) {
-					sb.append((char) character);
-				//} else {
-					//sb.append("u" + new String(Character.toChars(Integer.parseUnsignedInt(Integer.toUnsignedString(Character.getNumericValue(character), 16), 16))));
-				//}
+				sb.append((char) character);
 				break;
 			}
 		}
@@ -107,8 +95,7 @@ public class GdlParser {
 	/**
 	 * Overloaded method which doesn't require casting to Reader for common use
 	 * cases
-	 */
-	/**
+	 * 
 	 * @param filePath
 	 * @return
 	 * @throws IOException
@@ -121,22 +108,25 @@ public class GdlParser {
 	}
 
 	/**
-	 * Overloaded method which doesn't require casting to Reader for common use
-	 * cases
-	 */
-	/**
+	 * Overloaded method which doesn't require casting to Reader and handles
+	 * resulting IOException
+	 * 
 	 * @param gdl
-	 * @return
-	 * @throws IOException
+	 * @return tokens as a list of strings
 	 */
-	public static List<String> tokenizeString(String gdl) throws IOException {
-		return gdlTokenizer(new StringReader(gdl));
+	public static List<String> tokenizeString(String gdl) {
+		List<String> tokens = new ArrayList<String>();
+		try {
+			tokens = gdlTokenizer(new StringReader(gdl));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return tokens;
 	}
 
 	/**
 	 * Takes tokens and produces a parse tree returns ParseNode root of tree
-	 */
-	/**
+	 *
 	 * @param tokens
 	 * @return
 	 */
@@ -207,10 +197,9 @@ public class GdlParser {
 	 * @return
 	 * @throws IOException
 	 */
-	public static GdlNode parseString(String gdl) throws IOException {
+	public static GdlNode parseString(String gdl) {
 		return expandParseTree(tokenizeString(gdl));
 	}
-	
 
 	/**
 	 * Constructs a dependency graph used to order rules for mck translation The
@@ -234,17 +223,17 @@ public class GdlParser {
 				case GdlNode.GDL_BASE:
 				case GdlNode.GDL_INPUT:
 					break;
-					// Skip base and input clauses
+				// Skip base and input clauses
 				case GdlNode.GDL_NEXT:
 					headNodeString = "true_" + formatGdlNode(node.getChildren().get(0).getChildren().get(0));
 				default:
 					for (int i = 1; i < node.getChildren().size(); i++) {
 						boolean isNextTrue = false;
 						GdlNode toNode = node.getChildren().get(i);
-						while (toNode.getAtom().equals(GdlNode.GDL_NOT)
-								|| toNode.getAtom().equals(GdlNode.GDL_TRUE)
+						while (toNode.getAtom().equals(GdlNode.GDL_NOT) || toNode.getAtom().equals(GdlNode.GDL_TRUE)
 								|| toNode.getAtom().equals(GdlNode.GDL_NEXT)) {
-							if(toNode.getAtom().equals(GdlNode.GDL_TRUE) || toNode.getAtom().equals(GdlNode.GDL_NEXT)){
+							if (toNode.getAtom().equals(GdlNode.GDL_TRUE)
+									|| toNode.getAtom().equals(GdlNode.GDL_NEXT)) {
 								isNextTrue = true;
 							}
 							toNode = toNode.getChildren().get(0);
@@ -253,7 +242,7 @@ public class GdlParser {
 						if (isNextTrue) {
 							toNodeString = "true_" + formatGdlNode(toNode);
 						}
-						if(!headNodeString.equals(toNodeString)){
+						if (!headNodeString.equals(toNodeString)) {
 							graph.addEdge(headNodeString, toNodeString);
 						}
 					}
@@ -263,16 +252,16 @@ public class GdlParser {
 
 		return graph;
 	}
-	
+
 	/**
 	 * @param node
 	 * @return
 	 */
-	public static String formatGdlNode(GdlNode node){
+	public static String formatGdlNode(GdlNode node) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(node.getAtom());
-		if(!node.getChildren().isEmpty()){
-			for(GdlNode child : node.getChildren()){
+		if (!node.getChildren().isEmpty()) {
+			for (GdlNode child : node.getChildren()) {
 				sb.append("_" + formatGdlNode(child));
 			}
 		}
@@ -355,15 +344,9 @@ public class GdlParser {
 			} else {
 				String groundedClauseString = groundClause(clause, domainGraph.getMap());
 
-				GdlNode clauseTree = GdlNodeFactory.createGdl(); // Default root node if
-														// parseString throws
-														// error
-				try {
-					clauseTree = GdlParser.parseString(groundedClauseString);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
+				// Default root node if parseString throws error
+				GdlNode clauseTree = GdlNodeFactory.createGdl();
+				clauseTree = GdlParser.parseString(groundedClauseString);
 				if (!clauseTree.getChildren().isEmpty()) {
 					groundedRoot.getChildren().addAll(clauseTree.getChildren());
 				}
@@ -425,7 +408,6 @@ public class GdlParser {
 
 		return groundedClauses.toString();
 	}
-	
 
 	/**
 	 * Save string to file.
@@ -486,90 +468,102 @@ public class GdlParser {
 	 * @param prefix
 	 * @param indent
 	 */
-	public static void printParseTree(GdlNode root, String prefix, String indent) {
-		System.out.println(prefix + root.getAtom());
+	public static String printParseTree(GdlNode root, String prefix, String indent) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(System.lineSeparator() + prefix + root.getAtom());
+		// System.out.println(prefix + root.getAtom());
 		if (!root.getChildren().isEmpty()) {
 			for (GdlNode child : root.getChildren()) {
-				printParseTree(child, prefix + indent, indent);
+				sb.append(System.lineSeparator() + printParseTree(child, prefix + indent, indent));
 			}
 		}
+		return sb.toString();
 	}
 
 	/**
 	 * @param root
 	 */
-	public static void printParseTree(GdlNode root) {
-		printParseTree(root, ">", " -");
+	public static String printParseTree(GdlNode root) {
+		return printParseTree(root, ">", " -");
 	}
 
 	/**
 	 * Print the GdlType of the nodes of the tree
 	 * 
 	 * @param root
-	 * @param indent
-	 */
-	/**
-	 * @param root
 	 * @param prefix
 	 * @param indent
 	 */
-	public static void printParseTreeTypes(GdlNode root, String prefix, String indent) {
+	public static String printParseTreeTypes(GdlNode root, String prefix, String indent) {
+		StringBuilder sb = new StringBuilder();
 		switch (root.getType()) {
 		case ROOT:
-			System.out.println(prefix + "ROOT " + root.getAtom());
+			// System.out.println(prefix + "ROOT " + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "ROOT " + root.getAtom());
 			break;
 		case CLAUSE:
-			System.out.println(prefix + "CLAUSE " + root.getAtom());
+			// System.out.println(prefix + "CLAUSE " + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "CLAUSE " + root.getAtom());
 			break;
 		case FORMULA:
-			System.out.println(prefix + "FORMULA " + root.getAtom());
+			// System.out.println(prefix + "FORMULA " + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "FORMULA " + root.getAtom());
 			break;
 		case FUNCTION:
-			System.out.println(prefix + "FUNCTION " + root.getAtom());
+			// System.out.println(prefix + "FUNCTION " + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "FUNCTION " + root.getAtom());
 			break;
 		case CONSTANT:
-			System.out.println(prefix + "CONSTANT " + root.getAtom());
+			// System.out.println(prefix + "CONSTANT " + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "CONSTANT " + root.getAtom());
 			break;
 		case VARIABLE:
-			System.out.println(prefix + "VARIABLE " + root.getAtom());
+			// System.out.println(prefix + "VARIABLE " + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "VARIABLE" + root.getAtom());
 			break;
 		}
 
 		if (!root.getChildren().isEmpty()) {
 			for (GdlNode child : root.getChildren()) {
-				printParseTreeTypes(child, prefix + indent, indent);
+				sb.append(printParseTreeTypes(child, prefix + indent, indent));
 			}
 		}
+		return sb.toString();
 	}
 
 	/**
 	 * @param root
 	 */
-	public static void printParseTreeTypes(GdlNode root) {
-		printParseTreeTypes(root, ">", " -");
+	public static String printParseTreeTypes(GdlNode root) {
+		return printParseTreeTypes(root, ">", " -");
 	}
 
 	/**
 	 * @param root
 	 */
-	public static void prettyPrint(GdlNode root) {
+	public static String prettyPrint(GdlNode root) {
+		StringBuilder sb = new StringBuilder();
 		for (GdlNode clause : root.getChildren()) {
 			if (clause.getType() == GdlType.CLAUSE) {
 				for (GdlNode literal : clause.getChildren()) {
 					if (literal == clause.getChildren().get(0)) {
-						System.out.println("(<= " + literal.toString());
+						sb.append(System.lineSeparator() + "(<= " + literal.toString());
+						//System.out.println("(<= " + literal.toString());
 					} else if (literal == clause.getChildren().get(clause.getChildren().size() - 1)) {
-						System.out.println("   " + literal.toString() + ")");
+						sb.append(System.lineSeparator() + "   " + literal.toString() + ")");
+						//System.out.println("   " + literal.toString() + ")");
 					} else {
-						System.out.println("   " + literal.toString());
+						sb.append(System.lineSeparator() + "   " + literal.toString());
+						//System.out.println("   " + literal.toString());
 					}
 				}
 			} else {
-				System.out.println(clause);
+				sb.append(System.lineSeparator() + clause);
+				//System.out.println(clause);
 			}
-			System.out.println();
+			sb.append(System.lineSeparator());
+			//System.out.println();
 		}
+		return sb.toString();
 	}
-
-	
 }

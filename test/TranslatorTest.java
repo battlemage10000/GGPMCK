@@ -24,11 +24,7 @@ public class TranslatorTest {
 	@Test
 	public void testSimpleDependencyGraph(){
 		List<String> tokens = null;
-		try {
 			tokens = GdlParser.tokenizeString(testGoals);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
@@ -44,11 +40,7 @@ public class TranslatorTest {
 	@Test
 	public void testSimpleDomainGraph() {
 		List<String> tokens = null;
-		try {
 			tokens = GdlParser.tokenizeString(testGoals);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
@@ -89,11 +81,7 @@ public class TranslatorTest {
 		domainMap.put(new DomainGraph.Term("win", 1), domain);
 
 		List<String> tokens = new ArrayList<String>();
-		try {
 			tokens = GdlParser.tokenizeString(testGoalGrounding);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		String groundedClauses = GdlParser.groundClause(GdlParser.expandParseTree(tokens), domainMap);
 
@@ -104,11 +92,7 @@ public class TranslatorTest {
 	@Test
 	public void testParseTreeIterator() {
 		List<String> tokens = null;
-		try {
 			tokens = GdlParser.tokenizeString(testGoalGrounding);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
