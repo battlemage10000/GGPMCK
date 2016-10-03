@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 import util.GdlParser;
@@ -180,7 +179,7 @@ public class Main {
 
 			if (outputFileSwitch) {
 				GdlParser.saveFile(MckTranslator.toMck(root), outputFilePath);
-			} else if (!debugSwitch || outputLparseSwitch || outputMckSwitch) {
+			} else if (!debugSwitch || outputMckSwitch) {
 				System.out.println(MckTranslator.toMck(root));
 			}
 			int totalTime = (int) (System.currentTimeMillis() - startTime);
