@@ -75,9 +75,6 @@
 				<attribute name="Main-Class" value="translator.Main" />
 			</manifest>
 		</jar>
-		<copy todir="${deploy.dir}">
-			<fileset dir="${resource.dir}" />
-		</copy>
 	</target>
 	
 	<!-- Javadocs -->
