@@ -133,14 +133,14 @@ public class Main {
 				e.printStackTrace();
 			}
 			
-			File outputDir = new File("output");
+			File outputDir = new File(new File(inputFilePath).getName() + ".out");
 			outputDir.mkdir();
 			
 			// Use internal grounder
 			if (groundSwitch) {
 				DomainGraph domain = GdlParser.constructDomainGraph(root);
 				if (outputDotSwitch) {
-					GdlParser.saveFile(domain.dotEncodedGraph(), "output/domain.dot");
+					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
 				root = GdlParser.groundGdl(root, domain);
 			}
@@ -153,34 +153,34 @@ public class Main {
 			// Output dependency graph as a dot formatted file
 			if (outputDepDotSwitch) {
 				DependencyGraph graph = GdlParser.constructDependencyGraph(root);
-				GdlParser.saveFile(graph.dotEncodedGraph(), "output/dependency.dot");
+				GdlParser.saveFile(graph.dotEncodedGraph(), outputDir.getName() + "/dependency.dot");
 			}
 
 			// Print parse tree for debugging
 			if (parseTreeSwitch) {
-				GdlParser.saveFile(GdlParser.printParseTree(root), "output/parsetree");
+				GdlParser.saveFile(GdlParser.printParseTree(root), outputDir.getName() + "/parsetree");
 			}
 
 			// Print parse tree types for debugging
 			if (parseTreeTypesSwitch) {
-				GdlParser.saveFile(GdlParser.printParseTreeTypes(root), "output/treetypes");
+				GdlParser.saveFile(GdlParser.printParseTreeTypes(root), outputDir.getName() + "/treetypes");
 			}
 
 			// Output as another formatted gdl file
 			if (prettyPrintSwitch) {
-				GdlParser.saveFile(GdlParser.prettyPrint(root), "output/pretty.kif");
+				GdlParser.saveFile(GdlParser.prettyPrint(root), outputDir.getName() + "/pretty.kif");
 			}
 			
 			// Output lparse for grounding (lparse cannot be read)
 			if (outputLparseSwitch) {
-				GdlParser.saveFile(GdlParser.toLparse(root), "output/unground.lparse");
+				GdlParser.saveFile(GdlParser.toLparse(root), outputDir.getName() + "/unground.lparse");
 			}
 			
-
+			MckTranslator translator = new MckTranslator(root);
 			if (outputFileSwitch) {
-				GdlParser.saveFile(MckTranslator.toMck(root), outputFilePath);
-			} else if (!debugSwitch || outputMckSwitch) {
-				System.out.println(MckTranslator.toMck(root));
+				GdlParser.saveFile(translator.toMck(), outputFilePath);
+			} else if (outputMckSwitch) {
+				System.out.println(translator.toMck());
 			}
 			int totalTime = (int) (System.currentTimeMillis() - startTime);
 			System.out.println("Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
