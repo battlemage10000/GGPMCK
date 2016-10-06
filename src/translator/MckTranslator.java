@@ -194,7 +194,7 @@ public class MckTranslator {
 		StringBuilder mckNode = new StringBuilder();
 		if (body.length() == 0) {
 			ATt.add(formatMckNode(headNode));
-			mckNode.append(System.lineSeparator() + formatMckNode(headNode) + " := True");
+			mckNode.append(System.lineSeparator() + formatMckNode(headNode) + " := True;");
 		} else {
 			mckNode.append("if ");
 			mckNode.append(body.toString());
