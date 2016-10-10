@@ -211,7 +211,7 @@ public class Main {
 					System.out.println(
 							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 				}
-				MckTranslator translator = new MckTranslator(root);
+				MckTranslator translator = new MckTranslator(root, debugSwitch);
 				if (outputFileSwitch) {
 					GdlParser.saveFile(translator.toMck(), outputFilePath);
 				} else if (outputMckSwitch) {

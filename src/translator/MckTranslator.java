@@ -46,12 +46,14 @@ public class MckTranslator {
 
 	private GdlNode root;
 
-	public MckTranslator(GdlNode root) {
+	private boolean DEBUG;
+
+	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this.root = root;
+		this.DEBUG = DEBUG;
 		this.AT = new ArrayList<String>();
 		this.ATf = new HashSet<String>();
 		this.ATi = new HashSet<String>();
-		// TODO: Can we join ATt, ATc and ATh in to one structure
 		this.ATt = new HashSet<String>();
 		this.ATc = new HashSet<String>();
 		this.ATh = new HashSet<String>();
@@ -155,10 +157,15 @@ public class MckTranslator {
 			StringBuilder mckSubNode = new StringBuilder();
 			mckSubNode.append("(");
 			for (int i = 1; i < clause.getChildren().size(); i++) {
-				String mckFormatted = formatMckNode(clause.getChildren().get(i));
+				String mckFormatted;
+				if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
+					mckFormatted = formatMckNode(clause.getChildren().get(i).getChildren().get(0));
+				} else {
+					mckFormatted = formatMckNode(clause.getChildren().get(i));
+				}
 				// TODO: change if statement to use added _old vars from graph
 				if (ATt.contains(mckFormatted)) {
-					 mckSubNode.append("True" + MCK_AND);
+					mckSubNode.append("True" + MCK_AND);
 				} else if (!ATh.contains(mckFormatted)) {
 					mckSubNode.append("False" + MCK_AND);
 				} else if (sees && ATf.contains(mckFormatted)) {
@@ -232,12 +239,14 @@ public class MckTranslator {
 						AT.add(formatMckNode(node));
 					}
 					if (node.getChildren().get(0).toString().equals(node.getChildren().get(1).toString())) {
-						if (!ATc.contains(formatMckNode(node))) { //.getChildren().get(0)))) {
-							ATc.add(formatMckNode(node)); //.getChildren().get(0)));
+						if (!ATc.contains(formatMckNode(node))) { // .getChildren().get(0))))
+																	// {
+							ATc.add(formatMckNode(node)); // .getChildren().get(0)));
 						}
 					} else {
-						if (!ATt.contains(formatMckNode(node))) { //.getChildren().get(0)))) {
-							ATt.add(formatMckNode(node)); //.getChildren().get(0)));
+						if (!ATt.contains(formatMckNode(node))) { // .getChildren().get(0))))
+																	// {
+							ATt.add(formatMckNode(node)); // .getChildren().get(0)));
 						}
 					}
 				case GdlNode.GDL_ROLE:
@@ -431,6 +440,12 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		for (String contradiction : ATc) {
 			mck.append(System.lineSeparator() + "-- " + contradiction);
+		}
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Heads (ATh)");
+		mck.append(System.lineSeparator());
+		for (String heads : ATh) {
+			mck.append(System.lineSeparator() + "-- " + heads);
 		}
 
 		return mck.toString();
