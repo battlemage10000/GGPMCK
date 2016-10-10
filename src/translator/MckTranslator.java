@@ -508,21 +508,6 @@ public class MckTranslator {
 	private String generateInitialConditions() {
 		StringBuilder init_cond = new StringBuilder();
 
-		// Filter out tautologies and contradictions
-		for (String tautology : ATt) {
-			if (!ATi.contains(tautology)) {
-				ATi.add(tautology);
-			}if (AT.contains(tautology)) {
-				AT.remove(tautology);
-			}
-		}
-		
-		for (String contradiction : ATc) {
-			if (AT.contains(contradiction)) {
-				AT.remove(contradiction);
-			}
-		}
-		
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");
 		for (String node : AT) {
@@ -579,6 +564,31 @@ public class MckTranslator {
 
 		StringBuilder env_vars = new StringBuilder();
 
+		// Filter out tautologies and contradictions
+		for (String tautology : ATt) {
+			if (tautology.substring(0, 4).equals(GdlNode.GDL_SEES)) {
+				continue;
+			} else if (tautology.substring(0, 5).equals(GdlNode.GDL_LEGAL)) {
+				continue;
+			}
+			if (!ATi.contains(tautology)) {
+				ATi.add(tautology);
+			}if (AT.contains(tautology)) {
+				AT.remove(tautology);
+			}
+		}
+		
+		for (String contradiction : ATc) {
+			if (contradiction.substring(0, 4).equals(GdlNode.GDL_SEES)) {
+				continue;
+			} else if (contradiction.substring(0, 5).equals(GdlNode.GDL_LEGAL)) {
+				continue;
+			}
+			if (AT.contains(contradiction)) {
+				AT.remove(contradiction);
+			}
+		}
+		
 		// Environment Variables
 		for (String role : ATd.keySet()) {
 			env_vars.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
