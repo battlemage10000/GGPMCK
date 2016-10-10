@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.PriorityQueue;
 
 import util.GdlParser;
@@ -14,10 +15,8 @@ import util.graph.DependencyGraph;
 
 /**
  * Translates GDL-II in infix notation to MCK
- */
-/**
+ * 
  * @author vedantds
- *
  */
 public class MckTranslator {
 	public static String MCK_INIT = "INIT";
@@ -31,15 +30,15 @@ public class MckTranslator {
 	// Variables
 	private ArrayList<String> AT;
 	// Variables found in true and/or next
-	private ArrayList<String> ATf;
+	private HashSet<String> ATf;
 	// List of variables which are true in the initial state
-	private ArrayList<String> ATi;
+	private HashSet<String> ATi;
 	// List of variables which are always true(totality)
-	private ArrayList<String> ATt;
+	private HashSet<String> ATt;
 	// List of variables which are always false(contradiction)
-	private ArrayList<String> ATc;
+	private HashSet<String> ATc;
 	// List of formulae which are heads of clauses or facts
-	private ArrayList<String> ATh;
+	private HashSet<String> ATh;
 	// [Role -> Move] move map from legal
 	private HashMap<String, List<String>> ATd;
 	// [Role -> Sees] observation map from sees
@@ -49,21 +48,21 @@ public class MckTranslator {
 
 	public MckTranslator(GdlNode root) {
 		this.root = root;
-		AT = new ArrayList<String>();
-		ATf = new ArrayList<String>();
-		ATi = new ArrayList<String>();
+		this.AT = new ArrayList<String>();
+		this.ATf = new HashSet<String>();
+		this.ATi = new HashSet<String>();
 		// TODO: Can we join ATt, ATc and ATh in to one structure
-		ATt = new ArrayList<String>();
-		ATc = new ArrayList<String>();
-		ATh = new ArrayList<String>();
-		ATd = new HashMap<String, List<String>>();
-		ATs = new HashMap<String, List<String>>();
+		this.ATt = new HashSet<String>();
+		this.ATc = new HashSet<String>();
+		this.ATh = new HashSet<String>();
+		this.ATd = new HashMap<String, List<String>>();
+		this.ATs = new HashMap<String, List<String>>();
 	}
 
 	public static String orderGdlRules(GdlNode root) {
 		return orderGdlRules(root, GdlParser.constructDependencyGraph(root));
 	}
-	
+
 	public static String orderGdlRules(GdlNode root, DependencyGraph graph) {
 		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
 			@Override
@@ -81,7 +80,7 @@ public class MckTranslator {
 		PriorityQueue<GdlNode> unorderedAlt = new PriorityQueue<GdlNode>(gdlHeadComparator);
 		unordered.addAll(root.getChildren());
 
-		//DependencyGraph graph = GdlParser.constructDependencyGraph(root);
+		// DependencyGraph graph = GdlParser.constructDependencyGraph(root);
 		graph.computeStratum();
 		Map<String, Integer> stratumMap = graph.getStratumMap();
 		StringBuilder ordered = new StringBuilder();
@@ -162,14 +161,16 @@ public class MckTranslator {
 				// if (graph.getDependencyMap().keySet().contains(mckFormatted +
 				// "_old")) {
 				if (ATt.contains(mckFormatted)) {
-					mckSubNode.append("True" + MCK_AND);
+					//mckSubNode.append("True" + MCK_AND);
 					hasTrue = true;
 				} else if (ATc.contains(mckFormatted)) {
 					mckSubNode.append("False" + MCK_AND);
 					hasFalse = true;
 				} else if (!ATh.contains(mckFormatted)) {
 					mckSubNode.append("False" + MCK_AND);
-					ATc.add(mckFormatted);
+					if (!ATc.contains(mckFormatted)) {
+						ATc.add(mckFormatted);
+					}
 					hasFalse = true;
 				} else if (sees && ATf.contains(mckFormatted)) {
 					mckSubNode.append(mckFormatted + "_old" + MCK_AND);
@@ -193,11 +194,11 @@ public class MckTranslator {
 
 		StringBuilder mckNode = new StringBuilder();
 		if (body.length() == 0) {
-			ATt.add(formatMckNode(headNode));
-			mckNode.append(System.lineSeparator() + formatMckNode(headNode) + " := True;");
+			if (!ATt.contains(formatMckNode(headNode))) {
+				ATt.add(formatMckNode(headNode));
+			}
 		} else {
-			mckNode.append("if ");
-			mckNode.append(body.toString());
+			mckNode.append(System.lineSeparator() + "if " + body.toString());
 			mckNode.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := True");
 			mckNode.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := False");
 			mckNode.append(System.lineSeparator() + "fi;");
@@ -222,7 +223,7 @@ public class MckTranslator {
 
 		for (GdlNode node : root) {
 			if (node.getType() == GdlType.CLAUSE) {
-				if (!ATh.contains(formatMckNode(node.getChildren().get(0)))){
+				if (!ATh.contains(formatMckNode(node.getChildren().get(0)))) {
 					ATh.add(formatMckNode(node.getChildren().get(0)));
 				}
 			} else if (node.getType() == GdlType.FORMULA) {
@@ -234,7 +235,7 @@ public class MckTranslator {
 						ATt.add(formatMckNode(node));
 					}
 				}
-				
+
 				switch (node.getAtom()) {
 				case GdlNode.GDL_NOT:
 				case GdlNode.GDL_BASE:
@@ -314,70 +315,13 @@ public class MckTranslator {
 			}
 		}
 
-		// Add all initial true legal clauses to ATi
-		for (GdlNode clause : root.getChildren()) {
-			if (clause.getType() != GdlType.CLAUSE && clause.getAtom().equals(GdlNode.GDL_LEGAL)) {
-				ATi.add(formatMckNode(clause));
-			} else {
-				boolean headTrue = true;
-				for (int i = 1; i < clause.getChildren().size(); i++) {
-					if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
-						if (ATi.contains(formatMckNode(clause.getChildren().get(i).getChildren().get(0)))) {
-							headTrue = false;
-						}
-					} else {
-						if (!ATi.contains(formatMckNode(clause.getChildren().get(i)))) {
-							headTrue = false;
-						}
-					}
-				}
-				if (headTrue) {
-					ATi.add(formatMckNode(clause.getChildren().get(0)));
-				}
-			}
-		}
-
 		// Initialize string builders for different parts of the output
-		StringBuilder env_vars = new StringBuilder();
-		StringBuilder init_cond = new StringBuilder();
+		// StringBuilder env_vars = new StringBuilder();
+		// StringBuilder init_cond = new StringBuilder();
 		StringBuilder agents = new StringBuilder();
 		StringBuilder state_trans = new StringBuilder();
-		StringBuilder spec = new StringBuilder();
+		// StringBuilder spec = new StringBuilder();
 		StringBuilder protocols = new StringBuilder();
-
-		// Environment Variables
-		for (String role : ATd.keySet()) {
-			env_vars.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
-			for (String move : ATd.get(role)) {
-				env_vars.append(MCK_MOVE_PREFIX + move + ", ");
-			}
-			env_vars.append(MCK_INIT + ", " + MCK_STOP + "}");
-		}
-		env_vars.append(System.lineSeparator());
-		env_vars.append(System.lineSeparator() + "-- AT:");
-		for (String node : AT) {
-			env_vars.append(System.lineSeparator() + node + " : Bool");
-		}
-		env_vars.append(System.lineSeparator());
-		env_vars.append(System.lineSeparator() + "-- ATf:");
-		for (String node : ATf) {
-			env_vars.append(System.lineSeparator() + node + " : Bool");
-			// mck.append(System.lineSeparator() + node + "_old : Bool");
-		}
-		env_vars.append(System.lineSeparator());
-		env_vars.append(System.lineSeparator() + "-- ATd:");
-		for (String role : ATd.keySet()) {
-			env_vars.append(System.lineSeparator() + MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
-		}
-		env_vars.append(System.lineSeparator());
-		env_vars.append(System.lineSeparator() + "-- ATs:");
-		for (String role : ATs.keySet()) {
-			for (String move : ATs.get(role)) {
-				env_vars.append(System.lineSeparator() + "sees_" + role + "_" + move + " : Bool");
-			}
-		}
-		env_vars.append(System.lineSeparator());
-		env_vars.append(System.lineSeparator());
 
 		// Agent and Protocol Declarations
 		for (String role : ATd.keySet()) {
@@ -407,54 +351,6 @@ public class MckTranslator {
 		}
 		agents.append(System.lineSeparator());
 		protocols.append(System.lineSeparator());
-
-		// Initial Conditions
-		init_cond.append(System.lineSeparator() + "init_cond = ");
-		for (String node : AT) {
-			if (node.length() >= 5 && node.substring(0, 5).equals(GdlNode.GDL_LEGAL)) {
-				init_cond.append(System.lineSeparator() + node + " == ");
-				if (ATi.contains(node)) {
-					init_cond.append("True");
-				} else {
-					init_cond.append("False");
-				}
-				init_cond.append(MCK_AND);
-			} else if (node.length() >= 8 && node.substring(0, 8).equals(GdlNode.GDL_DISTINCT)) {
-				init_cond.append(System.lineSeparator() + node + " == ");
-				if (node.substring(9, 9 + (node.length() - 9) / 2)
-						.equals(node.substring(9 + (node.length() - 9) / 2 + 1))) {
-					init_cond.append("False");
-				} else {
-					init_cond.append("True");
-				}
-				init_cond.append(MCK_AND);
-			} else {
-				init_cond.append(System.lineSeparator() + node + " == ");
-				if (ATi.contains(node)) {
-					init_cond.append("True");
-				} else {
-					init_cond.append("False");
-				}
-				init_cond.append(MCK_AND);
-			}
-		}
-		for (String role : ATd.keySet()) {
-			init_cond.append(System.lineSeparator() + MCK_DOES_PREFIX + role + " == " + MCK_INIT);
-			init_cond.append(" /\\ ");
-		}
-		for (String trueVar : ATf) {
-			init_cond.append(System.lineSeparator() + trueVar + " == ");
-			if (ATi.contains(trueVar)) {
-				init_cond.append("True");
-			} else {
-				init_cond.append("False");
-			}
-			init_cond.append(MCK_AND);
-		}
-		// Remove last conjunction
-		init_cond.delete(init_cond.length() - 4, init_cond.length());
-		init_cond.append(System.lineSeparator());
-		init_cond.append(System.lineSeparator());
 
 		// State Transitions
 		state_trans.append(System.lineSeparator() + "transitions");
@@ -495,7 +391,7 @@ public class MckTranslator {
 					repeatHeadList.add(clause);
 				} else {
 					if (repeatHead != null) {
-						state_trans.append(System.lineSeparator() + formatClause(graph, repeatHead, repeatHeadList));
+						state_trans.append(formatClause(graph, repeatHead, repeatHeadList));
 					}
 					repeatHead = clause.getChildren().get(0);
 					repeatHeadList = new ArrayList<GdlNode>();
@@ -506,6 +402,66 @@ public class MckTranslator {
 		state_trans.deleteCharAt(state_trans.length() - 1);
 		state_trans.append(System.lineSeparator() + "end");
 		state_trans.append(System.lineSeparator());
+
+		// Add all initial true legal clauses to ATi
+		for (GdlNode clause : root.getChildren()) {
+			if (clause.getType() != GdlType.CLAUSE && clause.getAtom().equals(GdlNode.GDL_LEGAL)) {
+				ATi.add(formatMckNode(clause));
+			} else {
+				boolean headTrue = true;
+				for (int i = 1; i < clause.getChildren().size(); i++) {
+					if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
+						if (ATi.contains(formatMckNode(clause.getChildren().get(i).getChildren().get(0)))) {
+							headTrue = false;
+						}
+					} else {
+						if (!ATi.contains(formatMckNode(clause.getChildren().get(i)))) {
+							headTrue = false;
+						}
+					}
+				}
+				if (headTrue) {
+					ATi.add(formatMckNode(clause.getChildren().get(0)));
+				}
+			}
+		}
+
+		// Join all of the sections together
+		StringBuilder mck = new StringBuilder();
+		mck.append("-- MCK file generated using MckTranslator from a GGP game description");
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Environment Variables");
+		mck.append(System.lineSeparator() + generateEnvironmentVariables());
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Initial Conditions");
+		mck.append(System.lineSeparator() + generateInitialConditions());
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Agent Definitions");
+		mck.append(System.lineSeparator() + agents.toString());
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- State Transitions");
+		mck.append(System.lineSeparator() + state_trans.toString());
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Specifications");
+		mck.append(System.lineSeparator() + generateSpecification());
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Protocol Definitions");
+		mck.append(System.lineSeparator() + protocols.toString());
+		mck.append(System.lineSeparator());
+		mck.append(System.lineSeparator() + "-- Tautologies (ATt)");
+		for (String tautology : ATt) {
+			mck.append(System.lineSeparator() + "-- " + tautology);
+		}
+		mck.append(System.lineSeparator() + "-- Contradiction (ATc)");
+		for (String contradiction : ATc) {
+			mck.append(System.lineSeparator() + "-- " + contradiction);
+		}
+
+		return mck.toString();
+	}
+
+	private String generateSpecification() {
+		StringBuilder spec = new StringBuilder();
 
 		// Specification
 		spec.append(System.lineSeparator() + "spec_spr = AG(");
@@ -525,32 +481,137 @@ public class MckTranslator {
 		}
 		spec.delete(spec.length() - 4, spec.length());
 		spec.append(")");
+		spec.append(System.lineSeparator() + "spec_obs_ctl = AG(");
+		for (String role : ATd.keySet()) {
+			for (String move : ATd.get(role)) {
+				spec.append("(legal_" + role + "_" + move + " => Knows " + MCK_ROLE_PREFIX + role + " legal_" + role
+						+ "_" + move + ")");
+				spec.append(MCK_AND);
+			}
+		}
+		spec.delete(spec.length() - 4, spec.length());
+		spec.append(")");
+		spec.append(System.lineSeparator() + "spec_obs_ctl = AG(");
+		for (String role : ATd.keySet()) {
+			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_STOP + "))");
+			spec.append(MCK_AND);
+		}
+		spec.delete(spec.length() - 4, spec.length());
+		spec.append(")");
+		spec.append(System.lineSeparator() + "spec_obs_ctl = AF terminal");
 		spec.append(System.lineSeparator());
 		spec.append(System.lineSeparator());
 
-		// Join all of the sections together
-		StringBuilder mck = new StringBuilder();
-		mck.append("-- MCK file generated using MckTranslator from a GGP game description");
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Environment Variables");
-		mck.append(System.lineSeparator() + env_vars.toString());
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Initial Conditions");
-		mck.append(System.lineSeparator() + init_cond.toString());
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Agent Definitions");
-		mck.append(System.lineSeparator() + agents.toString());
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- State Transitions");
-		mck.append(System.lineSeparator() + state_trans.toString());
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Specifications");
-		mck.append(System.lineSeparator() + spec.toString());
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Protocol Definitions");
-		mck.append(System.lineSeparator() + protocols.toString());
-		mck.append(System.lineSeparator());
+		return spec.toString();
+	}
 
-		return mck.toString();
+	private String generateInitialConditions() {
+		StringBuilder init_cond = new StringBuilder();
+
+		// Filter out tautologies and contradictions
+		for (String tautology : ATt) {
+			if (!ATi.contains(tautology)) {
+				ATi.add(tautology);
+			}if (AT.contains(tautology)) {
+				AT.remove(tautology);
+			}
+		}
+		
+		for (String contradiction : ATc) {
+			if (AT.contains(contradiction)) {
+				AT.remove(contradiction);
+			}
+		}
+		
+		// Initial Conditions
+		init_cond.append(System.lineSeparator() + "init_cond = ");
+		for (String node : AT) {
+			/*if (node.length() >= 5 && node.substring(0, 5).equals(GdlNode.GDL_LEGAL)) {
+				init_cond.append(System.lineSeparator() + node + " == ");
+				if (ATi.contains(node)) {
+					init_cond.append("True");
+				} else {
+					init_cond.append("False");
+				}
+				init_cond.append(MCK_AND);
+			} else if (node.length() >= 8 && node.substring(0, 8).equals(GdlNode.GDL_DISTINCT)) {
+				init_cond.append(System.lineSeparator() + node + " == ");
+				if (node.substring(9, 9 + (node.length() - 9) / 2)
+						.equals(node.substring(9 + (node.length() - 9) / 2 + 1))) {
+					init_cond.append("False");
+				} else {
+					init_cond.append("True");
+				}
+				init_cond.append(MCK_AND);
+			} else {
+			*/
+				init_cond.append(System.lineSeparator() + node + " == ");
+				if (ATi.contains(node)) {
+					init_cond.append("True");
+				} else {
+					init_cond.append("False");
+				}
+				init_cond.append(MCK_AND);
+			//}
+		}
+		for (String role : ATd.keySet()) {
+			init_cond.append(System.lineSeparator() + MCK_DOES_PREFIX + role + " == " + MCK_INIT);
+			init_cond.append(" /\\ ");
+		}
+		for (String trueVar : ATf) {
+			init_cond.append(System.lineSeparator() + trueVar + " == ");
+			if (ATi.contains(trueVar)) {
+				init_cond.append("True");
+			} else {
+				init_cond.append("False");
+			}
+			init_cond.append(MCK_AND);
+		}
+		// Remove last conjunction
+		init_cond.delete(init_cond.length() - 4, init_cond.length());
+		init_cond.append(System.lineSeparator());
+		init_cond.append(System.lineSeparator());
+
+		return init_cond.toString();
+	}
+
+	private String generateEnvironmentVariables() {
+
+		StringBuilder env_vars = new StringBuilder();
+
+		// Environment Variables
+		for (String role : ATd.keySet()) {
+			env_vars.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
+			for (String move : ATd.get(role)) {
+				env_vars.append(MCK_MOVE_PREFIX + move + ", ");
+			}
+			env_vars.append(MCK_INIT + ", " + MCK_STOP + "}");
+		}
+		env_vars.append(System.lineSeparator());
+		env_vars.append(System.lineSeparator() + "-- AT:");
+		for (String node : AT) {
+			env_vars.append(System.lineSeparator() + node + " : Bool");
+		}
+		env_vars.append(System.lineSeparator());
+		env_vars.append(System.lineSeparator() + "-- ATf:");
+		for (String node : ATf) {
+			env_vars.append(System.lineSeparator() + node + " : Bool");
+		}
+		env_vars.append(System.lineSeparator());
+		env_vars.append(System.lineSeparator() + "-- ATd:");
+		for (String role : ATd.keySet()) {
+			env_vars.append(System.lineSeparator() + MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
+		}
+		env_vars.append(System.lineSeparator());
+		env_vars.append(System.lineSeparator() + "-- ATs:");
+		for (String role : ATs.keySet()) {
+			for (String move : ATs.get(role)) {
+				env_vars.append(System.lineSeparator() + "sees_" + role + "_" + move + " : Bool");
+			}
+		}
+		env_vars.append(System.lineSeparator());
+		env_vars.append(System.lineSeparator());
+
+		return env_vars.toString();
 	}
 }
