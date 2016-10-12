@@ -9,14 +9,24 @@ import util.grammar.GdlNode;
 
 public class GdlRule implements GdlNode, LparseNode {
 
+	private int stratum;
 	private final GdlNode parent;
 	private final ArrayList<GdlNode> children;
 
 	public GdlRule(GdlNode parent) {
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
+		this.stratum = -1;
 	}
 
+	public int getStratum() {
+		return stratum;
+	}
+	
+	public void setStratum(int stratum) {
+		this.stratum = stratum;
+	}
+	
 	public GdlNode getHead() {
 		return children.get(0);
 	}

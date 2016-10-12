@@ -122,6 +122,7 @@ public class Main {
 			List<String> tokens;
 			GdlNode root = GdlNodeFactory.createGdl();
 			try {
+				System.out.print("Parsing ... ");
 				if (inputFilePath.equals("")) {
 					tokens = GdlParser.gdlTokenizer(new InputStreamReader(System.in));
 				} else {
@@ -129,7 +130,7 @@ public class Main {
 				}
 				root = GdlParser.expandParseTree(tokens);
 
-				System.out.println("Finished parseing gdl file");
+				System.out.println("finished");
 				totalTime = (int) (System.currentTimeMillis() - startTime);
 				System.out.println(
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
@@ -144,13 +145,14 @@ public class Main {
 
 			// Use internal grounder
 			if (groundSwitch) {
+				System.out.print("Grounding ... ");
 				DomainGraph domain = GdlParser.constructDomainGraph(root);
 				if (outputDotSwitch) {
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
 				root = GdlParser.groundGdl(root, domain);
 
-				System.out.println("Finished grounding");
+				System.out.println("finished");
 				totalTime = (int) (System.currentTimeMillis() - startTime);
 				System.out.println(
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
@@ -159,10 +161,11 @@ public class Main {
 			// Output dependency graph as a dot formatted file
 			DependencyGraph graph = null;
 			if (outputDepDotSwitch) {
+				System.out.print("Generating dependency.dot ... ");
 				graph = GdlParser.constructDependencyGraph(root);
 				GdlParser.saveFile(graph.dotEncodedGraph(), outputDir.getName() + "/dependency.dot");
 
-				System.out.println("Finished generating dependency.dot");
+				System.out.println("finished");
 				totalTime = (int) (System.currentTimeMillis() - startTime);
 				System.out.println(
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
@@ -170,13 +173,14 @@ public class Main {
 
 			// Order rules by stratum
 			if (orderedSwitch) {
+				System.out.print("Ordering rules ... ");
 				if (graph == null) {
 					root = GdlParser.parseString(MckTranslator.orderGdlRules(root));
 				} else {
 					root = GdlParser.parseString(MckTranslator.orderGdlRules(root, graph));
 				}
 
-				System.out.println("Finished ordering rules");
+				System.out.println("finished");
 				totalTime = (int) (System.currentTimeMillis() - startTime);
 				System.out.println(
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
@@ -204,20 +208,22 @@ public class Main {
 
 			if (outputFileSwitch || outputMckSwitch) {
 				if (!orderedSwitch) {
+					System.out.print("Ordering rules ... ");
 					root = GdlParser.parseString(MckTranslator.orderGdlRules(root));
 
-					System.out.println("Finished ordering rules");
+					System.out.println("finished");
 					totalTime = (int) (System.currentTimeMillis() - startTime);
 					System.out.println(
 							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 				}
 				MckTranslator translator = new MckTranslator(root, debugSwitch);
+				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
 					GdlParser.saveFile(translator.toMck(), outputFilePath);
 				} else if (outputMckSwitch) {
 					System.out.println(translator.toMck());
 				}
-				System.out.println("Finished generating mck output");
+				System.out.println("finished");
 			}
 			totalTime = (int) (System.currentTimeMillis() - startTime);
 			System.out.println(

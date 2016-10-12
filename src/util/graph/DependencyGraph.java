@@ -50,6 +50,9 @@ public class DependencyGraph {
 	}
 
 	/**
+	 * Returns the stratum of the term,
+	 * -1 if it couln't be stratisfied
+	 * -2 if it doesn't exist in the graph
 	 * @param term
 	 * @return
 	 */
