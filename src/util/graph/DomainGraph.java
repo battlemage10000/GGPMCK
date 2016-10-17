@@ -192,10 +192,10 @@ public class DomainGraph {
 		for (Term node : adjacencyMap.keySet()) {
 			dot.append(System.lineSeparator() + "d_" + dotEncoded(node.getTerm()));
 			if (node.getArity() > 0) {
-				dot.append("_" + node.getArity() + " [label=\"" + node.getTerm() + "[" + node.getArity()
+				dot.append("_" + node.getArity() + " [label=\"" + dotEncoded(node.getTerm()) + "[" + node.getArity()
 						+ "]\",color=blue]");
 			} else if (node.getFunctionArity() > 0) {
-				dot.append("__" + node.getFunctionArity() + " [label=\"" + node.getTerm() + "/"
+				dot.append("__" + node.getFunctionArity() + " [label=\"" + dotEncoded(node.getTerm()) + "/"
 						+ node.getFunctionArity() + "\",");
 				if (node.getType() == GdlType.FORMULA) {
 					dot.append("color=red]");
@@ -210,7 +210,7 @@ public class DomainGraph {
 				}
 				dot.append(System.lineSeparator() + "}");
 			} else {
-				dot.append(" [label=\"" + node.getTerm() + "\",");
+				dot.append(" [label=\"" + dotEncoded(node.getTerm()) + "\",");
 				if (node.getType() == GdlType.FORMULA) {
 					dot.append("color=red]");
 				} else {
@@ -221,9 +221,9 @@ public class DomainGraph {
 
 		for (Term from : adjacencyMap.keySet()) {
 			if (adjacencyMap.get(from).size() > 0) {
-				dot.append(System.lineSeparator() + "  d_" + from.getTerm() + "_" + from.getArity() + " -> { ");
+				dot.append(System.lineSeparator() + "  d_" + dotEncoded(from.getTerm()) + "_" + from.getArity() + " -> { ");
 				for (Term to : adjacencyMap.get(from)) {
-					dot.append("d_" + to.getTerm());
+					dot.append("d_" + dotEncoded(to.getTerm()));
 
 					if (to.getFunctionArity() > 0) {
 						dot.append("__" + to.getFunctionArity());

@@ -114,7 +114,7 @@ public class DependencyGraph {
 
 		// Declare nodes and assign attributes
 		for (String from : adjacencyMap.keySet()) {
-			dot.append(System.lineSeparator() + dotEncoded(from) + " [label=\"" + from + " " + stratumMap.get(from) + "\"]");
+			dot.append(System.lineSeparator() + dotEncoded(from) + " [label=\"" + dotEncoded(from) + " " + stratumMap.get(from) + "\"]");
 		}
 		dot.append(System.lineSeparator());
 
@@ -149,7 +149,7 @@ public class DependencyGraph {
 	}
 
 	/**
-	 * 
+	 * Determine for each node which stratum or level it is in. 
 	 */
 	public void computeStratum() {
 		LinkedList<String> unstratified = new LinkedList<String>();
@@ -224,9 +224,7 @@ public class DependencyGraph {
 		}
 
 		if (adjacencyMap.containsKey(GdlNode.GDL_SEES)) {
-			//for (String child : adjacencyMap.get(GdlNode.GDL_SEES)) {
-				addOldValueForSees("", GdlNode.GDL_SEES);
-			//}
+			addOldValueForSees("", GdlNode.GDL_SEES);
 		}
 	}
 }
