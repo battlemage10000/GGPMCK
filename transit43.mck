@@ -1,0 +1,709 @@
+--This is a translation of transit.gdl to transit.mck 
+--Ji 
+
+--types
+
+type ActTransit ={Move_northT, Move_deast, Move_dwest, Move_nowhereT, StopTransit}
+type ActPatrol ={Move_north, Move_south, Move_east, Move_west, Move_nowhere, StopPatrol}
+type Steps ={1..30}
+type Ag ={Patrol, Transit}
+type Location ={D1_1, D1_2, D1_3, D1_4, D1_5, D1_6, D1_7, D1_8, D2_1, D2_2, D2_3, D2_4, D2_5, D2_6, D2_7, D2_8, D3_1, D3_2, D3_3, D3_4, D3_5, D3_6, D3_7, D3_8, D4_1, D4_2, D4_3, D4_4, D4_5, D4_6, D4_7, D4_8, D5_1, D5_2, D5_3, D5_4, D5_5, D5_6, D5_7, D5_8, D6_1, D6_2, D6_3, D6_4, D6_5, D6_6, D6_7, D6_8, D7_1, D7_2, D7_3, D7_4, D7_5, D7_6, D7_7, D7_8, D8_1, D8_2, D8_3, D8_4, D8_5, D8_6, D8_7, D8_8}
+
+--shared variables
+
+step: Steps
+control: Ag
+control_old: Ag
+location_patrol: Location
+location_transit: Location
+did_patrol: ActPatrol
+did_transit: ActTransit
+terminal: Bool
+captured: Bool
+timeout: Bool
+crossed: Bool
+sees_transit_location_patrol: Location
+sees_patrol_location_transit: Location
+legal_patrol_move_north: Bool
+legal_patrol_move_south: Bool
+legal_patrol_move_nowhere: Bool
+legal_patrol_move_east: Bool
+legal_patrol_move_west: Bool
+legal_transit_move_north: Bool
+legal_transit_move_dwest: Bool
+legal_transit_move_deast: Bool
+legal_transit_move_nowhere: Bool
+
+
+
+--initial condition--
+
+init_cond =
+control==Patrol /\ control_old==Patrol /\ location_patrol == D3_8 /\ location_transit == D2_1 /\ step ==1 /\did_patrol ==Move_nowhere /\ did_transit ==Move_nowhereT /\neg terminal /\ neg crossed /\ neg captured /\ neg timeout /\sees_transit_location_patrol == D3_8 /\ sees_patrol_location_transit == D2_1/\
+neg legal_patrol_move_north /\ legal_patrol_move_south /\ legal_patrol_move_nowhere /\legal_patrol_move_east /\legal_patrol_move_west/\
+legal_transit_move_north/\ legal_transit_move_dwest /\legal_transit_move_deast /\legal_transit_move_nowhere
+
+--agent binding--
+
+agent Patrol "patrol" (control, location_patrol, did_patrol, sees_patrol_location_transit, terminal, legal_patrol_move_north, legal_patrol_move_south, legal_patrol_move_nowhere, legal_patrol_move_east, legal_patrol_move_west)
+
+agent Transit "transit" (control, location_transit, did_transit, sees_transit_location_patrol, terminal, legal_transit_move_north, legal_transit_move_dwest, legal_transit_move_deast, legal_transit_move_nowhere)
+
+
+
+transitions 
+
+begin
+
+
+--remeber actions
+
+if Patrol.Move_north1 -> did_patrol := Move_north 
+[] Patrol.Move_south1 -> did_patrol := Move_south 
+[] Patrol.Move_west1 -> did_patrol := Move_west 
+[] Patrol.Move_east1 -> did_patrol := Move_east 
+[] Patrol.Move_nowhere1 -> did_patrol := Move_nowhere 
+[] otherwise -> did_patrol := StopPatrol fi;
+
+if Transit.Move_northT1 -> did_transit := Move_northT 
+[] Transit.Move_dwest1 -> did_transit := Move_dwest 
+[] Transit.Move_deast1 -> did_transit := Move_deast 
+[] Transit.Move_nowhereT1 -> did_transit := Move_nowhereT 
+[] otherwise -> did_transit := StopTransit fi;
+
+
+--update control
+
+if (neg terminal) -> control_old := control fi;
+if (neg terminal) /\ (control_old == Patrol) -> control := Transit fi;
+if (neg terminal) /\ (control_old == Transit) -> control := Patrol fi;
+
+--update locations
+
+if
+ (location_patrol == D1_2 /\ did_patrol == Move_south)\/(location_patrol == D2_1 /\ did_patrol == Move_west)\/(location_patrol == D1_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_1
+[] (location_patrol == D1_1 /\ did_patrol == Move_north)\/(location_patrol == D1_3 /\ did_patrol == Move_south)\/(location_patrol == D2_2 /\ did_patrol == Move_west)\/(location_patrol == D1_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_2
+[] (location_patrol == D1_2 /\ did_patrol == Move_north)\/(location_patrol == D1_4 /\ did_patrol == Move_south)\/(location_patrol == D2_3 /\ did_patrol == Move_west)\/(location_patrol == D1_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_3
+[] (location_patrol == D1_3 /\ did_patrol == Move_north)\/(location_patrol == D1_5 /\ did_patrol == Move_south)\/(location_patrol == D2_4 /\ did_patrol == Move_west)\/(location_patrol == D1_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_4
+[] (location_patrol == D1_4 /\ did_patrol == Move_north)\/(location_patrol == D1_6 /\ did_patrol == Move_south)\/(location_patrol == D2_5 /\ did_patrol == Move_west)\/(location_patrol == D1_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_5
+[] (location_patrol == D1_5 /\ did_patrol == Move_north)\/(location_patrol == D1_7 /\ did_patrol == Move_south)\/(location_patrol == D2_6 /\ did_patrol == Move_west)\/(location_patrol == D1_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_6
+[] (location_patrol == D1_6 /\ did_patrol == Move_north)\/(location_patrol == D1_8 /\ did_patrol == Move_south)\/(location_patrol == D2_7 /\ did_patrol == Move_west)\/(location_patrol == D1_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_7
+[] (location_patrol == D1_7 /\ did_patrol == Move_north)\/(location_patrol == D2_8 /\ did_patrol == Move_west)\/(location_patrol == D1_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D1_8
+[] (location_patrol == D2_2 /\ did_patrol == Move_south)\/(location_patrol == D1_1 /\ did_patrol == Move_east)\/(location_patrol == D3_1 /\ did_patrol == Move_west)\/(location_patrol == D2_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_1
+[] (location_patrol == D2_1 /\ did_patrol == Move_north)\/(location_patrol == D2_3 /\ did_patrol == Move_south)\/(location_patrol == D1_2 /\ did_patrol == Move_east)\/(location_patrol == D3_2 /\ did_patrol == Move_west)\/(location_patrol == D2_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_2
+[] (location_patrol == D2_2 /\ did_patrol == Move_north)\/(location_patrol == D2_4 /\ did_patrol == Move_south)\/(location_patrol == D1_3 /\ did_patrol == Move_east)\/(location_patrol == D3_3 /\ did_patrol == Move_west)\/(location_patrol == D2_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_3
+[] (location_patrol == D2_3 /\ did_patrol == Move_north)\/(location_patrol == D2_5 /\ did_patrol == Move_south)\/(location_patrol == D1_4 /\ did_patrol == Move_east)\/(location_patrol == D3_4 /\ did_patrol == Move_west)\/(location_patrol == D2_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_4
+[] (location_patrol == D2_4 /\ did_patrol == Move_north)\/(location_patrol == D2_6 /\ did_patrol == Move_south)\/(location_patrol == D1_5 /\ did_patrol == Move_east)\/(location_patrol == D3_5 /\ did_patrol == Move_west)\/(location_patrol == D2_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_5
+[] (location_patrol == D2_5 /\ did_patrol == Move_north)\/(location_patrol == D2_7 /\ did_patrol == Move_south)\/(location_patrol == D1_6 /\ did_patrol == Move_east)\/(location_patrol == D3_6 /\ did_patrol == Move_west)\/(location_patrol == D2_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_6
+[] (location_patrol == D2_6 /\ did_patrol == Move_north)\/(location_patrol == D2_8 /\ did_patrol == Move_south)\/(location_patrol == D1_7 /\ did_patrol == Move_east)\/(location_patrol == D3_7 /\ did_patrol == Move_west)\/(location_patrol == D2_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_7
+[] (location_patrol == D2_7 /\ did_patrol == Move_north)\/(location_patrol == D1_8 /\ did_patrol == Move_east)\/(location_patrol == D3_8 /\ did_patrol == Move_west)\/(location_patrol == D2_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D2_8
+[] (location_patrol == D3_2 /\ did_patrol == Move_south)\/(location_patrol == D2_1 /\ did_patrol == Move_east)\/(location_patrol == D4_1 /\ did_patrol == Move_west)\/(location_patrol == D3_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_1
+[] (location_patrol == D3_1 /\ did_patrol == Move_north)\/(location_patrol == D3_3 /\ did_patrol == Move_south)\/(location_patrol == D2_2 /\ did_patrol == Move_east)\/(location_patrol == D4_2 /\ did_patrol == Move_west)\/(location_patrol == D3_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_2
+[] (location_patrol == D3_2 /\ did_patrol == Move_north)\/(location_patrol == D3_4 /\ did_patrol == Move_south)\/(location_patrol == D2_3 /\ did_patrol == Move_east)\/(location_patrol == D4_3 /\ did_patrol == Move_west)\/(location_patrol == D3_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_3
+[] (location_patrol == D3_3 /\ did_patrol == Move_north)\/(location_patrol == D3_5 /\ did_patrol == Move_south)\/(location_patrol == D2_4 /\ did_patrol == Move_east)\/(location_patrol == D4_4 /\ did_patrol == Move_west)\/(location_patrol == D3_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_4
+[] (location_patrol == D3_4 /\ did_patrol == Move_north)\/(location_patrol == D3_6 /\ did_patrol == Move_south)\/(location_patrol == D2_5 /\ did_patrol == Move_east)\/(location_patrol == D4_5 /\ did_patrol == Move_west)\/(location_patrol == D3_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_5
+[] (location_patrol == D3_5 /\ did_patrol == Move_north)\/(location_patrol == D3_7 /\ did_patrol == Move_south)\/(location_patrol == D2_6 /\ did_patrol == Move_east)\/(location_patrol == D4_6 /\ did_patrol == Move_west)\/(location_patrol == D3_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_6
+[] (location_patrol == D3_6 /\ did_patrol == Move_north)\/(location_patrol == D3_8 /\ did_patrol == Move_south)\/(location_patrol == D2_7 /\ did_patrol == Move_east)\/(location_patrol == D4_7 /\ did_patrol == Move_west)\/(location_patrol == D3_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_7
+[] (location_patrol == D3_7 /\ did_patrol == Move_north)\/(location_patrol == D2_8 /\ did_patrol == Move_east)\/(location_patrol == D4_8 /\ did_patrol == Move_west)\/(location_patrol == D3_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D3_8
+[] (location_patrol == D4_2 /\ did_patrol == Move_south)\/(location_patrol == D3_1 /\ did_patrol == Move_east)\/(location_patrol == D5_1 /\ did_patrol == Move_west)\/(location_patrol == D4_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_1
+[] (location_patrol == D4_1 /\ did_patrol == Move_north)\/(location_patrol == D4_3 /\ did_patrol == Move_south)\/(location_patrol == D3_2 /\ did_patrol == Move_east)\/(location_patrol == D5_2 /\ did_patrol == Move_west)\/(location_patrol == D4_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_2
+[] (location_patrol == D4_2 /\ did_patrol == Move_north)\/(location_patrol == D4_4 /\ did_patrol == Move_south)\/(location_patrol == D3_3 /\ did_patrol == Move_east)\/(location_patrol == D5_3 /\ did_patrol == Move_west)\/(location_patrol == D4_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_3
+[] (location_patrol == D4_3 /\ did_patrol == Move_north)\/(location_patrol == D4_5 /\ did_patrol == Move_south)\/(location_patrol == D3_4 /\ did_patrol == Move_east)\/(location_patrol == D5_4 /\ did_patrol == Move_west)\/(location_patrol == D4_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_4
+[] (location_patrol == D4_4 /\ did_patrol == Move_north)\/(location_patrol == D4_6 /\ did_patrol == Move_south)\/(location_patrol == D3_5 /\ did_patrol == Move_east)\/(location_patrol == D5_5 /\ did_patrol == Move_west)\/(location_patrol == D4_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_5
+[] (location_patrol == D4_5 /\ did_patrol == Move_north)\/(location_patrol == D4_7 /\ did_patrol == Move_south)\/(location_patrol == D3_6 /\ did_patrol == Move_east)\/(location_patrol == D5_6 /\ did_patrol == Move_west)\/(location_patrol == D4_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_6
+[] (location_patrol == D4_6 /\ did_patrol == Move_north)\/(location_patrol == D4_8 /\ did_patrol == Move_south)\/(location_patrol == D3_7 /\ did_patrol == Move_east)\/(location_patrol == D5_7 /\ did_patrol == Move_west)\/(location_patrol == D4_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_7
+[] (location_patrol == D4_7 /\ did_patrol == Move_north)\/(location_patrol == D3_8 /\ did_patrol == Move_east)\/(location_patrol == D5_8 /\ did_patrol == Move_west)\/(location_patrol == D4_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D4_8
+[] (location_patrol == D5_2 /\ did_patrol == Move_south)\/(location_patrol == D4_1 /\ did_patrol == Move_east)\/(location_patrol == D6_1 /\ did_patrol == Move_west)\/(location_patrol == D5_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_1
+[] (location_patrol == D5_1 /\ did_patrol == Move_north)\/(location_patrol == D5_3 /\ did_patrol == Move_south)\/(location_patrol == D4_2 /\ did_patrol == Move_east)\/(location_patrol == D6_2 /\ did_patrol == Move_west)\/(location_patrol == D5_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_2
+[] (location_patrol == D5_2 /\ did_patrol == Move_north)\/(location_patrol == D5_4 /\ did_patrol == Move_south)\/(location_patrol == D4_3 /\ did_patrol == Move_east)\/(location_patrol == D6_3 /\ did_patrol == Move_west)\/(location_patrol == D5_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_3
+[] (location_patrol == D5_3 /\ did_patrol == Move_north)\/(location_patrol == D5_5 /\ did_patrol == Move_south)\/(location_patrol == D4_4 /\ did_patrol == Move_east)\/(location_patrol == D6_4 /\ did_patrol == Move_west)\/(location_patrol == D5_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_4
+[] (location_patrol == D5_4 /\ did_patrol == Move_north)\/(location_patrol == D5_6 /\ did_patrol == Move_south)\/(location_patrol == D4_5 /\ did_patrol == Move_east)\/(location_patrol == D6_5 /\ did_patrol == Move_west)\/(location_patrol == D5_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_5
+[] (location_patrol == D5_5 /\ did_patrol == Move_north)\/(location_patrol == D5_7 /\ did_patrol == Move_south)\/(location_patrol == D4_6 /\ did_patrol == Move_east)\/(location_patrol == D6_6 /\ did_patrol == Move_west)\/(location_patrol == D5_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_6
+[] (location_patrol == D5_6 /\ did_patrol == Move_north)\/(location_patrol == D5_8 /\ did_patrol == Move_south)\/(location_patrol == D4_7 /\ did_patrol == Move_east)\/(location_patrol == D6_7 /\ did_patrol == Move_west)\/(location_patrol == D5_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_7
+[] (location_patrol == D5_7 /\ did_patrol == Move_north)\/(location_patrol == D4_8 /\ did_patrol == Move_east)\/(location_patrol == D6_8 /\ did_patrol == Move_west)\/(location_patrol == D5_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D5_8
+[] (location_patrol == D6_2 /\ did_patrol == Move_south)\/(location_patrol == D5_1 /\ did_patrol == Move_east)\/(location_patrol == D7_1 /\ did_patrol == Move_west)\/(location_patrol == D6_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_1
+[] (location_patrol == D6_1 /\ did_patrol == Move_north)\/(location_patrol == D6_3 /\ did_patrol == Move_south)\/(location_patrol == D5_2 /\ did_patrol == Move_east)\/(location_patrol == D7_2 /\ did_patrol == Move_west)\/(location_patrol == D6_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_2
+[] (location_patrol == D6_2 /\ did_patrol == Move_north)\/(location_patrol == D6_4 /\ did_patrol == Move_south)\/(location_patrol == D5_3 /\ did_patrol == Move_east)\/(location_patrol == D7_3 /\ did_patrol == Move_west)\/(location_patrol == D6_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_3
+[] (location_patrol == D6_3 /\ did_patrol == Move_north)\/(location_patrol == D6_5 /\ did_patrol == Move_south)\/(location_patrol == D5_4 /\ did_patrol == Move_east)\/(location_patrol == D7_4 /\ did_patrol == Move_west)\/(location_patrol == D6_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_4
+[] (location_patrol == D6_4 /\ did_patrol == Move_north)\/(location_patrol == D6_6 /\ did_patrol == Move_south)\/(location_patrol == D5_5 /\ did_patrol == Move_east)\/(location_patrol == D7_5 /\ did_patrol == Move_west)\/(location_patrol == D6_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_5
+[] (location_patrol == D6_5 /\ did_patrol == Move_north)\/(location_patrol == D6_7 /\ did_patrol == Move_south)\/(location_patrol == D5_6 /\ did_patrol == Move_east)\/(location_patrol == D7_6 /\ did_patrol == Move_west)\/(location_patrol == D6_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_6
+[] (location_patrol == D6_6 /\ did_patrol == Move_north)\/(location_patrol == D6_8 /\ did_patrol == Move_south)\/(location_patrol == D5_7 /\ did_patrol == Move_east)\/(location_patrol == D7_7 /\ did_patrol == Move_west)\/(location_patrol == D6_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_7
+[] (location_patrol == D6_7 /\ did_patrol == Move_north)\/(location_patrol == D5_8 /\ did_patrol == Move_east)\/(location_patrol == D7_8 /\ did_patrol == Move_west)\/(location_patrol == D6_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D6_8
+[] (location_patrol == D7_2 /\ did_patrol == Move_south)\/(location_patrol == D6_1 /\ did_patrol == Move_east)\/(location_patrol == D8_1 /\ did_patrol == Move_west)\/(location_patrol == D7_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_1
+[] (location_patrol == D7_1 /\ did_patrol == Move_north)\/(location_patrol == D7_3 /\ did_patrol == Move_south)\/(location_patrol == D6_2 /\ did_patrol == Move_east)\/(location_patrol == D8_2 /\ did_patrol == Move_west)\/(location_patrol == D7_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_2
+[] (location_patrol == D7_2 /\ did_patrol == Move_north)\/(location_patrol == D7_4 /\ did_patrol == Move_south)\/(location_patrol == D6_3 /\ did_patrol == Move_east)\/(location_patrol == D8_3 /\ did_patrol == Move_west)\/(location_patrol == D7_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_3
+[] (location_patrol == D7_3 /\ did_patrol == Move_north)\/(location_patrol == D7_5 /\ did_patrol == Move_south)\/(location_patrol == D6_4 /\ did_patrol == Move_east)\/(location_patrol == D8_4 /\ did_patrol == Move_west)\/(location_patrol == D7_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_4
+[] (location_patrol == D7_4 /\ did_patrol == Move_north)\/(location_patrol == D7_6 /\ did_patrol == Move_south)\/(location_patrol == D6_5 /\ did_patrol == Move_east)\/(location_patrol == D8_5 /\ did_patrol == Move_west)\/(location_patrol == D7_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_5
+[] (location_patrol == D7_5 /\ did_patrol == Move_north)\/(location_patrol == D7_7 /\ did_patrol == Move_south)\/(location_patrol == D6_6 /\ did_patrol == Move_east)\/(location_patrol == D8_6 /\ did_patrol == Move_west)\/(location_patrol == D7_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_6
+[] (location_patrol == D7_6 /\ did_patrol == Move_north)\/(location_patrol == D7_8 /\ did_patrol == Move_south)\/(location_patrol == D6_7 /\ did_patrol == Move_east)\/(location_patrol == D8_7 /\ did_patrol == Move_west)\/(location_patrol == D7_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_7
+[] (location_patrol == D7_7 /\ did_patrol == Move_north)\/(location_patrol == D6_8 /\ did_patrol == Move_east)\/(location_patrol == D8_8 /\ did_patrol == Move_west)\/(location_patrol == D7_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D7_8
+[] (location_patrol == D8_2 /\ did_patrol == Move_south)\/(location_patrol == D7_1 /\ did_patrol == Move_east)\/(location_patrol == D8_1 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_1
+[] (location_patrol == D8_1 /\ did_patrol == Move_north)\/(location_patrol == D8_3 /\ did_patrol == Move_south)\/(location_patrol == D7_2 /\ did_patrol == Move_east)\/(location_patrol == D8_2 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_2
+[] (location_patrol == D8_2 /\ did_patrol == Move_north)\/(location_patrol == D8_4 /\ did_patrol == Move_south)\/(location_patrol == D7_3 /\ did_patrol == Move_east)\/(location_patrol == D8_3 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_3
+[] (location_patrol == D8_3 /\ did_patrol == Move_north)\/(location_patrol == D8_5 /\ did_patrol == Move_south)\/(location_patrol == D7_4 /\ did_patrol == Move_east)\/(location_patrol == D8_4 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_4
+[] (location_patrol == D8_4 /\ did_patrol == Move_north)\/(location_patrol == D8_6 /\ did_patrol == Move_south)\/(location_patrol == D7_5 /\ did_patrol == Move_east)\/(location_patrol == D8_5 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_5
+[] (location_patrol == D8_5 /\ did_patrol == Move_north)\/(location_patrol == D8_7 /\ did_patrol == Move_south)\/(location_patrol == D7_6 /\ did_patrol == Move_east)\/(location_patrol == D8_6 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_6
+[] (location_patrol == D8_6 /\ did_patrol == Move_north)\/(location_patrol == D8_8 /\ did_patrol == Move_south)\/(location_patrol == D7_7 /\ did_patrol == Move_east)\/(location_patrol == D8_7 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_7
+[] (location_patrol == D8_7 /\ did_patrol == Move_north)\/(location_patrol == D7_8 /\ did_patrol == Move_east)\/(location_patrol == D8_8 /\ did_patrol == Move_nowhere)-> location_patrol :=D8_8
+fi;
+
+if
+ (location_transit == D1_1 /\ did_transit == Move_nowhereT)-> location_transit := D1_1
+[] (location_transit == D1_1 /\ did_transit == Move_northT)\/(location_transit == D2_1 /\ did_transit == Move_dwest)\/(location_transit == D1_2 /\ did_transit == Move_nowhereT)-> location_transit := D1_2
+[] (location_transit == D1_2 /\ did_transit == Move_northT)\/(location_transit == D2_2 /\ did_transit == Move_dwest)\/(location_transit == D1_3 /\ did_transit == Move_nowhereT)-> location_transit := D1_3
+
+[] (location_transit == D1_3 /\ did_transit == Move_northT)
+ \/(location_transit == D2_3 /\ did_transit == Move_dwest)
+ \/(location_transit == D1_4 /\ did_transit == Move_nowhereT)
+ -> location_transit := D1_4
+
+[] (location_transit == D1_4 /\ did_transit == Move_northT)\/(location_transit == D2_4 /\ did_transit == Move_dwest)\/(location_transit == D1_5 /\ did_transit == Move_nowhereT)-> location_transit := D1_5
+[] (location_transit == D1_5 /\ did_transit == Move_northT)\/(location_transit == D2_5 /\ did_transit == Move_dwest)\/(location_transit == D1_6 /\ did_transit == Move_nowhereT)-> location_transit := D1_6
+[] (location_transit == D1_6 /\ did_transit == Move_northT)\/(location_transit == D2_6 /\ did_transit == Move_dwest)\/(location_transit == D1_7 /\ did_transit == Move_nowhereT)-> location_transit := D1_7
+[] (location_transit == D1_7 /\ did_transit == Move_northT)\/(location_transit == D2_7 /\ did_transit == Move_dwest)\/(location_transit == D1_8 /\ did_transit == Move_nowhereT)-> location_transit := D1_8
+[] (location_transit == D2_1 /\ did_transit == Move_nowhereT)-> location_transit := D2_1
+[] (location_transit == D2_1 /\ did_transit == Move_northT)\/(location_transit == D1_1 /\ did_transit == Move_deast)\/(location_transit == D3_1 /\ did_transit == Move_dwest)\/(location_transit == D2_2 /\ did_transit == Move_nowhereT)-> location_transit := D2_2
+[] (location_transit == D2_2 /\ did_transit == Move_northT)\/(location_transit == D1_2 /\ did_transit == Move_deast)\/(location_transit == D3_2 /\ did_transit == Move_dwest)\/(location_transit == D2_3 /\ did_transit == Move_nowhereT)-> location_transit := D2_3
+
+[] (location_transit == D2_3 /\ did_transit == Move_northT)
+ \/(location_transit == D1_3 /\ did_transit == Move_deast)
+ \/(location_transit == D3_3 /\ did_transit == Move_dwest)
+ \/(location_transit == D2_4 /\ did_transit == Move_nowhereT)
+ -> location_transit := D2_4
+
+
+[] (location_transit == D2_4 /\ did_transit == Move_northT)\/(location_transit == D1_4 /\ did_transit == Move_deast)\/(location_transit == D3_4 /\ did_transit == Move_dwest)\/(location_transit == D2_5 /\ did_transit == Move_nowhereT)-> location_transit := D2_5
+[] (location_transit == D2_5 /\ did_transit == Move_northT)\/(location_transit == D1_5 /\ did_transit == Move_deast)\/(location_transit == D3_5 /\ did_transit == Move_dwest)\/(location_transit == D2_6 /\ did_transit == Move_nowhereT)-> location_transit := D2_6
+[] (location_transit == D2_6 /\ did_transit == Move_northT)\/(location_transit == D1_6 /\ did_transit == Move_deast)\/(location_transit == D3_6 /\ did_transit == Move_dwest)\/(location_transit == D2_7 /\ did_transit == Move_nowhereT)-> location_transit := D2_7
+[] (location_transit == D2_7 /\ did_transit == Move_northT)\/(location_transit == D1_7 /\ did_transit == Move_deast)\/(location_transit == D3_7 /\ did_transit == Move_dwest)\/(location_transit == D2_8 /\ did_transit == Move_nowhereT)-> location_transit := D2_8
+[] (location_transit == D3_1 /\ did_transit == Move_nowhereT)-> location_transit := D3_1
+[] (location_transit == D3_1 /\ did_transit == Move_northT)\/(location_transit == D2_1 /\ did_transit == Move_deast)\/(location_transit == D4_1 /\ did_transit == Move_dwest)\/(location_transit == D3_2 /\ did_transit == Move_nowhereT)-> location_transit := D3_2
+[] (location_transit == D3_2 /\ did_transit == Move_northT)\/(location_transit == D2_2 /\ did_transit == Move_deast)\/(location_transit == D4_2 /\ did_transit == Move_dwest)\/(location_transit == D3_3 /\ did_transit == Move_nowhereT)-> location_transit := D3_3
+[] (location_transit == D3_3 /\ did_transit == Move_northT)\/(location_transit == D2_3 /\ did_transit == Move_deast)\/(location_transit == D4_3 /\ did_transit == Move_dwest)\/(location_transit == D3_4 /\ did_transit == Move_nowhereT)-> location_transit := D3_4
+[] (location_transit == D3_4 /\ did_transit == Move_northT)\/(location_transit == D2_4 /\ did_transit == Move_deast)\/(location_transit == D4_4 /\ did_transit == Move_dwest)\/(location_transit == D3_5 /\ did_transit == Move_nowhereT)-> location_transit := D3_5
+[] (location_transit == D3_5 /\ did_transit == Move_northT)\/(location_transit == D2_5 /\ did_transit == Move_deast)\/(location_transit == D4_5 /\ did_transit == Move_dwest)\/(location_transit == D3_6 /\ did_transit == Move_nowhereT)-> location_transit := D3_6
+[] (location_transit == D3_6 /\ did_transit == Move_northT)\/(location_transit == D2_6 /\ did_transit == Move_deast)\/(location_transit == D4_6 /\ did_transit == Move_dwest)\/(location_transit == D3_7 /\ did_transit == Move_nowhereT)-> location_transit := D3_7
+[] (location_transit == D3_7 /\ did_transit == Move_northT)\/(location_transit == D2_7 /\ did_transit == Move_deast)\/(location_transit == D4_7 /\ did_transit == Move_dwest)\/(location_transit == D3_8 /\ did_transit == Move_nowhereT)-> location_transit := D3_8
+[] (location_transit == D4_1 /\ did_transit == Move_nowhereT)-> location_transit := D4_1
+[] (location_transit == D4_1 /\ did_transit == Move_northT)\/(location_transit == D3_1 /\ did_transit == Move_deast)\/(location_transit == D5_1 /\ did_transit == Move_dwest)\/(location_transit == D4_2 /\ did_transit == Move_nowhereT)-> location_transit := D4_2
+[] (location_transit == D4_2 /\ did_transit == Move_northT)\/(location_transit == D3_2 /\ did_transit == Move_deast)\/(location_transit == D5_2 /\ did_transit == Move_dwest)\/(location_transit == D4_3 /\ did_transit == Move_nowhereT)-> location_transit := D4_3
+[] (location_transit == D4_3 /\ did_transit == Move_northT)\/(location_transit == D3_3 /\ did_transit == Move_deast)\/(location_transit == D5_3 /\ did_transit == Move_dwest)\/(location_transit == D4_4 /\ did_transit == Move_nowhereT)-> location_transit := D4_4
+[] (location_transit == D4_4 /\ did_transit == Move_northT)\/(location_transit == D3_4 /\ did_transit == Move_deast)\/(location_transit == D5_4 /\ did_transit == Move_dwest)\/(location_transit == D4_5 /\ did_transit == Move_nowhereT)-> location_transit := D4_5
+[] (location_transit == D4_5 /\ did_transit == Move_northT)\/(location_transit == D3_5 /\ did_transit == Move_deast)\/(location_transit == D5_5 /\ did_transit == Move_dwest)\/(location_transit == D4_6 /\ did_transit == Move_nowhereT)-> location_transit := D4_6
+[] (location_transit == D4_6 /\ did_transit == Move_northT)\/(location_transit == D3_6 /\ did_transit == Move_deast)\/(location_transit == D5_6 /\ did_transit == Move_dwest)\/(location_transit == D4_7 /\ did_transit == Move_nowhereT)-> location_transit := D4_7
+[] (location_transit == D4_7 /\ did_transit == Move_northT)\/(location_transit == D3_7 /\ did_transit == Move_deast)\/(location_transit == D5_7 /\ did_transit == Move_dwest)\/(location_transit == D4_8 /\ did_transit == Move_nowhereT)-> location_transit := D4_8
+[] (location_transit == D5_1 /\ did_transit == Move_nowhereT)-> location_transit := D5_1
+[] (location_transit == D5_1 /\ did_transit == Move_northT)\/(location_transit == D4_1 /\ did_transit == Move_deast)\/(location_transit == D6_1 /\ did_transit == Move_dwest)\/(location_transit == D5_2 /\ did_transit == Move_nowhereT)-> location_transit := D5_2
+[] (location_transit == D5_2 /\ did_transit == Move_northT)\/(location_transit == D4_2 /\ did_transit == Move_deast)\/(location_transit == D6_2 /\ did_transit == Move_dwest)\/(location_transit == D5_3 /\ did_transit == Move_nowhereT)-> location_transit := D5_3
+[] (location_transit == D5_3 /\ did_transit == Move_northT)\/(location_transit == D4_3 /\ did_transit == Move_deast)\/(location_transit == D6_3 /\ did_transit == Move_dwest)\/(location_transit == D5_4 /\ did_transit == Move_nowhereT)-> location_transit := D5_4
+[] (location_transit == D5_4 /\ did_transit == Move_northT)\/(location_transit == D4_4 /\ did_transit == Move_deast)\/(location_transit == D6_4 /\ did_transit == Move_dwest)\/(location_transit == D5_5 /\ did_transit == Move_nowhereT)-> location_transit := D5_5
+[] (location_transit == D5_5 /\ did_transit == Move_northT)\/(location_transit == D4_5 /\ did_transit == Move_deast)\/(location_transit == D6_5 /\ did_transit == Move_dwest)\/(location_transit == D5_6 /\ did_transit == Move_nowhereT)-> location_transit := D5_6
+[] (location_transit == D5_6 /\ did_transit == Move_northT)\/(location_transit == D4_6 /\ did_transit == Move_deast)\/(location_transit == D6_6 /\ did_transit == Move_dwest)\/(location_transit == D5_7 /\ did_transit == Move_nowhereT)-> location_transit := D5_7
+[] (location_transit == D5_7 /\ did_transit == Move_northT)\/(location_transit == D4_7 /\ did_transit == Move_deast)\/(location_transit == D6_7 /\ did_transit == Move_dwest)\/(location_transit == D5_8 /\ did_transit == Move_nowhereT)-> location_transit := D5_8
+[] (location_transit == D6_1 /\ did_transit == Move_nowhereT)-> location_transit := D6_1
+[] (location_transit == D6_1 /\ did_transit == Move_northT)\/(location_transit == D5_1 /\ did_transit == Move_deast)\/(location_transit == D7_1 /\ did_transit == Move_dwest)\/(location_transit == D6_2 /\ did_transit == Move_nowhereT)-> location_transit := D6_2
+[] (location_transit == D6_2 /\ did_transit == Move_northT)\/(location_transit == D5_2 /\ did_transit == Move_deast)\/(location_transit == D7_2 /\ did_transit == Move_dwest)\/(location_transit == D6_3 /\ did_transit == Move_nowhereT)-> location_transit := D6_3
+[] (location_transit == D6_3 /\ did_transit == Move_northT)\/(location_transit == D5_3 /\ did_transit == Move_deast)\/(location_transit == D7_3 /\ did_transit == Move_dwest)\/(location_transit == D6_4 /\ did_transit == Move_nowhereT)-> location_transit := D6_4
+[] (location_transit == D6_4 /\ did_transit == Move_northT)\/(location_transit == D5_4 /\ did_transit == Move_deast)\/(location_transit == D7_4 /\ did_transit == Move_dwest)\/(location_transit == D6_5 /\ did_transit == Move_nowhereT)-> location_transit := D6_5
+[] (location_transit == D6_5 /\ did_transit == Move_northT)\/(location_transit == D5_5 /\ did_transit == Move_deast)\/(location_transit == D7_5 /\ did_transit == Move_dwest)\/(location_transit == D6_6 /\ did_transit == Move_nowhereT)-> location_transit := D6_6
+[] (location_transit == D6_6 /\ did_transit == Move_northT)\/(location_transit == D5_6 /\ did_transit == Move_deast)\/(location_transit == D7_6 /\ did_transit == Move_dwest)\/(location_transit == D6_7 /\ did_transit == Move_nowhereT)-> location_transit := D6_7
+[] (location_transit == D6_7 /\ did_transit == Move_northT)\/(location_transit == D5_7 /\ did_transit == Move_deast)\/(location_transit == D7_7 /\ did_transit == Move_dwest)\/(location_transit == D6_8 /\ did_transit == Move_nowhereT)-> location_transit := D6_8
+[] (location_transit == D7_1 /\ did_transit == Move_nowhereT)-> location_transit := D7_1
+[] (location_transit == D7_1 /\ did_transit == Move_northT)\/(location_transit == D6_1 /\ did_transit == Move_deast)\/(location_transit == D8_1 /\ did_transit == Move_dwest)\/(location_transit == D7_2 /\ did_transit == Move_nowhereT)-> location_transit := D7_2
+[] (location_transit == D7_2 /\ did_transit == Move_northT)\/(location_transit == D6_2 /\ did_transit == Move_deast)\/(location_transit == D8_2 /\ did_transit == Move_dwest)\/(location_transit == D7_3 /\ did_transit == Move_nowhereT)-> location_transit := D7_3
+[] (location_transit == D7_3 /\ did_transit == Move_northT)\/(location_transit == D6_3 /\ did_transit == Move_deast)\/(location_transit == D8_3 /\ did_transit == Move_dwest)\/(location_transit == D7_4 /\ did_transit == Move_nowhereT)-> location_transit := D7_4
+[] (location_transit == D7_4 /\ did_transit == Move_northT)\/(location_transit == D6_4 /\ did_transit == Move_deast)\/(location_transit == D8_4 /\ did_transit == Move_dwest)\/(location_transit == D7_5 /\ did_transit == Move_nowhereT)-> location_transit := D7_5
+[] (location_transit == D7_5 /\ did_transit == Move_northT)\/(location_transit == D6_5 /\ did_transit == Move_deast)\/(location_transit == D8_5 /\ did_transit == Move_dwest)\/(location_transit == D7_6 /\ did_transit == Move_nowhereT)-> location_transit := D7_6
+[] (location_transit == D7_6 /\ did_transit == Move_northT)\/(location_transit == D6_6 /\ did_transit == Move_deast)\/(location_transit == D8_6 /\ did_transit == Move_dwest)\/(location_transit == D7_7 /\ did_transit == Move_nowhereT)-> location_transit := D7_7
+[] (location_transit == D7_7 /\ did_transit == Move_northT)\/(location_transit == D6_7 /\ did_transit == Move_deast)\/(location_transit == D8_7 /\ did_transit == Move_dwest)\/(location_transit == D7_8 /\ did_transit == Move_nowhereT)-> location_transit := D7_8
+[] (location_transit == D8_1 /\ did_transit == Move_nowhereT)-> location_transit := D8_1
+[] (location_transit == D8_1 /\ did_transit == Move_northT)\/(location_transit == D7_1 /\ did_transit == Move_deast)\/(location_transit == D8_2 /\ did_transit == Move_nowhereT)-> location_transit := D8_2
+[] (location_transit == D8_2 /\ did_transit == Move_northT)\/(location_transit == D7_2 /\ did_transit == Move_deast)\/(location_transit == D8_3 /\ did_transit == Move_nowhereT)-> location_transit := D8_3
+[] (location_transit == D8_3 /\ did_transit == Move_northT)\/(location_transit == D7_3 /\ did_transit == Move_deast)\/(location_transit == D8_4 /\ did_transit == Move_nowhereT)-> location_transit := D8_4
+[] (location_transit == D8_4 /\ did_transit == Move_northT)\/(location_transit == D7_4 /\ did_transit == Move_deast)\/(location_transit == D8_5 /\ did_transit == Move_nowhereT)-> location_transit := D8_5
+[] (location_transit == D8_5 /\ did_transit == Move_northT)\/(location_transit == D7_5 /\ did_transit == Move_deast)\/(location_transit == D8_6 /\ did_transit == Move_nowhereT)-> location_transit := D8_6
+[] (location_transit == D8_6 /\ did_transit == Move_northT)\/(location_transit == D7_6 /\ did_transit == Move_deast)\/(location_transit == D8_7 /\ did_transit == Move_nowhereT)-> location_transit := D8_7
+[] (location_transit == D8_7 /\ did_transit == Move_northT)\/(location_transit == D7_7 /\ did_transit == Move_deast)\/(location_transit == D8_8 /\ did_transit == Move_nowhereT)-> location_transit := D8_8
+fi;
+
+--update step counter
+if (neg terminal) -> step := step +1 fi; 
+
+legal_patrol_move_north := 
+((control == Patrol) /\ (location_patrol == D1_1))\/ ((control == Patrol) /\ (location_patrol == D1_2))\/ ((control == Patrol) /\ (location_patrol == D1_5))\/ ((control == Patrol) /\ (location_patrol == D1_6))\/ ((control == Patrol) /\ (location_patrol == D1_7))\/ ((control == Patrol) /\ (location_patrol == D2_1))\/ ((control == Patrol) /\ (location_patrol == D2_2))\/ ((control == Patrol) /\ (location_patrol == D2_3))\/ ((control == Patrol) /\ (location_patrol == D2_4))\/ ((control == Patrol) /\ (location_patrol == D2_5))\/ ((control == Patrol) /\ (location_patrol == D2_6))\/ ((control == Patrol) /\ (location_patrol == D2_7))\/ ((control == Patrol) /\ (location_patrol == D3_1))\/ ((control == Patrol) /\ (location_patrol == D3_2))\/ ((control == Patrol) /\ (location_patrol == D3_3))\/ ((control == Patrol) /\ (location_patrol == D3_4))\/ ((control == Patrol) /\ (location_patrol == D3_5))\/ ((control == Patrol) /\ (location_patrol == D3_6))\/ ((control == Patrol) /\ (location_patrol == D3_7))\/ ((control == Patrol) /\ (location_patrol == D4_1))\/ ((control == Patrol) /\ (location_patrol == D4_2))\/ ((control == Patrol) /\ (location_patrol == D4_3))\/ ((control == Patrol) /\ (location_patrol == D4_4))\/ ((control == Patrol) /\ (location_patrol == D4_5))\/ ((control == Patrol) /\ (location_patrol == D4_6))\/ ((control == Patrol) /\ (location_patrol == D4_7))\/ ((control == Patrol) /\ (location_patrol == D6_1))\/ ((control == Patrol) /\ (location_patrol == D6_2))\/ ((control == Patrol) /\ (location_patrol == D6_3))\/ ((control == Patrol) /\ (location_patrol == D6_4))\/ ((control == Patrol) /\ (location_patrol == D6_5))\/ ((control == Patrol) /\ (location_patrol == D6_6))\/ ((control == Patrol) /\ (location_patrol == D6_7))\/ ((control == Patrol) /\ (location_patrol == D7_1))\/ ((control == Patrol) /\ (location_patrol == D7_2))\/ ((control == Patrol) /\ (location_patrol == D7_3))\/ ((control == Patrol) /\ (location_patrol == D7_4))\/ ((control == Patrol) /\ (location_patrol == D7_5))\/ ((control == Patrol) /\ (location_patrol == D7_6))\/ ((control == Patrol) /\ (location_patrol == D7_7))\/ ((control == Patrol) /\ (location_patrol == D8_1))\/ ((control == Patrol) /\ (location_patrol == D8_2))\/ ((control == Patrol) /\ (location_patrol == D8_3))\/ ((control == Patrol) /\ (location_patrol == D8_4))\/ ((control == Patrol) /\ (location_patrol == D8_5))\/ ((control == Patrol) /\ (location_patrol == D8_6))\/ ((control == Patrol) /\ (location_patrol == D8_7)); 
+
+legal_patrol_move_south := 
+((control == Patrol) /\ (location_patrol == D1_2))\/ ((control == Patrol) /\ (location_patrol == D1_3))\/ ((control == Patrol) /\ (location_patrol == D1_4))\/ ((control == Patrol) /\ (location_patrol == D1_7))\/ ((control == Patrol) /\ (location_patrol == D1_8))\/ ((control == Patrol) /\ (location_patrol == D2_2))\/ ((control == Patrol) /\ (location_patrol == D2_3))\/ ((control == Patrol) /\ (location_patrol == D2_4))\/ ((control == Patrol) /\ (location_patrol == D2_5))\/ ((control == Patrol) /\ (location_patrol == D2_6))\/ ((control == Patrol) /\ (location_patrol == D2_7))\/ ((control == Patrol) /\ (location_patrol == D2_8))\/ ((control == Patrol) /\ (location_patrol == D3_2))\/ ((control == Patrol) /\ (location_patrol == D3_3))\/ ((control == Patrol) /\ (location_patrol == D3_4))\/ ((control == Patrol) /\ (location_patrol == D3_5))\/ ((control == Patrol) /\ (location_patrol == D3_6))\/ ((control == Patrol) /\ (location_patrol == D3_7))\/ ((control == Patrol) /\ (location_patrol == D3_8))\/ ((control == Patrol) /\ (location_patrol == D4_2))\/ ((control == Patrol) /\ (location_patrol == D4_3))\/ ((control == Patrol) /\ (location_patrol == D4_4))\/ ((control == Patrol) /\ (location_patrol == D4_5))\/ ((control == Patrol) /\ (location_patrol == D4_6))\/ ((control == Patrol) /\ (location_patrol == D4_7))\/ ((control == Patrol) /\ (location_patrol == D4_8))\/ ((control == Patrol) /\ (location_patrol == D6_2))\/ ((control == Patrol) /\ (location_patrol == D6_3))\/ ((control == Patrol) /\ (location_patrol == D6_4))\/ ((control == Patrol) /\ (location_patrol == D6_5))\/ ((control == Patrol) /\ (location_patrol == D6_6))\/ ((control == Patrol) /\ (location_patrol == D6_7))\/ ((control == Patrol) /\ (location_patrol == D6_8))\/ ((control == Patrol) /\ (location_patrol == D7_2))\/ ((control == Patrol) /\ (location_patrol == D7_3))\/ ((control == Patrol) /\ (location_patrol == D7_4))\/ ((control == Patrol) /\ (location_patrol == D7_5))\/ ((control == Patrol) /\ (location_patrol == D7_6))\/ ((control == Patrol) /\ (location_patrol == D7_7))\/ ((control == Patrol) /\ (location_patrol == D7_8))\/ ((control == Patrol) /\ (location_patrol == D8_2))\/ ((control == Patrol) /\ (location_patrol == D8_3))\/ ((control == Patrol) /\ (location_patrol == D8_4))\/ ((control == Patrol) /\ (location_patrol == D8_5))\/ ((control == Patrol) /\ (location_patrol == D8_6))\/ ((control == Patrol) /\ (location_patrol == D8_7))\/ ((control == Patrol) /\ (location_patrol == D8_8));
+
+legal_patrol_move_west := 
+((control == Patrol) /\ (location_patrol == D2_1))\/ ((control == Patrol) /\ (location_patrol == D2_2))\/ ((control == Patrol) /\ (location_patrol == D2_3))\/ ((control == Patrol) /\ (location_patrol == D2_6))\/ ((control == Patrol) /\ (location_patrol == D2_7))\/ ((control == Patrol) /\ (location_patrol == D2_8))\/ ((control == Patrol) /\ (location_patrol == D3_1))\/ ((control == Patrol) /\ (location_patrol == D3_2))\/ ((control == Patrol) /\ (location_patrol == D3_3))\/ ((control == Patrol) /\ (location_patrol == D3_4))\/ ((control == Patrol) /\ (location_patrol == D3_5))\/ ((control == Patrol) /\ (location_patrol == D3_6))\/ ((control == Patrol) /\ (location_patrol == D3_7))\/ ((control == Patrol) /\ (location_patrol == D3_8))\/ ((control == Patrol) /\ (location_patrol == D4_1))\/ ((control == Patrol) /\ (location_patrol == D4_2))\/ ((control == Patrol) /\ (location_patrol == D4_3))\/ ((control == Patrol) /\ (location_patrol == D4_4))\/ ((control == Patrol) /\ (location_patrol == D4_5))\/ ((control == Patrol) /\ (location_patrol == D4_6))\/ ((control == Patrol) /\ (location_patrol == D4_7))\/ ((control == Patrol) /\ (location_patrol == D4_8))\/ ((control == Patrol) /\ (location_patrol == D5_1))\/ ((control == Patrol) /\ (location_patrol == D5_2))\/ ((control == Patrol) /\ (location_patrol == D5_3))\/ ((control == Patrol) /\ (location_patrol == D5_4))\/ ((control == Patrol) /\ (location_patrol == D5_5))\/ ((control == Patrol) /\ (location_patrol == D5_6))\/ ((control == Patrol) /\ (location_patrol == D5_7))\/ ((control == Patrol) /\ (location_patrol == D5_8))\/ ((control == Patrol) /\ (location_patrol == D7_1))\/ ((control == Patrol) /\ (location_patrol == D7_2))\/ ((control == Patrol) /\ (location_patrol == D7_3))\/ ((control == Patrol) /\ (location_patrol == D7_4))\/ ((control == Patrol) /\ (location_patrol == D7_5))\/ ((control == Patrol) /\ (location_patrol == D7_6))\/ ((control == Patrol) /\ (location_patrol == D7_7))\/ ((control == Patrol) /\ (location_patrol == D7_8))\/ ((control == Patrol) /\ (location_patrol == D8_1))\/ ((control == Patrol) /\ (location_patrol == D8_2))\/ ((control == Patrol) /\ (location_patrol == D8_3))\/ ((control == Patrol) /\ (location_patrol == D8_4))\/ ((control == Patrol) /\ (location_patrol == D8_5))\/ ((control == Patrol) /\ (location_patrol == D8_6))\/ ((control == Patrol) /\ (location_patrol == D8_7))\/ ((control == Patrol) /\ (location_patrol == D8_8));
+
+legal_patrol_move_east := 
+((control == Patrol) /\ (location_patrol == D1_1))\/ ((control == Patrol) /\ (location_patrol == D1_2))\/ ((control == Patrol) /\ (location_patrol == D1_3))\/ ((control == Patrol) /\ (location_patrol == D1_4))\/ ((control == Patrol) /\ (location_patrol == D1_5))\/ ((control == Patrol) /\ (location_patrol == D1_6))\/ ((control == Patrol) /\ (location_patrol == D1_7))\/ ((control == Patrol) /\ (location_patrol == D1_8))\/ ((control == Patrol) /\ (location_patrol == D2_1))\/ ((control == Patrol) /\ (location_patrol == D2_2))\/ ((control == Patrol) /\ (location_patrol == D2_3))\/ ((control == Patrol) /\ (location_patrol == D2_4))\/ ((control == Patrol) /\ (location_patrol == D2_5))\/ ((control == Patrol) /\ (location_patrol == D2_6))\/ ((control == Patrol) /\ (location_patrol == D2_7))\/ ((control == Patrol) /\ (location_patrol == D2_8))\/ ((control == Patrol) /\ (location_patrol == D3_1))\/ ((control == Patrol) /\ (location_patrol == D3_2))\/ ((control == Patrol) /\ (location_patrol == D3_3))\/ ((control == Patrol) /\ (location_patrol == D3_4))\/ ((control == Patrol) /\ (location_patrol == D3_5))\/ ((control == Patrol) /\ (location_patrol == D3_6))\/ ((control == Patrol) /\ (location_patrol == D3_7))\/ ((control == Patrol) /\ (location_patrol == D3_8))\/ ((control == Patrol) /\ (location_patrol == D5_1))\/ ((control == Patrol) /\ (location_patrol == D5_2))\/ ((control == Patrol) /\ (location_patrol == D5_3))\/ ((control == Patrol) /\ (location_patrol == D5_4))\/ ((control == Patrol) /\ (location_patrol == D5_5))\/ ((control == Patrol) /\ (location_patrol == D5_6))\/ ((control == Patrol) /\ (location_patrol == D5_7))\/ ((control == Patrol) /\ (location_patrol == D5_8))\/ ((control == Patrol) /\ (location_patrol == D6_1))\/ ((control == Patrol) /\ (location_patrol == D6_2))\/ ((control == Patrol) /\ (location_patrol == D6_3))\/ ((control == Patrol) /\ (location_patrol == D6_4))\/ ((control == Patrol) /\ (location_patrol == D6_5))\/ ((control == Patrol) /\ (location_patrol == D6_6))\/ ((control == Patrol) /\ (location_patrol == D6_7))\/ ((control == Patrol) /\ (location_patrol == D6_8))\/ ((control == Patrol) /\ (location_patrol == D7_1))\/ ((control == Patrol) /\ (location_patrol == D7_2))\/ ((control == Patrol) /\ (location_patrol == D7_3))\/ ((control == Patrol) /\ (location_patrol == D7_4))\/ ((control == Patrol) /\ (location_patrol == D7_5))\/ ((control == Patrol) /\ (location_patrol == D7_6))\/ ((control == Patrol) /\ (location_patrol == D7_7))\/ ((control == Patrol) /\ (location_patrol == D7_8));
+
+legal_patrol_move_nowhere := 
+ (neg (control == Patrol))\/ ((control == Patrol) /\ (location_patrol == D1_1))\/ ((control == Patrol) /\ (location_patrol == D1_2))\/ ((control == Patrol) /\ (location_patrol == D1_3))\/ ((control == Patrol) /\ (location_patrol == D1_4))\/ ((control == Patrol) /\ (location_patrol == D1_5))\/ ((control == Patrol) /\ (location_patrol == D1_6))\/ ((control == Patrol) /\ (location_patrol == D1_7))\/ ((control == Patrol) /\ (location_patrol == D1_8))\/ ((control == Patrol) /\ (location_patrol == D2_1))\/ ((control == Patrol) /\ (location_patrol == D2_2))\/ ((control == Patrol) /\ (location_patrol == D2_3))\/ ((control == Patrol) /\ (location_patrol == D2_4))\/ ((control == Patrol) /\ (location_patrol == D2_5))\/ ((control == Patrol) /\ (location_patrol == D2_6))\/ ((control == Patrol) /\ (location_patrol == D2_7))\/ ((control == Patrol) /\ (location_patrol == D2_8))\/ ((control == Patrol) /\ (location_patrol == D3_1))\/ ((control == Patrol) /\ (location_patrol == D3_2))\/ ((control == Patrol) /\ (location_patrol == D3_3))\/ ((control == Patrol) /\ (location_patrol == D3_4))\/ ((control == Patrol) /\ (location_patrol == D3_5))\/ ((control == Patrol) /\ (location_patrol == D3_6))\/ ((control == Patrol) /\ (location_patrol == D3_7))\/ ((control == Patrol) /\ (location_patrol == D3_8))\/ ((control == Patrol) /\ (location_patrol == D4_1))\/ ((control == Patrol) /\ (location_patrol == D4_2))\/ ((control == Patrol) /\ (location_patrol == D4_3))\/ ((control == Patrol) /\ (location_patrol == D4_4))\/ ((control == Patrol) /\ (location_patrol == D4_5))\/ ((control == Patrol) /\ (location_patrol == D4_6))\/ ((control == Patrol) /\ (location_patrol == D4_7))\/ ((control == Patrol) /\ (location_patrol == D4_8))\/ ((control == Patrol) /\ (location_patrol == D5_1))\/ ((control == Patrol) /\ (location_patrol == D5_2))\/ ((control == Patrol) /\ (location_patrol == D5_3))\/ ((control == Patrol) /\ (location_patrol == D5_4))\/ ((control == Patrol) /\ (location_patrol == D5_5))\/ ((control == Patrol) /\ (location_patrol == D5_6))\/ ((control == Patrol) /\ (location_patrol == D5_7))\/ ((control == Patrol) /\ (location_patrol == D5_8))\/ ((control == Patrol) /\ (location_patrol == D6_1))\/ ((control == Patrol) /\ (location_patrol == D6_2))\/ ((control == Patrol) /\ (location_patrol == D6_3))\/ ((control == Patrol) /\ (location_patrol == D6_4))\/ ((control == Patrol) /\ (location_patrol == D6_5))\/ ((control == Patrol) /\ (location_patrol == D6_6))\/ ((control == Patrol) /\ (location_patrol == D6_7))\/ ((control == Patrol) /\ (location_patrol == D6_8))\/ ((control == Patrol) /\ (location_patrol == D7_1))\/ ((control == Patrol) /\ (location_patrol == D7_2))\/ ((control == Patrol) /\ (location_patrol == D7_3))\/ ((control == Patrol) /\ (location_patrol == D7_4))\/ ((control == Patrol) /\ (location_patrol == D7_5))\/ ((control == Patrol) /\ (location_patrol == D7_6))\/ ((control == Patrol) /\ (location_patrol == D7_7))\/ ((control == Patrol) /\ (location_patrol == D7_8))\/ ((control == Patrol) /\ (location_patrol == D8_1))\/ ((control == Patrol) /\ (location_patrol == D8_2))\/ ((control == Patrol) /\ (location_patrol == D8_3))\/ ((control == Patrol) /\ (location_patrol == D8_4))\/ ((control == Patrol) /\ (location_patrol == D8_5))\/ ((control == Patrol) /\ (location_patrol == D8_6))\/ ((control == Patrol) /\ (location_patrol == D8_7))\/ ((control == Patrol) /\ (location_patrol == D8_8));
+
+legal_transit_move_north := 
+((control == Transit) /\ (location_transit ==D1_1))\/ ((control == Transit) /\ (location_transit ==D1_2))\/ ((control == Transit) /\ (location_transit ==D1_5))\/ ((control == Transit) /\ (location_transit ==D1_6))\/ ((control == Transit) /\ (location_transit ==D1_7))\/ ((control == Transit) /\ (location_transit ==D2_1))\/ ((control == Transit) /\ (location_transit ==D2_2))\/ ((control == Transit) /\ (location_transit ==D2_3))\/ ((control == Transit) /\ (location_transit ==D2_4))\/ ((control == Transit) /\ (location_transit ==D2_5))\/ ((control == Transit) /\ (location_transit ==D2_6))\/ ((control == Transit) /\ (location_transit ==D2_7))\/ ((control == Transit) /\ (location_transit ==D3_1))\/ ((control == Transit) /\ (location_transit ==D3_2))\/ ((control == Transit) /\ (location_transit ==D3_3))\/ ((control == Transit) /\ (location_transit ==D3_4))\/ ((control == Transit) /\ (location_transit ==D3_5))\/ ((control == Transit) /\ (location_transit ==D3_6))\/ ((control == Transit) /\ (location_transit ==D3_7))\/ ((control == Transit) /\ (location_transit ==D4_1))\/ ((control == Transit) /\ (location_transit ==D4_2))\/ ((control == Transit) /\ (location_transit ==D4_3))\/ ((control == Transit) /\ (location_transit ==D4_4))\/ ((control == Transit) /\ (location_transit ==D4_5))\/ ((control == Transit) /\ (location_transit ==D4_6))\/ ((control == Transit) /\ (location_transit ==D4_7))\/ ((control == Transit) /\ (location_transit ==D6_1))\/ ((control == Transit) /\ (location_transit ==D6_2))\/ ((control == Transit) /\ (location_transit ==D6_3))\/ ((control == Transit) /\ (location_transit ==D6_4))\/ ((control == Transit) /\ (location_transit ==D6_5))\/ ((control == Transit) /\ (location_transit ==D6_6))\/ ((control == Transit) /\ (location_transit ==D6_7))\/ ((control == Transit) /\ (location_transit ==D7_1))\/ ((control == Transit) /\ (location_transit ==D7_2))\/ ((control == Transit) /\ (location_transit ==D7_3))\/ ((control == Transit) /\ (location_transit ==D7_4))\/ ((control == Transit) /\ (location_transit ==D7_5))\/ ((control == Transit) /\ (location_transit ==D7_6))\/ ((control == Transit) /\ (location_transit ==D7_7))\/ ((control == Transit) /\ (location_transit ==D8_1))\/ ((control == Transit) /\ (location_transit ==D8_2))\/ ((control == Transit) /\ (location_transit ==D8_3))\/ ((control == Transit) /\ (location_transit ==D8_4))\/ ((control == Transit) /\ (location_transit ==D8_5))\/ ((control == Transit) /\ (location_transit ==D8_6))\/ ((control == Transit) /\ (location_transit ==D8_7));
+
+legal_transit_move_dwest := 
+((control == Transit) /\ (location_transit ==D2_1))\/ ((control == Transit) /\ (location_transit ==D2_2))\/ ((control == Transit) /\ (location_transit ==D2_5))\/ ((control == Transit) /\ (location_transit ==D2_6))\/ ((control == Transit) /\ (location_transit ==D2_7))\/ ((control == Transit) /\ (location_transit ==D3_1))\/ ((control == Transit) /\ (location_transit ==D3_2))\/ ((control == Transit) /\ (location_transit ==D3_3))\/ ((control == Transit) /\ (location_transit ==D3_4))\/ ((control == Transit) /\ (location_transit ==D3_5))\/ ((control == Transit) /\ (location_transit ==D3_6))\/ ((control == Transit) /\ (location_transit ==D3_7))\/ ((control == Transit) /\ (location_transit ==D4_1))\/ ((control == Transit) /\ (location_transit ==D4_2))\/ ((control == Transit) /\ (location_transit ==D4_3))\/ ((control == Transit) /\ (location_transit ==D4_4))\/ ((control == Transit) /\ (location_transit ==D4_5))\/ ((control == Transit) /\ (location_transit ==D4_6))\/ ((control == Transit) /\ (location_transit ==D4_7))\/ ((control == Transit) /\ (location_transit ==D5_1))\/ ((control == Transit) /\ (location_transit ==D5_2))\/ ((control == Transit) /\ (location_transit ==D5_3))\/ ((control == Transit) /\ (location_transit ==D5_4))\/ ((control == Transit) /\ (location_transit ==D5_5))\/ ((control == Transit) /\ (location_transit ==D5_6))\/ ((control == Transit) /\ (location_transit ==D5_7))\/ ((control == Transit) /\ (location_transit ==D7_1))\/ ((control == Transit) /\ (location_transit ==D7_2))\/ ((control == Transit) /\ (location_transit ==D7_3))\/ ((control == Transit) /\ (location_transit ==D7_4))\/ ((control == Transit) /\ (location_transit ==D7_5))\/ ((control == Transit) /\ (location_transit ==D7_6))\/ ((control == Transit) /\ (location_transit ==D7_7))\/ ((control == Transit) /\ (location_transit ==D8_1))\/ ((control == Transit) /\ (location_transit ==D8_2))\/ ((control == Transit) /\ (location_transit ==D8_3))\/ ((control == Transit) /\ (location_transit ==D8_4))\/ ((control == Transit) /\ (location_transit ==D8_5))\/ ((control == Transit) /\ (location_transit ==D8_6))\/ ((control == Transit) /\ (location_transit ==D8_7));
+
+legal_transit_move_deast := 
+((control == Transit) /\ (location_transit ==D1_1))\/ ((control == Transit) /\ (location_transit ==D1_2))\/ ((control == Transit) /\ (location_transit ==D1_3))\/ ((control == Transit) /\ (location_transit ==D1_4))\/ ((control == Transit) /\ (location_transit ==D1_5))\/ ((control == Transit) /\ (location_transit ==D1_6))\/ ((control == Transit) /\ (location_transit ==D1_7))\/ ((control == Transit) /\ (location_transit ==D2_1))\/ ((control == Transit) /\ (location_transit ==D2_2))\/ ((control == Transit) /\ (location_transit ==D2_3))\/ ((control == Transit) /\ (location_transit ==D2_4))\/ ((control == Transit) /\ (location_transit ==D2_5))\/ ((control == Transit) /\ (location_transit ==D2_6))\/ ((control == Transit) /\ (location_transit ==D2_7))\/ ((control == Transit) /\ (location_transit ==D3_1))\/ ((control == Transit) /\ (location_transit ==D3_2))\/ ((control == Transit) /\ (location_transit ==D3_3))\/ ((control == Transit) /\ (location_transit ==D3_4))\/ ((control == Transit) /\ (location_transit ==D3_5))\/ ((control == Transit) /\ (location_transit ==D3_6))\/ ((control == Transit) /\ (location_transit ==D3_7))\/ ((control == Transit) /\ (location_transit ==D5_1))\/ ((control == Transit) /\ (location_transit ==D5_2))\/ ((control == Transit) /\ (location_transit ==D5_3))\/ ((control == Transit) /\ (location_transit ==D5_4))\/ ((control == Transit) /\ (location_transit ==D5_5))\/ ((control == Transit) /\ (location_transit ==D5_6))\/ ((control == Transit) /\ (location_transit ==D5_7))\/ ((control == Transit) /\ (location_transit ==D6_1))\/ ((control == Transit) /\ (location_transit ==D6_2))\/ ((control == Transit) /\ (location_transit ==D6_3))\/ ((control == Transit) /\ (location_transit ==D6_4))\/ ((control == Transit) /\ (location_transit ==D6_5))\/ ((control == Transit) /\ (location_transit ==D6_6))\/ ((control == Transit) /\ (location_transit ==D6_7))\/ ((control == Transit) /\ (location_transit ==D7_1))\/ ((control == Transit) /\ (location_transit ==D7_2))\/ ((control == Transit) /\ (location_transit ==D7_3))\/ ((control == Transit) /\ (location_transit ==D7_4))\/ ((control == Transit) /\ (location_transit ==D7_5))\/ ((control == Transit) /\ (location_transit ==D7_6))\/ ((control == Transit) /\ (location_transit ==D7_7));
+
+legal_transit_move_nowhere := 
+ (neg (control == Transit))\/ ((control == Transit) /\ (location_transit ==D1_1))\/ ((control == Transit) /\ (location_transit ==D1_2))\/ ((control == Transit) /\ (location_transit ==D1_3))\/ ((control == Transit) /\ (location_transit ==D1_4))\/ ((control == Transit) /\ (location_transit ==D1_5))\/ ((control == Transit) /\ (location_transit ==D1_6))\/ ((control == Transit) /\ (location_transit ==D1_7))\/ ((control == Transit) /\ (location_transit ==D1_8))\/ ((control == Transit) /\ (location_transit ==D2_1))\/ ((control == Transit) /\ (location_transit ==D2_2))\/ ((control == Transit) /\ (location_transit ==D2_3))\/ ((control == Transit) /\ (location_transit ==D2_4))\/ ((control == Transit) /\ (location_transit ==D2_5))\/ ((control == Transit) /\ (location_transit ==D2_6))\/ ((control == Transit) /\ (location_transit ==D2_7))\/ ((control == Transit) /\ (location_transit ==D2_8))\/ ((control == Transit) /\ (location_transit ==D3_1))\/ ((control == Transit) /\ (location_transit ==D3_2))\/ ((control == Transit) /\ (location_transit ==D3_3))\/ ((control == Transit) /\ (location_transit ==D3_4))\/ ((control == Transit) /\ (location_transit ==D3_5))\/ ((control == Transit) /\ (location_transit ==D3_6))\/ ((control == Transit) /\ (location_transit ==D3_7))\/ ((control == Transit) /\ (location_transit ==D3_8))\/ ((control == Transit) /\ (location_transit ==D4_1))\/ ((control == Transit) /\ (location_transit ==D4_2))\/ ((control == Transit) /\ (location_transit ==D4_3))\/ ((control == Transit) /\ (location_transit ==D4_4))\/ ((control == Transit) /\ (location_transit ==D4_5))\/ ((control == Transit) /\ (location_transit ==D4_6))\/ ((control == Transit) /\ (location_transit ==D4_7))\/ ((control == Transit) /\ (location_transit ==D4_8))\/ ((control == Transit) /\ (location_transit ==D5_1))\/ ((control == Transit) /\ (location_transit ==D5_2))\/ ((control == Transit) /\ (location_transit ==D5_3))\/ ((control == Transit) /\ (location_transit ==D5_4))\/ ((control == Transit) /\ (location_transit ==D5_5))\/ ((control == Transit) /\ (location_transit ==D5_6))\/ ((control == Transit) /\ (location_transit ==D5_7))\/ ((control == Transit) /\ (location_transit ==D5_8))\/ ((control == Transit) /\ (location_transit ==D6_1))\/ ((control == Transit) /\ (location_transit ==D6_2))\/ ((control == Transit) /\ (location_transit ==D6_3))\/ ((control == Transit) /\ (location_transit ==D6_4))\/ ((control == Transit) /\ (location_transit ==D6_5))\/ ((control == Transit) /\ (location_transit ==D6_6))\/ ((control == Transit) /\ (location_transit ==D6_7))\/ ((control == Transit) /\ (location_transit ==D6_8))\/ ((control == Transit) /\ (location_transit ==D7_1))\/ ((control == Transit) /\ (location_transit ==D7_2))\/ ((control == Transit) /\ (location_transit ==D7_3))\/ ((control == Transit) /\ (location_transit ==D7_4))\/ ((control == Transit) /\ (location_transit ==D7_5))\/ ((control == Transit) /\ (location_transit ==D7_6))\/ ((control == Transit) /\ (location_transit ==D7_7))\/ ((control == Transit) /\ (location_transit ==D7_8))\/ ((control == Transit) /\ (location_transit ==D8_1))\/ ((control == Transit) /\ (location_transit ==D8_2))\/ ((control == Transit) /\ (location_transit ==D8_3))\/ ((control == Transit) /\ (location_transit ==D8_4))\/ ((control == Transit) /\ (location_transit ==D8_5))\/ ((control == Transit) /\ (location_transit ==D8_6))\/ ((control == Transit) /\ (location_transit ==D8_7))\/ ((control == Transit) /\ (location_transit ==D8_8));
+
+
+if (location_transit ==D1_1 /\ location_patrol == D1_1)\/(location_transit ==D1_2 /\ location_patrol == D1_2)\/(location_transit ==D1_3 /\ location_patrol == D1_3)\/(location_transit ==D1_4 /\ location_patrol == D1_4)\/(location_transit ==D1_5 /\ location_patrol == D1_5)\/(location_transit ==D1_6 /\ location_patrol == D1_6)\/(location_transit ==D1_7 /\ location_patrol == D1_7)\/(location_transit ==D1_8 /\ location_patrol == D1_8)\/(location_transit ==D2_1 /\ location_patrol == D2_1)\/(location_transit ==D2_2 /\ location_patrol == D2_2)\/(location_transit ==D2_3 /\ location_patrol == D2_3)\/(location_transit ==D2_4 /\ location_patrol == D2_4)\/(location_transit ==D2_5 /\ location_patrol == D2_5)\/(location_transit ==D2_6 /\ location_patrol == D2_6)\/(location_transit ==D2_7 /\ location_patrol == D2_7)\/(location_transit ==D2_8 /\ location_patrol == D2_8)\/(location_transit ==D3_1 /\ location_patrol == D3_1)\/(location_transit ==D3_2 /\ location_patrol == D3_2)\/(location_transit ==D3_3 /\ location_patrol == D3_3)\/(location_transit ==D3_4 /\ location_patrol == D3_4)\/(location_transit ==D3_5 /\ location_patrol == D3_5)\/(location_transit ==D3_6 /\ location_patrol == D3_6)\/(location_transit ==D3_7 /\ location_patrol == D3_7)\/(location_transit ==D3_8 /\ location_patrol == D3_8)\/(location_transit ==D4_1 /\ location_patrol == D4_1)\/(location_transit ==D4_2 /\ location_patrol == D4_2)\/(location_transit ==D4_3 /\ location_patrol == D4_3)\/(location_transit ==D4_4 /\ location_patrol == D4_4)\/(location_transit ==D4_5 /\ location_patrol == D4_5)\/(location_transit ==D4_6 /\ location_patrol == D4_6)\/(location_transit ==D4_7 /\ location_patrol == D4_7)\/(location_transit ==D4_8 /\ location_patrol == D4_8)\/(location_transit ==D5_1 /\ location_patrol == D5_1)\/(location_transit ==D5_2 /\ location_patrol == D5_2)\/(location_transit ==D5_3 /\ location_patrol == D5_3)\/(location_transit ==D5_4 /\ location_patrol == D5_4)\/(location_transit ==D5_5 /\ location_patrol == D5_5)\/(location_transit ==D5_6 /\ location_patrol == D5_6)\/(location_transit ==D5_7 /\ location_patrol == D5_7)\/(location_transit ==D5_8 /\ location_patrol == D5_8)\/(location_transit ==D6_1 /\ location_patrol == D6_1)\/(location_transit ==D6_2 /\ location_patrol == D6_2)\/(location_transit ==D6_3 /\ location_patrol == D6_3)\/(location_transit ==D6_4 /\ location_patrol == D6_4)\/(location_transit ==D6_5 /\ location_patrol == D6_5)\/(location_transit ==D6_6 /\ location_patrol == D6_6)\/(location_transit ==D6_7 /\ location_patrol == D6_7)\/(location_transit ==D6_8 /\ location_patrol == D6_8)\/(location_transit ==D7_1 /\ location_patrol == D7_1)\/(location_transit ==D7_2 /\ location_patrol == D7_2)\/(location_transit ==D7_3 /\ location_patrol == D7_3)\/(location_transit ==D7_4 /\ location_patrol == D7_4)\/(location_transit ==D7_5 /\ location_patrol == D7_5)\/(location_transit ==D7_6 /\ location_patrol == D7_6)\/(location_transit ==D7_7 /\ location_patrol == D7_7)\/(location_transit ==D7_8 /\ location_patrol == D7_8)\/(location_transit ==D8_1 /\ location_patrol == D8_1)\/(location_transit ==D8_2 /\ location_patrol == D8_2)\/(location_transit ==D8_3 /\ location_patrol == D8_3)\/(location_transit ==D8_4 /\ location_patrol == D8_4)\/(location_transit ==D8_5 /\ location_patrol == D8_5)\/(location_transit ==D8_6 /\ location_patrol == D8_6)\/(location_transit ==D8_7 /\ location_patrol == D8_7)\/(location_transit ==D8_8 /\ location_patrol == D8_8)
+-> captured := True 
+[] otherwise -> captured := False 
+ fi;
+
+
+
+if (neg captured /\ location_transit ==D1_8)\/ (neg captured /\ location_transit ==D2_8)\/ (neg captured /\ location_transit ==D3_8)\/ (neg captured /\ location_transit ==D4_8)\/ (neg captured /\ location_transit ==D5_8)\/ (neg captured /\ location_transit ==D6_8)\/ (neg captured /\ location_transit ==D7_8)\/ (neg captured /\ location_transit ==D8_8)
+-> crossed := True 
+[] otherwise -> crossed := False 
+ fi;
+
+
+
+timeout := (step == 30) /\ (neg crossed) /\ (neg captured);
+
+terminal := crossed \/ timeout \/ captured;
+
+
+--what an agent sees:
+
+if (location_patrol == D1_1/\ location_transit ==D1_1)
+-> sees_transit_location_patrol :=D1_1
+fi;
+if (location_patrol == D1_2/\ location_transit ==D1_2)
+-> sees_transit_location_patrol :=D1_2
+fi;
+if (location_patrol == D1_3/\ location_transit ==D1_3)
+-> sees_transit_location_patrol :=D1_3
+fi;
+if (location_patrol == D1_4/\ location_transit ==D1_4)
+-> sees_transit_location_patrol :=D1_4
+fi;
+if (location_patrol == D1_5/\ location_transit ==D1_5)
+-> sees_transit_location_patrol :=D1_5
+fi;
+if (location_patrol == D1_6/\ location_transit ==D1_6)
+-> sees_transit_location_patrol :=D1_6
+fi;
+if (location_patrol == D1_7/\ location_transit ==D1_7)
+-> sees_transit_location_patrol :=D1_7
+fi;
+if (location_patrol == D1_8/\ location_transit ==D1_8)
+-> sees_transit_location_patrol :=D1_8
+fi;
+if (location_patrol == D2_1/\ location_transit ==D2_1)
+-> sees_transit_location_patrol :=D2_1
+fi;
+if (location_patrol == D2_2/\ location_transit ==D2_2)
+-> sees_transit_location_patrol :=D2_2
+fi;
+if (location_patrol == D2_3/\ location_transit ==D2_3)
+-> sees_transit_location_patrol :=D2_3
+fi;
+if (location_patrol == D2_4/\ location_transit ==D2_4)
+-> sees_transit_location_patrol :=D2_4
+fi;
+if (location_patrol == D2_5/\ location_transit ==D2_5)
+-> sees_transit_location_patrol :=D2_5
+fi;
+if (location_patrol == D2_6/\ location_transit ==D2_6)
+-> sees_transit_location_patrol :=D2_6
+fi;
+if (location_patrol == D2_7/\ location_transit ==D2_7)
+-> sees_transit_location_patrol :=D2_7
+fi;
+if (location_patrol == D2_8/\ location_transit ==D2_8)
+-> sees_transit_location_patrol :=D2_8
+fi;
+if (location_patrol == D3_1/\ location_transit ==D3_1)
+-> sees_transit_location_patrol :=D3_1
+fi;
+if (location_patrol == D3_2/\ location_transit ==D3_2)
+-> sees_transit_location_patrol :=D3_2
+fi;
+if (location_patrol == D3_3/\ location_transit ==D3_3)
+-> sees_transit_location_patrol :=D3_3
+fi;
+if (location_patrol == D3_4/\ location_transit ==D3_4)
+-> sees_transit_location_patrol :=D3_4
+fi;
+if (location_patrol == D3_5/\ location_transit ==D3_5)
+-> sees_transit_location_patrol :=D3_5
+fi;
+if (location_patrol == D3_6/\ location_transit ==D3_6)
+-> sees_transit_location_patrol :=D3_6
+fi;
+if (location_patrol == D3_7/\ location_transit ==D3_7)
+-> sees_transit_location_patrol :=D3_7
+fi;
+if (location_patrol == D3_8/\ location_transit ==D3_8)
+-> sees_transit_location_patrol :=D3_8
+fi;
+if (location_patrol == D4_1/\ location_transit ==D4_1)
+-> sees_transit_location_patrol :=D4_1
+fi;
+if (location_patrol == D4_2/\ location_transit ==D4_2)
+-> sees_transit_location_patrol :=D4_2
+fi;
+if (location_patrol == D4_3/\ location_transit ==D4_3)
+-> sees_transit_location_patrol :=D4_3
+fi;
+if (location_patrol == D4_4/\ location_transit ==D4_4)
+-> sees_transit_location_patrol :=D4_4
+fi;
+if (location_patrol == D4_5/\ location_transit ==D4_5)
+-> sees_transit_location_patrol :=D4_5
+fi;
+if (location_patrol == D4_6/\ location_transit ==D4_6)
+-> sees_transit_location_patrol :=D4_6
+fi;
+if (location_patrol == D4_7/\ location_transit ==D4_7)
+-> sees_transit_location_patrol :=D4_7
+fi;
+if (location_patrol == D4_8/\ location_transit ==D4_8)
+-> sees_transit_location_patrol :=D4_8
+fi;
+if (location_patrol == D5_1/\ location_transit ==D5_1)
+-> sees_transit_location_patrol :=D5_1
+fi;
+if (location_patrol == D5_2/\ location_transit ==D5_2)
+-> sees_transit_location_patrol :=D5_2
+fi;
+if (location_patrol == D5_3/\ location_transit ==D5_3)
+-> sees_transit_location_patrol :=D5_3
+fi;
+if (location_patrol == D5_4/\ location_transit ==D5_4)
+-> sees_transit_location_patrol :=D5_4
+fi;
+if (location_patrol == D5_5/\ location_transit ==D5_5)
+-> sees_transit_location_patrol :=D5_5
+fi;
+if (location_patrol == D5_6/\ location_transit ==D5_6)
+-> sees_transit_location_patrol :=D5_6
+fi;
+if (location_patrol == D5_7/\ location_transit ==D5_7)
+-> sees_transit_location_patrol :=D5_7
+fi;
+if (location_patrol == D5_8/\ location_transit ==D5_8)
+-> sees_transit_location_patrol :=D5_8
+fi;
+if (location_patrol == D6_1/\ location_transit ==D6_1)
+-> sees_transit_location_patrol :=D6_1
+fi;
+if (location_patrol == D6_2/\ location_transit ==D6_2)
+-> sees_transit_location_patrol :=D6_2
+fi;
+if (location_patrol == D6_3/\ location_transit ==D6_3)
+-> sees_transit_location_patrol :=D6_3
+fi;
+if (location_patrol == D6_4/\ location_transit ==D6_4)
+-> sees_transit_location_patrol :=D6_4
+fi;
+if (location_patrol == D6_5/\ location_transit ==D6_5)
+-> sees_transit_location_patrol :=D6_5
+fi;
+if (location_patrol == D6_6/\ location_transit ==D6_6)
+-> sees_transit_location_patrol :=D6_6
+fi;
+if (location_patrol == D6_7/\ location_transit ==D6_7)
+-> sees_transit_location_patrol :=D6_7
+fi;
+if (location_patrol == D6_8/\ location_transit ==D6_8)
+-> sees_transit_location_patrol :=D6_8
+fi;
+if (location_patrol == D7_1/\ location_transit ==D7_1)
+-> sees_transit_location_patrol :=D7_1
+fi;
+if (location_patrol == D7_2/\ location_transit ==D7_2)
+-> sees_transit_location_patrol :=D7_2
+fi;
+if (location_patrol == D7_3/\ location_transit ==D7_3)
+-> sees_transit_location_patrol :=D7_3
+fi;
+if (location_patrol == D7_4/\ location_transit ==D7_4)
+-> sees_transit_location_patrol :=D7_4
+fi;
+if (location_patrol == D7_5/\ location_transit ==D7_5)
+-> sees_transit_location_patrol :=D7_5
+fi;
+if (location_patrol == D7_6/\ location_transit ==D7_6)
+-> sees_transit_location_patrol :=D7_6
+fi;
+if (location_patrol == D7_7/\ location_transit ==D7_7)
+-> sees_transit_location_patrol :=D7_7
+fi;
+if (location_patrol == D7_8/\ location_transit ==D7_8)
+-> sees_transit_location_patrol :=D7_8
+fi;
+if (location_patrol == D8_1/\ location_transit ==D8_1)
+-> sees_transit_location_patrol :=D8_1
+fi;
+if (location_patrol == D8_2/\ location_transit ==D8_2)
+-> sees_transit_location_patrol :=D8_2
+fi;
+if (location_patrol == D8_3/\ location_transit ==D8_3)
+-> sees_transit_location_patrol :=D8_3
+fi;
+if (location_patrol == D8_4/\ location_transit ==D8_4)
+-> sees_transit_location_patrol :=D8_4
+fi;
+if (location_patrol == D8_5/\ location_transit ==D8_5)
+-> sees_transit_location_patrol :=D8_5
+fi;
+if (location_patrol == D8_6/\ location_transit ==D8_6)
+-> sees_transit_location_patrol :=D8_6
+fi;
+if (location_patrol == D8_7/\ location_transit ==D8_7)
+-> sees_transit_location_patrol :=D8_7
+fi;
+if (location_patrol == D8_8/\ location_transit ==D8_8)
+-> sees_transit_location_patrol :=D8_8
+fi;
+if (location_patrol == D1_1/\ location_transit ==D1_1)
+-> sees_patrol_location_transit :=D1_1
+fi;
+if (location_patrol == D1_2/\ location_transit ==D1_2)
+-> sees_patrol_location_transit :=D1_2
+fi;
+if (location_patrol == D1_3/\ location_transit ==D1_3)
+-> sees_patrol_location_transit :=D1_3
+fi;
+if (location_patrol == D1_4/\ location_transit ==D1_4)
+-> sees_patrol_location_transit :=D1_4
+fi;
+if (location_patrol == D1_5/\ location_transit ==D1_5)
+-> sees_patrol_location_transit :=D1_5
+fi;
+if (location_patrol == D1_6/\ location_transit ==D1_6)
+-> sees_patrol_location_transit :=D1_6
+fi;
+if (location_patrol == D1_7/\ location_transit ==D1_7)
+-> sees_patrol_location_transit :=D1_7
+fi;
+if (location_patrol == D1_8/\ location_transit ==D1_8) \/ (location_transit ==D1_8)
+-> sees_patrol_location_transit :=D1_8
+fi;
+if (location_patrol == D2_1/\ location_transit ==D2_1)
+-> sees_patrol_location_transit :=D2_1
+fi;
+if (location_patrol == D2_2/\ location_transit ==D2_2)
+-> sees_patrol_location_transit :=D2_2
+fi;
+if (location_patrol == D2_3/\ location_transit ==D2_3)
+-> sees_patrol_location_transit :=D2_3
+fi;
+if (location_patrol == D2_4/\ location_transit ==D2_4)
+-> sees_patrol_location_transit :=D2_4
+fi;
+if (location_patrol == D2_5/\ location_transit ==D2_5)
+-> sees_patrol_location_transit :=D2_5
+fi;
+if (location_patrol == D2_6/\ location_transit ==D2_6)
+-> sees_patrol_location_transit :=D2_6
+fi;
+if (location_patrol == D2_7/\ location_transit ==D2_7)
+-> sees_patrol_location_transit :=D2_7
+fi;
+if (location_patrol == D2_8/\ location_transit ==D2_8) \/ (location_transit ==D2_8)
+-> sees_patrol_location_transit :=D2_8
+fi;
+if (location_patrol == D3_1/\ location_transit ==D3_1)
+-> sees_patrol_location_transit :=D3_1
+fi;
+if (location_patrol == D3_2/\ location_transit ==D3_2)
+-> sees_patrol_location_transit :=D3_2
+fi;
+if (location_patrol == D3_3/\ location_transit ==D3_3)
+-> sees_patrol_location_transit :=D3_3
+fi;
+if (location_patrol == D3_4/\ location_transit ==D3_4)
+-> sees_patrol_location_transit :=D3_4
+fi;
+if (location_patrol == D3_5/\ location_transit ==D3_5)
+-> sees_patrol_location_transit :=D3_5
+fi;
+if (location_patrol == D3_6/\ location_transit ==D3_6)
+-> sees_patrol_location_transit :=D3_6
+fi;
+if (location_patrol == D3_7/\ location_transit ==D3_7)
+-> sees_patrol_location_transit :=D3_7
+fi;
+if (location_patrol == D3_8/\ location_transit ==D3_8) \/ (location_transit ==D3_8)
+-> sees_patrol_location_transit :=D3_8
+fi;
+if (location_patrol == D4_1/\ location_transit ==D4_1)
+-> sees_patrol_location_transit :=D4_1
+fi;
+if (location_patrol == D4_2/\ location_transit ==D4_2)
+-> sees_patrol_location_transit :=D4_2
+fi;
+if (location_patrol == D4_3/\ location_transit ==D4_3)
+-> sees_patrol_location_transit :=D4_3
+fi;
+if (location_patrol == D4_4/\ location_transit ==D4_4)
+-> sees_patrol_location_transit :=D4_4
+fi;
+if (location_patrol == D4_5/\ location_transit ==D4_5)
+-> sees_patrol_location_transit :=D4_5
+fi;
+if (location_patrol == D4_6/\ location_transit ==D4_6)
+-> sees_patrol_location_transit :=D4_6
+fi;
+if (location_patrol == D4_7/\ location_transit ==D4_7)
+-> sees_patrol_location_transit :=D4_7
+fi;
+if (location_patrol == D4_8/\ location_transit ==D4_8) \/ (location_transit ==D4_8)
+-> sees_patrol_location_transit :=D4_8
+fi;
+if (location_patrol == D5_1/\ location_transit ==D5_1)
+-> sees_patrol_location_transit :=D5_1
+fi;
+if (location_patrol == D5_2/\ location_transit ==D5_2)
+-> sees_patrol_location_transit :=D5_2
+fi;
+if (location_patrol == D5_3/\ location_transit ==D5_3)
+-> sees_patrol_location_transit :=D5_3
+fi;
+if (location_patrol == D5_4/\ location_transit ==D5_4)
+-> sees_patrol_location_transit :=D5_4
+fi;
+if (location_patrol == D5_5/\ location_transit ==D5_5)
+-> sees_patrol_location_transit :=D5_5
+fi;
+if (location_patrol == D5_6/\ location_transit ==D5_6)
+-> sees_patrol_location_transit :=D5_6
+fi;
+if (location_patrol == D5_7/\ location_transit ==D5_7)
+-> sees_patrol_location_transit :=D5_7
+fi;
+if (location_patrol == D5_8/\ location_transit ==D5_8) \/ (location_transit ==D5_8)
+-> sees_patrol_location_transit :=D5_8
+fi;
+if (location_patrol == D6_1/\ location_transit ==D6_1)
+-> sees_patrol_location_transit :=D6_1
+fi;
+if (location_patrol == D6_2/\ location_transit ==D6_2)
+-> sees_patrol_location_transit :=D6_2
+fi;
+if (location_patrol == D6_3/\ location_transit ==D6_3)
+-> sees_patrol_location_transit :=D6_3
+fi;
+if (location_patrol == D6_4/\ location_transit ==D6_4)
+-> sees_patrol_location_transit :=D6_4
+fi;
+if (location_patrol == D6_5/\ location_transit ==D6_5)
+-> sees_patrol_location_transit :=D6_5
+fi;
+if (location_patrol == D6_6/\ location_transit ==D6_6)
+-> sees_patrol_location_transit :=D6_6
+fi;
+if (location_patrol == D6_7/\ location_transit ==D6_7)
+-> sees_patrol_location_transit :=D6_7
+fi;
+if (location_patrol == D6_8/\ location_transit ==D6_8) \/ (location_transit ==D6_8)
+-> sees_patrol_location_transit :=D6_8
+fi;
+if (location_patrol == D7_1/\ location_transit ==D7_1)
+-> sees_patrol_location_transit :=D7_1
+fi;
+if (location_patrol == D7_2/\ location_transit ==D7_2)
+-> sees_patrol_location_transit :=D7_2
+fi;
+if (location_patrol == D7_3/\ location_transit ==D7_3)
+-> sees_patrol_location_transit :=D7_3
+fi;
+if (location_patrol == D7_4/\ location_transit ==D7_4)
+-> sees_patrol_location_transit :=D7_4
+fi;
+if (location_patrol == D7_5/\ location_transit ==D7_5)
+-> sees_patrol_location_transit :=D7_5
+fi;
+if (location_patrol == D7_6/\ location_transit ==D7_6)
+-> sees_patrol_location_transit :=D7_6
+fi;
+if (location_patrol == D7_7/\ location_transit ==D7_7)
+-> sees_patrol_location_transit :=D7_7
+fi;
+if (location_patrol == D7_8/\ location_transit ==D7_8) \/ (location_transit ==D7_8)
+-> sees_patrol_location_transit :=D7_8
+fi;
+if (location_patrol == D8_1/\ location_transit ==D8_1)
+-> sees_patrol_location_transit :=D8_1
+fi;
+if (location_patrol == D8_2/\ location_transit ==D8_2)
+-> sees_patrol_location_transit :=D8_2
+fi;
+if (location_patrol == D8_3/\ location_transit ==D8_3)
+-> sees_patrol_location_transit :=D8_3
+fi;
+if (location_patrol == D8_4/\ location_transit ==D8_4)
+-> sees_patrol_location_transit :=D8_4
+fi;
+if (location_patrol == D8_5/\ location_transit ==D8_5)
+-> sees_patrol_location_transit :=D8_5
+fi;
+if (location_patrol == D8_6/\ location_transit ==D8_6)
+-> sees_patrol_location_transit :=D8_6
+fi;
+if (location_patrol == D8_7/\ location_transit ==D8_7)
+-> sees_patrol_location_transit :=D8_7
+fi;
+if (location_patrol == D8_8/\ location_transit ==D8_8) \/ (location_transit ==D8_8)
+-> sees_patrol_location_transit :=D8_8
+fi
+end
+
+
+--Specifications to be checked--
+-- spec_obs = AF terminal 
+
+--spec_spr = X 31 (Knows Patrol (step == 3) )
+
+spec_spr = X 20 (Knows Patrol (step == 3) )
+
+--spec_clk = G (terminal => Knows Patrol terminal)
+--spec_obs = G (terminal => Knows Patrol terminal)
+
+
+--End of Specifications to be checked--
+
+--agent protocol--
+
+protocol "patrol" (control: Ag, location_patrol: observable Location, did_patrol: observable ActPatrol, sees_patrol_location_transit: observable Location, terminal: Bool, legal_patrol_move_north: Bool, legal_patrol_move_south: Bool, legal_patrol_move_nowhere: Bool, legal_patrol_move_east: Bool, legal_patrol_move_west: Bool)
+--changed location_patrol observable
+--turned legal def into bool
+
+begin
+ do neg terminal ->
+ if legal_patrol_move_north -> <<Move_north1>>
+[] legal_patrol_move_south -> <<Move_south1>>
+[] legal_patrol_move_east -> <<Move_east1>>
+[] legal_patrol_move_west -> <<Move_west1>>
+[] legal_patrol_move_nowhere -> <<Move_nowhere1>>
+ fi
+ od
+end
+
+protocol "transit" (control: Ag, location_transit: observable Location, did_transit: observable ActTransit, sees_transit_location_patrol: observable Location, terminal: Bool, legal_transit_move_north: Bool, legal_transit_move_dwest: Bool, legal_transit_move_deast: Bool, legal_transit_move_nowhere: Bool) --changed location_transit observable 
+
+begin
+ do
+ neg terminal ->
+ if legal_transit_move_north -> <<Move_northT1>>
+[] legal_transit_move_deast -> <<Move_deast1>>
+[] legal_transit_move_dwest -> <<Move_dwest1>>
+[] legal_transit_move_nowhere -> <<Move_nowhereT1>>
+fi 
+ od
+end
