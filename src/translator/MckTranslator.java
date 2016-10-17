@@ -31,6 +31,7 @@ public class MckTranslator {
 	public static String MCK_OR = " \\/ ";
 	public static String MCK_TRUE = "True";
 	public static String MCK_FALSE = "False";
+	public static boolean ONE_LINE_TRANSITIONS = true;
 	// Variables
 	private Set<String> AT;
 	// Variables found in true and/or next
@@ -69,6 +70,13 @@ public class MckTranslator {
 		return orderGdlRules(root, GdlParser.constructDependencyGraph(root));
 	}
 
+	/**
+	 * Use a priority list to order by stratum.
+	 * 
+	 * @param root
+	 * @param graph
+	 * @return
+	 */
 	public static String orderGdlRules(GdlNode root, DependencyGraph graph) {
 		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
 			@Override
@@ -78,21 +86,19 @@ public class MckTranslator {
 							- ((util.grammar.GdlRule) toHead).getStratum();
 					if (stratDiff != 0) {
 						return stratDiff;
+					} else {
+						return fromHead.getChildren().get(0).toString().compareTo(toHead.getChildren().get(0).toString());
 					}
-				}
-
-				if (fromHead.getType() == GdlType.CLAUSE) {
-					fromHead = fromHead.getChildren().get(0);
-				}
-				if (toHead.getType() == GdlType.CLAUSE) {
-					toHead = toHead.getChildren().get(0);
+				} else if (fromHead instanceof util.grammar.GdlRule) {
+					return 1;
+				} else if (toHead instanceof util.grammar.GdlRule) {
+					return -1;
 				}
 				return fromHead.toString().compareTo(toHead.toString());
 			}
 		};
+
 		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(gdlHeadComparator);
-		// PriorityQueue<GdlNode> unorderedAlt = new
-		// PriorityQueue<GdlNode>(gdlHeadComparator);
 		graph.computeStratum();
 		for (GdlNode clause : root.getChildren()) {
 			if (clause instanceof util.grammar.GdlRule) {
@@ -107,21 +113,6 @@ public class MckTranslator {
 		}
 
 		StringBuilder ordered = new StringBuilder();
-		/*
-		 * Map<String, Integer> stratumMap = graph.getStratumMap(); int stratum
-		 * = -2;
-		 * 
-		 * while (!unordered.isEmpty()) { while (!unordered.isEmpty()) { GdlNode
-		 * node = unordered.remove(); String nodeID =
-		 * node.getChildren().get(0).getAtom(); if
-		 * (nodeID.equals(GdlNode.GDL_TRUE) || nodeID.equals(GdlNode.GDL_NEXT))
-		 * { nodeID = "true_" +
-		 * GdlParser.formatGdlNode(node.getChildren().get(0).getChildren().get(0
-		 * )); } if (stratumMap.get(nodeID) == null || stratumMap.get(nodeID) ==
-		 * stratum) { ordered.append(node.toString()); } else {
-		 * unorderedAlt.add(node); } } stratum++; unordered = unorderedAlt;
-		 * unorderedAlt = new PriorityQueue<GdlNode>(gdlHeadComparator); }
-		 */
 		while (!unordered.isEmpty()) {
 			GdlNode node = unordered.remove();
 			ordered.append(node.toString());
@@ -172,6 +163,12 @@ public class MckTranslator {
 			sees = true;
 		}
 
+		int headStratum;
+		if (headNode.getAtom().equals(GdlNode.GDL_NEXT)) {
+			headStratum = graph.getStratum(formatMckNode(headNode.getChildren().get(0)));
+		} else {
+			headStratum = graph.getStratum(formatMckNode(headNode));
+		}
 		StringBuilder disjunctBody = new StringBuilder();
 		boolean disjunctBodyHasOtherThanFalse = false;
 		for (GdlNode clause : bodyList) {
@@ -194,15 +191,22 @@ public class MckTranslator {
 					if (DEBUG) {
 						conjuntBody.append(MCK_TRUE + MCK_AND);
 					}
-				} else if (!ATh.contains(mckFormatted)
-						&& !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
+				} else if (ATc.contains(mckFormatted)) {
 					conjuntBody.append(MCK_FALSE + MCK_AND);
+					conjunctBodyHasFalse = true;
+					conjunctBodyHasOtherThanTrue = true;
+				} else if (!ATh.contains(mckFormatted) && !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
+					conjuntBody.append(MCK_FALSE + MCK_AND);
+					conjunctBodyHasFalse = true;
+					conjunctBodyHasOtherThanTrue = true;
 					if (!ATc.contains(mckFormatted)) {
 						ATc.add(mckFormatted);
 					}
-					conjunctBodyHasFalse = true;
-					conjunctBodyHasOtherThanTrue = true;
 				} else if (sees && ATf.contains(mckFormatted)) {
+					conjuntBody.append(mckFormatted + "_old" + MCK_AND);
+					conjunctBodyHasOtherThanTrue = true;
+				} else if (graph.hasTerm("true_" + formatMckNode(headNode))
+						&& graph.hasTerm("true_" + mckFormatted + "_old")) {
 					conjuntBody.append(mckFormatted + "_old" + MCK_AND);
 					conjunctBodyHasOtherThanTrue = true;
 				} else {
@@ -247,6 +251,9 @@ public class MckTranslator {
 			if (!ATt.contains(formatMckNode(headNode))) {
 				ATt.add(formatMckNode(headNode));
 			}
+			
+		} else if (ONE_LINE_TRANSITIONS) {
+			mckNode.append(System.lineSeparator() + formatMckNode(headNode) + " := " + disjunctBody.toString() + ";");
 		} else {
 			mckNode.append(System.lineSeparator() + "if " + disjunctBody.toString());
 			mckNode.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := True");
@@ -366,7 +373,6 @@ public class MckTranslator {
 			}
 		}
 
-		System.out.println("Partitioned parse nodes");
 		for (String initTrue : ATt) {
 			if (!ATi.contains(initTrue)) {
 				ATi.add(initTrue);
@@ -390,17 +396,22 @@ public class MckTranslator {
 				protocols.append("sees_" + role + "_" + sees + " : observable Bool, ");
 				agents.append("sees_" + role + "_" + sees + ", ");
 			}
-			protocols.append(MCK_DOES_PREFIX + role + " : observable " + MCK_ACTION_PREFIX + role);
+			protocols.append(MCK_DOES_PREFIX + role + " : observable " + MCK_ACTION_PREFIX + role + ", ");
+			protocols.append("terminal : observable Bool");
 			protocols.append(")");
-			agents.append(MCK_DOES_PREFIX + role);
+			agents.append(MCK_DOES_PREFIX + role + ", ");
+			agents.append("terminal");
 			agents.append(")");
 			protocols.append(System.lineSeparator() + "begin");
-			protocols.append(System.lineSeparator() + "  if  ");
+			protocols.append(System.lineSeparator() + "  if terminal -> <<STOP>>");
+			protocols.append(System.lineSeparator() + "  [] otherwise ->");
+			protocols.append(System.lineSeparator() + "    if  ");
 			for (String move : ATd.get(role)) {
 				protocols.append("legal_" + role + "_" + move + " -> <<" + MCK_MOVE_PREFIX + move + ">>");
-				protocols.append(System.lineSeparator() + "  []  ");
+				protocols.append(System.lineSeparator() + "    []  ");
 			}
-			protocols.delete(protocols.length() - 7, protocols.length());
+			protocols.delete(protocols.length() - 9, protocols.length());
+			protocols.append(System.lineSeparator() + "    fi");
 			protocols.append(System.lineSeparator() + "  fi");
 			protocols.append(System.lineSeparator() + "end");
 		}
@@ -421,7 +432,9 @@ public class MckTranslator {
 				state_trans.append(
 						MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + move + System.lineSeparator() + "[] ");
 			}
-			state_trans.delete(state_trans.length() - 4, state_trans.length());
+			state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_STOP + " -> ");
+			state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_STOP);
+			//state_trans.delete(state_trans.length() - 4, state_trans.length());
 			state_trans.append(System.lineSeparator() + "fi;");
 		}
 		state_trans.append(System.lineSeparator());
@@ -441,8 +454,10 @@ public class MckTranslator {
 		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
 		GdlNode repeatHead = null;
 		for (GdlNode clause : root.getChildren()) {
+			// Type of clause that isn't BASE or INPUT
 			if (clause.getType() == GdlType.CLAUSE && !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_BASE)
 					&& !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INPUT)) {
+				
 				if (repeatHead != null && clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
 					repeatHeadList.add(clause);
 				} else {
@@ -454,6 +469,10 @@ public class MckTranslator {
 					repeatHeadList.add(clause);
 				}
 			}
+		}
+		// Fix to skipping last clause in game
+		if (repeatHead != null) {
+			state_trans.append(formatClause(graph, repeatHead, repeatHeadList));
 		}
 		state_trans.deleteCharAt(state_trans.length() - 1); // Remove last ';'
 		state_trans.append(System.lineSeparator() + "end");
