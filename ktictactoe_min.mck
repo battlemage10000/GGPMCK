@@ -1,0 +1,1580 @@
+-- This is a systematic translation from Krieg-tictactoe in GDL-II to the MCK input language
+-- Ji Ruan
+
+-- Version 3: legal-variables removed. 
+-- Version 4: line_x, line_o, line_b removed
+-- Version 4.1: distinct-variables removed. goal-variables removed. 
+-- This is the version of minimal number of variables. 
+
+-- Variables
+cell_1_1_b: Bool
+cell_1_2_b: Bool
+cell_1_3_b: Bool
+cell_2_1_b: Bool
+cell_2_2_b: Bool
+cell_2_3_b: Bool
+cell_3_1_b: Bool
+cell_3_2_b: Bool
+cell_3_3_b: Bool
+cell_1_1_x: Bool
+cell_1_2_x: Bool
+cell_1_3_x: Bool
+cell_2_1_x: Bool
+cell_2_2_x: Bool
+cell_2_3_x: Bool
+cell_3_1_x: Bool
+cell_3_2_x: Bool
+cell_3_3_x: Bool
+cell_1_1_o: Bool
+cell_1_2_o: Bool
+cell_1_3_o: Bool
+cell_2_1_o: Bool
+cell_2_2_o: Bool
+cell_2_3_o: Bool
+cell_3_1_o: Bool
+cell_3_2_o: Bool
+cell_3_3_o: Bool
+control_xplayer: Bool
+control_xplayer_old: Bool
+control_oplayer: Bool
+tried_xplayer_1_1: Bool
+tried_xplayer_1_2: Bool
+tried_xplayer_1_3: Bool
+tried_xplayer_2_1: Bool
+tried_xplayer_2_2: Bool
+tried_xplayer_2_3: Bool
+tried_xplayer_3_1: Bool
+tried_xplayer_3_2: Bool
+tried_xplayer_3_3: Bool
+tried_oplayer_1_1: Bool
+tried_oplayer_1_2: Bool
+tried_oplayer_1_3: Bool
+tried_oplayer_2_1: Bool
+tried_oplayer_2_2: Bool
+tried_oplayer_2_3: Bool
+tried_oplayer_3_1: Bool
+tried_oplayer_3_2: Bool
+tried_oplayer_3_3: Bool
+did_xplayer_mark_1_1: Bool
+did_xplayer_mark_1_2: Bool
+did_xplayer_mark_1_3: Bool
+did_xplayer_mark_2_1: Bool
+did_xplayer_mark_2_2: Bool
+did_xplayer_mark_2_3: Bool
+did_xplayer_mark_3_1: Bool
+did_xplayer_mark_3_2: Bool
+did_xplayer_mark_3_3: Bool
+did_xplayer_noop: Bool
+did_oplayer_mark_1_1: Bool
+did_oplayer_mark_1_2: Bool
+did_oplayer_mark_1_3: Bool
+did_oplayer_mark_2_1: Bool
+did_oplayer_mark_2_2: Bool
+did_oplayer_mark_2_3: Bool
+did_oplayer_mark_3_1: Bool
+did_oplayer_mark_3_2: Bool
+did_oplayer_mark_3_3: Bool
+did_oplayer_noop: Bool
+sees_xplayer_yourmove: Bool
+sees_oplayer_yourmove: Bool
+
+-- 70 boolean variables in total. 
+
+-- define other non-essential atoms
+
+define line_b = 
+(cell_1_1_b /\ cell_1_2_b /\ cell_1_3_b)
+\/
+(cell_2_1_b /\ cell_2_2_b /\ cell_2_3_b)
+\/
+(cell_3_1_b /\ cell_3_2_b /\ cell_3_3_b)
+\/
+(cell_1_1_b /\ cell_2_1_b /\ cell_3_1_b)
+\/
+(cell_1_2_b /\ cell_2_2_b /\ cell_3_2_b)
+\/
+(cell_1_3_b /\ cell_2_3_b /\ cell_3_3_b)
+\/
+(cell_1_1_b /\ cell_2_2_b /\ cell_3_3_b)
+\/
+(cell_1_3_b /\ cell_2_2_b /\ cell_3_1_b)
+
+define line_x = 
+(cell_1_1_x /\ cell_1_2_x /\ cell_1_3_x)
+\/
+(cell_2_1_x /\ cell_2_2_x /\ cell_2_3_x)
+\/
+(cell_3_1_x /\ cell_3_2_x /\ cell_3_3_x)
+\/
+(cell_1_1_x /\ cell_2_1_x /\ cell_3_1_x)
+\/
+(cell_1_2_x /\ cell_2_2_x /\ cell_3_2_x)
+\/
+(cell_1_3_x /\ cell_2_3_x /\ cell_3_3_x)
+\/
+(cell_1_1_x /\ cell_2_2_x /\ cell_3_3_x)
+\/
+(cell_1_3_x /\ cell_2_2_x /\ cell_3_1_x) 
+
+define line_o = 
+(cell_1_1_o /\ cell_1_2_o /\ cell_1_3_o)
+\/
+(cell_2_1_o /\ cell_2_2_o /\ cell_2_3_o)
+\/
+(cell_3_1_o /\ cell_3_2_o /\ cell_3_3_o)
+\/
+(cell_1_1_o /\ cell_2_1_o /\ cell_3_1_o)
+\/
+(cell_1_2_o /\ cell_2_2_o /\ cell_3_2_o)
+\/
+(cell_1_3_o /\ cell_2_3_o /\ cell_3_3_o)
+\/
+(cell_1_1_o /\ cell_2_2_o /\ cell_3_3_o)
+\/
+(cell_1_3_o /\ cell_2_2_o /\ cell_3_1_o) 
+
+define open = cell_1_1_b \/ cell_1_2_b \/ cell_1_3_b
+\/ cell_2_1_b \/ cell_2_2_b \/ cell_2_3_b
+\/ cell_3_1_b \/ cell_3_2_b \/ cell_3_3_b
+
+define legal_xplayer_mark_1_1 = (control_xplayer /\ cell_1_1_b /\ neg (tried_xplayer_1_1)) \/ 
+(control_xplayer /\ cell_1_1_x /\ neg (tried_xplayer_1_1)) \/
+(control_xplayer /\ cell_1_1_o /\ neg (tried_xplayer_1_1))
+define legal_xplayer_mark_1_2 = (control_xplayer /\ cell_1_2_b /\ neg (tried_xplayer_1_2)) \/ 
+(control_xplayer /\ cell_1_2_x /\ neg (tried_xplayer_1_2)) \/
+(control_xplayer /\ cell_1_2_o /\ neg (tried_xplayer_1_2))
+define legal_xplayer_mark_1_3 = (control_xplayer /\ cell_1_3_b /\ neg (tried_xplayer_1_3)) \/ 
+(control_xplayer /\ cell_1_3_x /\ neg (tried_xplayer_1_3)) \/
+(control_xplayer /\ cell_1_3_o /\ neg (tried_xplayer_1_3))
+define legal_xplayer_mark_2_1 = (control_xplayer /\ cell_2_1_b /\ neg (tried_xplayer_2_1)) \/ 
+(control_xplayer /\ cell_2_1_x /\ neg (tried_xplayer_2_1)) \/
+(control_xplayer /\ cell_2_1_o /\ neg (tried_xplayer_2_1))
+define legal_xplayer_mark_2_2 = (control_xplayer /\ cell_2_2_b /\ neg (tried_xplayer_2_2)) \/ 
+(control_xplayer /\ cell_2_2_x /\ neg (tried_xplayer_2_2)) \/
+(control_xplayer /\ cell_2_2_o /\ neg (tried_xplayer_2_2))
+define legal_xplayer_mark_2_3 = (control_xplayer /\ cell_2_3_b /\ neg (tried_xplayer_2_3)) \/ 
+(control_xplayer /\ cell_2_3_x /\ neg (tried_xplayer_2_3)) \/
+(control_xplayer /\ cell_2_3_o /\ neg (tried_xplayer_2_3))
+define legal_xplayer_mark_3_1 = (control_xplayer /\ cell_3_1_b /\ neg (tried_xplayer_3_1)) \/ 
+(control_xplayer /\ cell_3_1_x /\ neg (tried_xplayer_3_1)) \/
+(control_xplayer /\ cell_3_1_o /\ neg (tried_xplayer_3_1))
+define legal_xplayer_mark_3_2 = (control_xplayer /\ cell_3_2_b /\ neg (tried_xplayer_3_2)) \/ 
+(control_xplayer /\ cell_3_2_x /\ neg (tried_xplayer_3_2)) \/
+(control_xplayer /\ cell_3_2_o /\ neg (tried_xplayer_3_2))
+define legal_xplayer_mark_3_3 = (control_xplayer /\ cell_3_3_b /\ neg (tried_xplayer_3_3)) \/ 
+(control_xplayer /\ cell_3_3_x /\ neg (tried_xplayer_3_3)) \/
+(control_xplayer /\ cell_3_3_o /\ neg (tried_xplayer_3_3))
+
+define legal_oplayer_mark_1_1 = (control_oplayer /\ cell_1_1_b /\ neg (tried_oplayer_1_1)) \/ 
+(control_oplayer /\ cell_1_1_x /\ neg (tried_oplayer_1_1)) \/
+(control_oplayer /\ cell_1_1_o /\ neg (tried_oplayer_1_1))
+define legal_oplayer_mark_1_2 = (control_oplayer /\ cell_1_2_b /\ neg (tried_oplayer_1_2)) \/ 
+(control_oplayer /\ cell_1_2_x /\ neg (tried_oplayer_1_2)) \/
+(control_oplayer /\ cell_1_2_o /\ neg (tried_oplayer_1_2))
+define legal_oplayer_mark_1_3 = (control_oplayer /\ cell_1_3_b /\ neg (tried_oplayer_1_3)) \/ 
+(control_oplayer /\ cell_1_3_x /\ neg (tried_oplayer_1_3)) \/
+(control_oplayer /\ cell_1_3_o /\ neg (tried_oplayer_1_3))
+define legal_oplayer_mark_2_1 = (control_oplayer /\ cell_2_1_b /\ neg (tried_oplayer_2_1)) \/ 
+(control_oplayer /\ cell_2_1_x /\ neg (tried_oplayer_2_1)) \/
+(control_oplayer /\ cell_2_1_o /\ neg (tried_oplayer_2_1))
+define legal_oplayer_mark_2_2 = (control_oplayer /\ cell_2_2_b /\ neg (tried_oplayer_2_2)) \/ 
+(control_oplayer /\ cell_2_2_x /\ neg (tried_oplayer_2_2)) \/
+(control_oplayer /\ cell_2_2_o /\ neg (tried_oplayer_2_2))
+define legal_oplayer_mark_2_3 = (control_oplayer /\ cell_2_3_b /\ neg (tried_oplayer_2_3)) \/ 
+(control_oplayer /\ cell_2_3_x /\ neg (tried_oplayer_2_3)) \/
+(control_oplayer /\ cell_2_3_o /\ neg (tried_oplayer_2_3))
+define legal_oplayer_mark_3_1 = (control_oplayer /\ cell_3_1_b /\ neg (tried_oplayer_3_1)) \/ 
+(control_oplayer /\ cell_3_1_x /\ neg (tried_oplayer_3_1)) \/
+(control_oplayer /\ cell_3_1_o /\ neg (tried_oplayer_3_1))
+define legal_oplayer_mark_3_2 = (control_oplayer /\ cell_3_2_b /\ neg (tried_oplayer_3_2)) \/ 
+(control_oplayer /\ cell_3_2_x /\ neg (tried_oplayer_3_2)) \/
+(control_oplayer /\ cell_3_2_o /\ neg (tried_oplayer_3_2))
+define legal_oplayer_mark_3_3 = (control_oplayer /\ cell_3_3_b /\ neg (tried_oplayer_3_3)) \/ 
+(control_oplayer /\ cell_3_3_x /\ neg (tried_oplayer_3_3)) \/
+(control_oplayer /\ cell_3_3_o /\ neg (tried_oplayer_3_3))
+
+define validmove = 
+(did_xplayer_mark_1_1 /\ cell_1_1_b) 
+\/ (did_xplayer_mark_1_2 /\ cell_1_2_b) 
+\/ (did_xplayer_mark_1_3 /\ cell_1_3_b) 
+\/ (did_xplayer_mark_2_1 /\ cell_2_1_b) 
+\/ (did_xplayer_mark_2_2 /\ cell_2_2_b) 
+\/ (did_xplayer_mark_2_3 /\ cell_2_3_b) 
+\/ (did_xplayer_mark_3_1 /\ cell_3_1_b) 
+\/ (did_xplayer_mark_3_2 /\ cell_3_2_b) 
+\/ (did_xplayer_mark_3_3 /\ cell_3_3_b) 
+\/ (did_oplayer_mark_1_1 /\ cell_1_1_b) 
+\/ (did_oplayer_mark_1_2 /\ cell_1_2_b) 
+\/ (did_oplayer_mark_1_3 /\ cell_1_3_b) 
+\/ (did_oplayer_mark_2_1 /\ cell_2_1_b) 
+\/ (did_oplayer_mark_2_2 /\ cell_2_2_b) 
+\/ (did_oplayer_mark_2_3 /\ cell_2_3_b) 
+\/ (did_oplayer_mark_3_1 /\ cell_3_1_b) 
+\/ (did_oplayer_mark_3_2 /\ cell_3_2_b) 
+\/ (did_oplayer_mark_3_3 /\ cell_3_3_b) 
+
+
+define legal_xplayer_noop = control_oplayer
+define legal_oplayer_noop = control_xplayer
+
+define terminal = line_x \/ line_o \/ not open
+
+define goal_xplayer_100 = line_x 
+define goal_xplayer_50 = neg line_x /\ neg line_o 
+define goal_xplayer_0 = line_o 
+
+define goal_oplayer_100 = line_o 
+define goal_oplayer_50 = neg line_o /\ neg line_x 
+define goal_oplayer_0 = line_x 
+
+
+-- Initial Condition
+init_cond = cell_1_1_b == True /\ cell_1_2_b == True /\ cell_1_3_b == True /\
+cell_2_1_b == True /\ cell_2_2_b == True /\ cell_2_3_b == True /\
+cell_3_1_b == True /\ cell_3_2_b == True /\ cell_3_3_b == True /\
+control_xplayer == True /\
+cell_1_1_x == False /\ cell_1_2_x == False /\ cell_1_3_x == False /\
+cell_2_1_x == False /\ cell_2_2_x == False /\ cell_2_3_x == False /\
+cell_3_1_x == False /\ cell_3_2_x == False /\ cell_3_3_x == False /\
+cell_1_1_o == False /\ cell_1_2_o == False /\ cell_1_3_o == False /\
+cell_2_1_o == False /\ cell_2_2_o == False /\ cell_2_3_o == False /\
+cell_3_1_o == False /\ cell_3_2_o == False /\ cell_3_3_o == False /\
+control_xplayer_old == False /\
+control_oplayer == False /\
+tried_xplayer_1_1 == False /\ tried_xplayer_1_2 == False /\ tried_xplayer_1_3 == False /\
+tried_xplayer_2_1 == False /\ tried_xplayer_2_2 == False /\ tried_xplayer_2_3 == False /\
+tried_xplayer_3_1 == False /\ tried_xplayer_3_2 == False /\ tried_xplayer_3_3 == False /\
+tried_oplayer_1_1 == False /\ tried_oplayer_1_2 == False /\ tried_oplayer_1_3 == False /\
+tried_oplayer_2_1 == False /\ tried_oplayer_2_2 == False /\ tried_oplayer_2_3 == False /\
+tried_oplayer_3_1 == False /\ tried_oplayer_3_2 == False /\ tried_oplayer_3_3 == False /\
+did_xplayer_mark_1_1 == False /\ did_xplayer_mark_1_2 == False /\ did_xplayer_mark_1_3 == False /\
+did_xplayer_mark_2_1 == False /\ did_xplayer_mark_2_2 == False /\ did_xplayer_mark_2_3 == False /\
+did_xplayer_mark_3_1 == False /\ did_xplayer_mark_3_2 == False /\ did_xplayer_mark_3_3 == False /\
+did_oplayer_mark_1_1 == False /\ did_oplayer_mark_1_2 == False /\ did_oplayer_mark_1_3 == False /\
+did_oplayer_mark_2_1 == False /\ did_oplayer_mark_2_2 == False /\ did_oplayer_mark_2_3 == False /\
+did_oplayer_mark_3_1 == False /\ did_oplayer_mark_3_2 == False /\ did_oplayer_mark_3_3 == False /\
+did_xplayer_noop == False /\ did_oplayer_noop == False /\
+sees_xplayer_yourmove == False /\ sees_oplayer_yourmove == False
+
+-- Agent binding
+agent Xplayer "xplayer" (
+control_xplayer, 
+control_oplayer, 
+cell_1_1_b,
+cell_1_2_b,
+cell_1_3_b,
+cell_2_1_b,
+cell_2_2_b,
+cell_2_3_b,
+cell_3_1_b,
+cell_3_2_b,
+cell_3_3_b,
+cell_1_1_x,
+cell_1_2_x,
+cell_1_3_x,
+cell_2_1_x,
+cell_2_2_x,
+cell_2_3_x,
+cell_3_1_x,
+cell_3_2_x,
+cell_3_3_x,
+cell_1_1_o,
+cell_1_2_o,
+cell_1_3_o,
+cell_2_1_o,
+cell_2_2_o,
+cell_2_3_o,
+cell_3_1_o,
+cell_3_2_o,
+cell_3_3_o,
+tried_xplayer_1_1,
+tried_xplayer_1_2,
+tried_xplayer_1_3,
+tried_xplayer_2_1,
+tried_xplayer_2_2,
+tried_xplayer_2_3,
+tried_xplayer_3_1,
+tried_xplayer_3_2,
+tried_xplayer_3_3,
+sees_xplayer_yourmove,
+did_xplayer_mark_1_1, 
+did_xplayer_mark_1_2, 
+did_xplayer_mark_1_3, 
+did_xplayer_mark_2_1, 
+did_xplayer_mark_2_2, 
+did_xplayer_mark_2_3, 
+did_xplayer_mark_3_1, 
+did_xplayer_mark_3_2, 
+did_xplayer_mark_3_3,
+did_xplayer_noop
+)
+
+agent Oplayer "oplayer" (
+control_xplayer, 
+control_oplayer, 
+cell_1_1_b,
+cell_1_2_b,
+cell_1_3_b,
+cell_2_1_b,
+cell_2_2_b,
+cell_2_3_b,
+cell_3_1_b,
+cell_3_2_b,
+cell_3_3_b,
+cell_1_1_x,
+cell_1_2_x,
+cell_1_3_x,
+cell_2_1_x,
+cell_2_2_x,
+cell_2_3_x,
+cell_3_1_x,
+cell_3_2_x,
+cell_3_3_x,
+cell_1_1_o,
+cell_1_2_o,
+cell_1_3_o,
+cell_2_1_o,
+cell_2_2_o,
+cell_2_3_o,
+cell_3_1_o,
+cell_3_2_o,
+cell_3_3_o,
+tried_xplayer_1_1,
+tried_xplayer_1_2,
+tried_xplayer_1_3,
+tried_xplayer_2_1,
+tried_xplayer_2_2,
+tried_xplayer_2_3,
+tried_xplayer_3_1,
+tried_xplayer_3_2,
+tried_xplayer_3_3,
+sees_oplayer_yourmove,
+did_oplayer_mark_1_1, 
+did_oplayer_mark_1_2, 
+did_oplayer_mark_1_3, 
+did_oplayer_mark_2_1, 
+did_oplayer_mark_2_2, 
+did_oplayer_mark_2_3, 
+did_oplayer_mark_3_1, 
+did_oplayer_mark_3_2, 
+did_oplayer_mark_3_3,
+did_oplayer_noop
+)
+
+transitions
+begin
+
+
+----
+--ACTIONS
+---- 
+
+---
+if Xplayer.Mark_1_1 -> did_xplayer_mark_1_1:= True
+[]otherwise -> did_xplayer_mark_1_1:= False
+fi; 
+if Xplayer.Mark_1_2 -> did_xplayer_mark_1_2:= True
+[]otherwise -> did_xplayer_mark_1_2:= False
+fi; 
+if Xplayer.Mark_1_3 -> did_xplayer_mark_1_3:= True
+[]otherwise -> did_xplayer_mark_1_3:= False
+fi; 
+if Xplayer.Mark_2_1 -> did_xplayer_mark_2_1:= True
+[]otherwise -> did_xplayer_mark_2_1:= False
+fi; 
+if Xplayer.Mark_2_2 -> did_xplayer_mark_2_2:= True
+[]otherwise -> did_xplayer_mark_2_2:= False
+fi; 
+if Xplayer.Mark_2_3 -> did_xplayer_mark_2_3:= True
+[]otherwise -> did_xplayer_mark_2_3:= False
+fi; 
+if Xplayer.Mark_3_1 -> did_xplayer_mark_3_1:= True
+[]otherwise -> did_xplayer_mark_3_1:= False
+fi; 
+if Xplayer.Mark_3_2 -> did_xplayer_mark_3_2:= True
+[]otherwise -> did_xplayer_mark_3_2:= False
+fi; 
+if Xplayer.Mark_3_3 -> did_xplayer_mark_3_3:= True
+[]otherwise -> did_xplayer_mark_3_3:= False
+fi; 
+if Xplayer.Noop -> did_xplayer_noop:= True
+[]otherwise -> did_xplayer_noop:= False
+fi; 
+
+if Oplayer.Mark_1_1 -> did_oplayer_mark_1_1:= True
+[]otherwise -> did_oplayer_mark_1_1:= False
+fi; 
+if Oplayer.Mark_1_2 -> did_oplayer_mark_1_2:= True
+[]otherwise -> did_oplayer_mark_1_2:= False
+fi; 
+if Oplayer.Mark_1_3 -> did_oplayer_mark_1_3:= True
+[]otherwise -> did_oplayer_mark_1_3:= False
+fi; 
+if Oplayer.Mark_2_1 -> did_oplayer_mark_2_1:= True
+[]otherwise -> did_oplayer_mark_2_1:= False
+fi; 
+if Oplayer.Mark_2_2 -> did_oplayer_mark_2_2:= True
+[]otherwise -> did_oplayer_mark_2_2:= False
+fi; 
+if Oplayer.Mark_2_3 -> did_oplayer_mark_2_3:= True
+[]otherwise -> did_oplayer_mark_2_3:= False
+fi; 
+if Oplayer.Mark_3_1 -> did_oplayer_mark_3_1:= True
+[]otherwise -> did_oplayer_mark_3_1:= False
+fi; 
+if Oplayer.Mark_3_2 -> did_oplayer_mark_3_2:= True
+[]otherwise -> did_oplayer_mark_3_2:= False
+fi; 
+if Oplayer.Mark_3_3 -> did_oplayer_mark_3_3:= True
+[]otherwise -> did_oplayer_mark_3_3:= False
+fi; 
+if Oplayer.Noop -> did_oplayer_noop:= True
+[]otherwise -> did_oplayer_noop:= False
+fi; 
+
+-- Variables that immediately depend on does
+
+
+----
+--SEES
+----
+-- What agent sees in the next state. 
+-- These variables should be observable by the repellant agents!
+-- These statements should be executed after validmove rules and before next (control oplayer) rules 
+-- according to the dependency of variables. 
+if (neg validmove /\ control_xplayer) \/ (validmove /\ control_oplayer )
+-> sees_xplayer_yourmove := True
+[] otherwise -> sees_xplayer_yourmove := False
+fi; 
+if (neg validmove /\ control_oplayer) \/ (validmove /\ control_xplayer )
+-> sees_oplayer_yourmove := True
+[] otherwise -> sees_oplayer_yourmove := False
+fi; 
+
+if (neg validmove /\ did_xplayer_mark_1_1 ) \/ (neg validmove /\ tried_xplayer_1_1)
+ -> tried_xplayer_1_1 := True
+[] otherwise -> tried_xplayer_1_1 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_1_2 ) \/ (neg validmove /\ tried_xplayer_1_2)
+ -> tried_xplayer_1_2 := True
+[] otherwise -> tried_xplayer_1_2 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_1_3 ) \/ (neg validmove /\ tried_xplayer_1_3)
+ -> tried_xplayer_1_3 := True
+[] otherwise -> tried_xplayer_1_3 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_2_1 ) \/ (neg validmove /\ tried_xplayer_2_1)
+ -> tried_xplayer_2_1 := True
+[] otherwise -> tried_xplayer_2_1 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_2_2 ) \/ (neg validmove /\ tried_xplayer_2_2)
+ -> tried_xplayer_2_2 := True
+[] otherwise -> tried_xplayer_2_2 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_2_3 ) \/ (neg validmove /\ tried_xplayer_2_3)
+ -> tried_xplayer_2_3 := True
+[] otherwise -> tried_xplayer_2_3 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_3_1 ) \/ (neg validmove /\ tried_xplayer_3_1)
+ -> tried_xplayer_3_1 := True
+[] otherwise -> tried_xplayer_3_1 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_3_2 ) \/ (neg validmove /\ tried_xplayer_3_2)
+ -> tried_xplayer_3_2 := True
+[] otherwise -> tried_xplayer_3_2 := False
+fi; 
+if (neg validmove /\ did_xplayer_mark_3_3 ) \/ (neg validmove /\ tried_xplayer_3_3)
+ -> tried_xplayer_3_3 := True
+[] otherwise -> tried_xplayer_3_3 := False
+fi; 
+
+if (neg validmove /\ did_oplayer_mark_1_1 ) \/ (neg validmove /\ tried_oplayer_1_1)
+ -> tried_oplayer_1_1 := True
+[] otherwise -> tried_oplayer_1_1 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_1_2 ) \/ (neg validmove /\ tried_oplayer_1_2)
+ -> tried_oplayer_1_2 := True
+[] otherwise -> tried_oplayer_1_2 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_1_3 ) \/ (neg validmove /\ tried_oplayer_1_3)
+ -> tried_oplayer_1_3 := True
+[] otherwise -> tried_oplayer_1_3 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_2_1 ) \/ (neg validmove /\ tried_oplayer_2_1)
+ -> tried_oplayer_2_1 := True
+[] otherwise -> tried_oplayer_2_1 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_2_2 ) \/ (neg validmove /\ tried_oplayer_2_2)
+ -> tried_oplayer_2_2 := True
+[] otherwise -> tried_oplayer_2_2 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_2_3 ) \/ (neg validmove /\ tried_oplayer_2_3)
+ -> tried_oplayer_2_3 := True
+[] otherwise -> tried_oplayer_2_3 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_3_1 ) \/ (neg validmove /\ tried_oplayer_3_1)
+ -> tried_oplayer_3_1 := True
+[] otherwise -> tried_oplayer_3_1 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_3_2 ) \/ (neg validmove /\ tried_oplayer_3_2)
+ -> tried_oplayer_3_2 := True
+[] otherwise -> tried_oplayer_3_2 := False
+fi; 
+if (neg validmove /\ did_oplayer_mark_3_3 ) \/ (neg validmove /\ tried_oplayer_3_3)
+ -> tried_oplayer_3_3 := True
+[] otherwise -> tried_oplayer_3_3 := False
+fi; 
+
+-- save the old value of control_xplayer 
+
+control_xplayer_old := control_xplayer;
+--
+if (control_xplayer /\ neg validmove ) \/ (control_oplayer /\ validmove) 
+-> control_xplayer := True
+[] otherwise -> control_xplayer := False
+fi;  
+
+-- similar for control_oplayer but there is a twist:
+-- the control_xplayer should be the previous value not the current one!
+-- we can use control_xplayer_old := control_xplayer to record the old value! 
+-- this would require an old copy of all the variables. Here we only use: control_xplayer_old
+
+if (control_oplayer /\ neg validmove ) \/ (control_xplayer_old /\ validmove) 
+-> control_oplayer := True
+[] otherwise -> control_oplayer := False
+fi;  
+
+-----
+--NEXT rules
+----
+
+if (cell_1_1_b /\ neg validmove ) \/ 
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_1_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_b /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_1_1_b := True
+[] otherwise -> cell_1_1_b := False
+fi; 
+-- similar for cell_1_2_b
+if (cell_1_2_b /\ neg validmove ) \/ 
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_2_b /\ validmove /\ did_xplayer_mark_3_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_b /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_1_2_b := True
+[] otherwise -> cell_1_2_b := False
+fi; 
+if (cell_1_3_b /\ neg validmove ) \/ 
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_2_2  ) \/ 
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_3_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_2_2  ) \/ 
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_b /\ validmove /\ did_oplayer_mark_3_2  )  
+-> cell_1_3_b := True
+[] otherwise -> cell_1_3_b := False
+fi; 
+if (cell_2_1_b /\ neg validmove ) \/ 
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_1_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_b /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_2_1_b := True
+[] otherwise -> cell_2_1_b := False
+fi; 
+if (cell_2_2_b /\ neg validmove ) \/ 
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_2_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_1_3  ) \/  
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_b /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_2_2_b := True
+[] otherwise -> cell_2_2_b := False
+fi; 
+if (cell_2_3_b /\ neg validmove ) \/ 
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_2_2  ) \/ 
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_3_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_2_2  ) \/ 
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_b /\ validmove /\ did_oplayer_mark_3_2  ) 
+-> cell_2_3_b := True
+[] otherwise -> cell_2_3_b := False
+fi; 
+if (cell_3_1_b /\ neg validmove ) \/ 
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_1_3  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_3_1_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_3_1_b /\ validmove /\ did_oplayer_mark_3_3  ) 
+
+-> cell_3_1_b := True
+[] otherwise -> cell_3_1_b := False
+fi; 
+if (cell_3_2_b /\ neg validmove ) \/ 
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_3_2_b /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_2_b /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_3_2_b := True
+[] otherwise -> cell_3_2_b := False
+fi; 
+if (cell_3_3_b /\ neg validmove ) \/ 
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_2_2  ) \/ 
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_3_3_b /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_2_2  ) \/ 
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_3_b /\ validmove /\ did_oplayer_mark_3_2  ) 
+-> cell_3_3_b := True
+[] otherwise -> cell_3_3_b := False
+fi; 
+--------------
+if (cell_1_1_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_1_1) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_1_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_x /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_1_1_x := True
+[] otherwise -> cell_1_1_x := False
+fi; 
+-- similar for cell_1_2_x
+if (cell_1_2_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_1_2) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_2_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_x /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_1_2_x := True
+[] otherwise -> cell_1_2_x := False
+fi; 
+if (cell_1_3_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_1_3) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_2_2  ) \/ 
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_1_3_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_x /\ validmove /\ did_oplayer_mark_3_2  )
+-> cell_1_3_x := True
+[] otherwise -> cell_1_3_x := False
+fi; 
+if (cell_2_1_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_2_1) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_1_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_x /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_2_1_x := True
+[] otherwise -> cell_2_1_x := False
+fi; 
+if (cell_2_2_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_2_2) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_1_3  ) \/  
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_2_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_x /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_2_2_x := True
+[] otherwise -> cell_2_2_x := False
+fi; 
+if (cell_2_3_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_2_3) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_2_2  ) \/ 
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_2_3_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_x /\ validmove /\ did_oplayer_mark_3_2  ) 
+-> cell_2_3_x := True
+[] otherwise -> cell_2_3_x := False
+fi; 
+if (cell_3_1_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_3_1) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_3_1_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_3_1_x /\ validmove /\ did_oplayer_mark_3_3  ) 
+
+-> cell_3_1_x := True
+[] otherwise -> cell_3_1_x := False
+fi; 
+if (cell_3_2_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_3_2) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_3_2_x /\ validmove /\ did_xplayer_mark_3_3  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_2_x /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_3_2_x := True
+[] otherwise -> cell_3_2_x := False
+fi; 
+if (cell_3_3_x /\ neg validmove ) \/ (validmove /\ did_xplayer_mark_3_3) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_1_2  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_1_3  ) \/ 
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_2_3  ) \/ 
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_1_1  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_1_2  ) \/ 
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_2_1  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_2_2  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_3_1  ) \/
+(cell_3_3_x /\ validmove /\ did_xplayer_mark_3_2  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_3_x /\ validmove /\ did_oplayer_mark_3_2  ) 
+-> cell_3_3_x := True
+[] otherwise -> cell_3_3_x := False
+fi; 
+--------------
+if (cell_1_1_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_1_1) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_1_o /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_1_1_o := True
+[] otherwise -> cell_1_1_o := False
+fi; 
+-- similar for cell_1_2_o
+if (cell_1_2_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_1_2) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_2_o /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_1_2_o := True
+[] otherwise -> cell_1_2_o := False
+fi; 
+if (cell_1_3_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_1_3) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/ 
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_1_3_o /\ validmove /\ did_oplayer_mark_3_2  )
+-> cell_1_3_o := True
+[] otherwise -> cell_1_3_o := False
+fi; 
+if (cell_2_1_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_2_1) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_1_o /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_2_1_o := True
+[] otherwise -> cell_2_1_o := False
+fi; 
+if (cell_2_2_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_2_2) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/  
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_2_o /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_2_2_o := True
+[] otherwise -> cell_2_2_o := False
+fi; 
+if (cell_2_3_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_2_3) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/ 
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_2_3_o /\ validmove /\ did_oplayer_mark_3_2  ) 
+-> cell_2_3_o := True
+[] otherwise -> cell_2_3_o := False
+fi; 
+if (cell_3_1_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_3_1) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_3_1_o /\ validmove /\ did_oplayer_mark_3_3  ) 
+
+-> cell_3_1_o := True
+[] otherwise -> cell_3_1_o := False
+fi; 
+if (cell_3_2_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_3_2) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_3_3  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_2_o /\ validmove /\ did_oplayer_mark_3_3  ) 
+-> cell_3_2_o := True
+[] otherwise -> cell_3_2_o := False
+fi; 
+if (cell_3_3_o /\ neg validmove ) \/ (validmove /\ did_oplayer_mark_3_3) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/ 
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_3_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_3  ) \/ 
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_3  ) \/ 
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_1_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_2_2  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_3_1  ) \/
+(cell_3_3_o /\ validmove /\ did_oplayer_mark_3_2  ) 
+-> cell_3_3_o := True
+[] otherwise -> cell_3_3_o := False
+fi 
+
+end
+
+---- Specifications checked for workshop paper. 
+
+--spec_obs = control_xplayer
+--spec_obs = X (control_oplayer)
+--spec_obs = X^2 control_xplayer
+
+
+--spec_spr_bmc 1= ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\ (legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\ (  legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\ (legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\ (legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\ (legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\ (legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\ (legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\ (legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\ (legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+--spec_spr_bmc 2= AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\ (legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\ (  legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\ (legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\ (legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\ (legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\ (legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\ (legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\ (legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\ (legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+--spec_spr_bmc 3= AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\ (legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\ (  legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\ (legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\ (legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\ (legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\ (legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\ (legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\ (legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\ (legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+--spec_spr_bmc 4= AX AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\ (legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\ (  legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\ (legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\ (legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\ (legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\ (legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\ (legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\ (legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\ (legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+--spec_spr_xn = X 3 ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\ (legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\ (  legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\ (legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\ (legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\ (legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\ (legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\ (legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\ (legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\ (legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+
+--spec_spr_bmc 3= AX AX control_xplayer
+--spec_spr_bmc 5 = AG ( tried_xplayer_1_1 => AX tried_xplayer_1_1) -- false ok
+--spec_spr_bmc 4 = AG ( tried_xplayer_1_1 => AX tried_xplayer_1_1) -- true ok
+
+-- spec_obs = AX control_oplayer -- true ok
+-- spec_spr = AX control_oplayer -- true ok
+
+-- spec_obs_es = AF terminal -- %out of memory
+--spec_spr_bmc 4= AX AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\(legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\(legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\(legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\(legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\(legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\(legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\(legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\(legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\(legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+--%%%%%Being Tested
+--- checking now!
+--spec_spr_bmc 2= AX control_oplayer
+--spec_spr_bmc 3= neg AX AX control_xplayer
+
+--spec_spr_bmc 6= AX AX AX AX AX (neg terminal)
+
+--spec_spr_bmc 4 = AG ( tried_xplayer_1_1 => AX tried_xplayer_1_1) -- false ok
+
+--spec_obs = AG ( tried_xplayer_1_1 => AX tried_xplayer_1_1) -- false ok
+
+--spec_spr = AX AX control_oplayer -- true testing at oud00, 16, 18
+
+-- spec_spr = AX AX AX terminal
+
+--spec_spr_bmc 3= AX AX control_oplayer
+
+--spec_spr = AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\ (legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\ (  legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\ (legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\ (legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\ (legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\ (legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\ (legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\ (legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\ (legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+
+--spec_obs = AF terminal
+
+--%%%other specifications
+
+--spec_obs_bmc 2= control_xplayer -- true ok
+--spec_obs_bmc 2= X control_oplayer -- true ok
+--spec_obs_bmc 3= X X control_xplayer -- false ok
+--spec_obs_bmc 2= AX control_oplayer -- true ok
+
+--spec_spr_bmc 2= AX control_oplayer -- true ok
+--spec_spr_bmc 4= AX AX AX control_oplayer -- false ok
+
+
+--spec_obs_bmc 10= AX AX AX AX ( AX (neg terminal)) --false in length two?
+
+--spec_obs_bmc 2= (Knows Xplayer cell_1_1_b)	-- true ok
+--spec_clk_bmc 2 = (Knows Xplayer cell_1_1_b) 	--true ok
+--spec_spr_bmc 2 = (Knows Xplayer cell_1_1_b) 	--true ok
+--spec_spr_bmc 2 = AX (Knows Xplayer cell_1_1_b) 	--false ok
+--spec_spr_bmc 2 = AX (cell_1_1_b => Knows Xplayer cell_1_1_b)	-- true ok
+--spec_clk_bmc 2 = AX (cell_1_1_b => Knows Xplayer cell_1_1_b)	-- true ok
+
+--spec_spr_bmc 2 = (cell_1_1_b => Knows Xplayer cell_1_1_b)	--true ok
+--spec_spr_bmc 5 = AG ( tried_xplayer_1_1 => AX tried_xplayer_1_1) -- false ok
+--spec_spr_bmc 2= AX (cell_1_1_x => (Knows Xplayer cell_1_1_x)) -- true ok
+
+-- spec_spr_nested =  << {Xplayer} >> X cell_1_1_x -- no BMC for ATL with spr. 
+
+
+
+--spec_spr_bmc 2= AX((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\(legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\(legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\(legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\(legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\(legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\(legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\(legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\(legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\(legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+-- true ok
+
+--spec_spr_bmc 3= AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\(legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\(legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\(legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\(legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\(legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\(legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\(legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\(legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\(legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+-- true ok
+
+--spec_spr_bmc 7= AX AX AX AX AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\(legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\(legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\(legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\(legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\(legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\(legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\(legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\(legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\(legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+-- true ok
+
+--spec_spr_bmc 15 = AX AX AX AX AX AX AX AX AX AX AX ((legal_xplayer_mark_1_1 => Knows Xplayer legal_xplayer_mark_1_1) /\(legal_xplayer_mark_1_2 => Knows Xplayer legal_xplayer_mark_1_2) /\(legal_xplayer_mark_1_3 => Knows Xplayer legal_xplayer_mark_1_3) /\(legal_xplayer_mark_2_1 => Knows Xplayer legal_xplayer_mark_2_1) /\(legal_xplayer_mark_2_2 => Knows Xplayer legal_xplayer_mark_2_2) /\(legal_xplayer_mark_2_3 => Knows Xplayer legal_xplayer_mark_2_3) /\(legal_xplayer_mark_3_1 => Knows Xplayer legal_xplayer_mark_3_1) /\(legal_xplayer_mark_3_2 => Knows Xplayer legal_xplayer_mark_3_2) /\(legal_xplayer_mark_3_3 => Knows Xplayer legal_xplayer_mark_3_3) /\(legal_xplayer_noop => Knows Xplayer legal_xplayer_noop) )
+-- true ok
+
+
+-- Agent Protocol
+protocol "xplayer" ( 
+control_xplayer: Bool, 
+control_oplayer: Bool, 
+cell_1_1_b: Bool,
+cell_1_2_b: Bool,
+cell_1_3_b: Bool,
+cell_2_1_b: Bool,
+cell_2_2_b: Bool,
+cell_2_3_b: Bool,
+cell_3_1_b: Bool,
+cell_3_2_b: Bool,
+cell_3_3_b: Bool,
+cell_1_1_x: Bool,
+cell_1_2_x: Bool,
+cell_1_3_x: Bool,
+cell_2_1_x: Bool,
+cell_2_2_x: Bool,
+cell_2_3_x: Bool,
+cell_3_1_x: Bool,
+cell_3_2_x: Bool,
+cell_3_3_x: Bool,
+cell_1_1_o: Bool,
+cell_1_2_o: Bool,
+cell_1_3_o: Bool,
+cell_2_1_o: Bool,
+cell_2_2_o: Bool,
+cell_2_3_o: Bool,
+cell_3_1_o: Bool,
+cell_3_2_o: Bool,
+cell_3_3_o: Bool,
+tried_xplayer_1_1: Bool,
+tried_xplayer_1_2: Bool,
+tried_xplayer_1_3: Bool,
+tried_xplayer_2_1: Bool,
+tried_xplayer_2_2: Bool,
+tried_xplayer_2_3: Bool,
+tried_xplayer_3_1: Bool,
+tried_xplayer_3_2: Bool,
+tried_xplayer_3_3: Bool,
+sees_xplayer_yourmove: observable Bool,
+did_xplayer_mark_1_1: observable Bool, 
+did_xplayer_mark_1_2: observable Bool, 
+did_xplayer_mark_1_3: observable Bool, 
+did_xplayer_mark_2_1: observable Bool, 
+did_xplayer_mark_2_2: observable Bool, 
+did_xplayer_mark_2_3: observable Bool, 
+did_xplayer_mark_3_1: observable Bool, 
+did_xplayer_mark_3_2: observable Bool, 
+did_xplayer_mark_3_3: observable Bool,
+did_xplayer_noop: observable Bool
+)
+begin
+	do
+	(control_xplayer /\ cell_1_1_b /\ neg (tried_xplayer_1_1)) \/ 
+(control_xplayer /\ cell_1_1_x /\ neg (tried_xplayer_1_1)) \/
+(control_xplayer /\ cell_1_1_o /\ neg (tried_xplayer_1_1)) -> <<Mark_1_1>>
+	[] (control_xplayer /\ cell_1_2_b /\ neg (tried_xplayer_1_2)) \/ 
+(control_xplayer /\ cell_1_2_x /\ neg (tried_xplayer_1_2)) \/
+(control_xplayer /\ cell_1_2_o /\ neg (tried_xplayer_1_2)) -> <<Mark_1_2>>
+	[] (control_xplayer /\ cell_1_3_b /\ neg (tried_xplayer_1_3)) \/ 
+(control_xplayer /\ cell_1_3_x /\ neg (tried_xplayer_1_3)) \/
+(control_xplayer /\ cell_1_3_o /\ neg (tried_xplayer_1_3)) -> <<Mark_1_3>>
+	[] (control_xplayer /\ cell_2_1_b /\ neg (tried_xplayer_2_1)) \/ 
+(control_xplayer /\ cell_2_1_x /\ neg (tried_xplayer_2_1)) \/
+(control_xplayer /\ cell_2_1_o /\ neg (tried_xplayer_2_1)) -> <<Mark_2_1>>
+	[] (control_xplayer /\ cell_2_2_b /\ neg (tried_xplayer_2_2)) \/ 
+(control_xplayer /\ cell_2_2_x /\ neg (tried_xplayer_2_2)) \/
+(control_xplayer /\ cell_2_2_o /\ neg (tried_xplayer_2_2)) -> <<Mark_2_2>>
+	[] (control_xplayer /\ cell_2_3_b /\ neg (tried_xplayer_2_3)) \/ 
+(control_xplayer /\ cell_2_3_x /\ neg (tried_xplayer_2_3)) \/
+(control_xplayer /\ cell_2_3_o /\ neg (tried_xplayer_2_3)) -> <<Mark_2_3>>
+	[] (control_xplayer /\ cell_3_1_b /\ neg (tried_xplayer_3_1)) \/ 
+(control_xplayer /\ cell_3_1_x /\ neg (tried_xplayer_3_1)) \/
+(control_xplayer /\ cell_3_1_o /\ neg (tried_xplayer_3_1)) -> <<Mark_3_1>>
+	[] (control_xplayer /\ cell_3_2_b /\ neg (tried_xplayer_3_2)) \/ 
+(control_xplayer /\ cell_3_2_x /\ neg (tried_xplayer_3_2)) \/
+(control_xplayer /\ cell_3_2_o /\ neg (tried_xplayer_3_2)) -> <<Mark_3_2>>
+	[] (control_xplayer /\ cell_3_3_b /\ neg (tried_xplayer_3_3)) \/ 
+(control_xplayer /\ cell_3_3_x /\ neg (tried_xplayer_3_3)) \/
+(control_xplayer /\ cell_3_3_o /\ neg (tried_xplayer_3_3)) -> <<Mark_3_3>>
+	[] control_oplayer -> <<Noop>>
+	od
+end	
+
+protocol "oplayer" ( 
+control_xplayer: Bool, 
+control_oplayer: Bool, 
+cell_1_1_b: Bool,
+cell_1_2_b: Bool,
+cell_1_3_b: Bool,
+cell_2_1_b: Bool,
+cell_2_2_b: Bool,
+cell_2_3_b: Bool,
+cell_3_1_b: Bool,
+cell_3_2_b: Bool,
+cell_3_3_b: Bool,
+cell_1_1_x: Bool,
+cell_1_2_x: Bool,
+cell_1_3_x: Bool,
+cell_2_1_x: Bool,
+cell_2_2_x: Bool,
+cell_2_3_x: Bool,
+cell_3_1_x: Bool,
+cell_3_2_x: Bool,
+cell_3_3_x: Bool,
+cell_1_1_o: Bool,
+cell_1_2_o: Bool,
+cell_1_3_o: Bool,
+cell_2_1_o: Bool,
+cell_2_2_o: Bool,
+cell_2_3_o: Bool,
+cell_3_1_o: Bool,
+cell_3_2_o: Bool,
+cell_3_3_o: Bool,
+tried_oplayer_1_1: Bool,
+tried_oplayer_1_2: Bool,
+tried_oplayer_1_3: Bool,
+tried_oplayer_2_1: Bool,
+tried_oplayer_2_2: Bool,
+tried_oplayer_2_3: Bool,
+tried_oplayer_3_1: Bool,
+tried_oplayer_3_2: Bool,
+tried_oplayer_3_3: Bool,
+sees_oplayer_yourmove: observable Bool,
+did_oplayer_mark_1_1: observable Bool, 
+did_oplayer_mark_1_2: observable Bool, 
+did_oplayer_mark_1_3: observable Bool, 
+did_oplayer_mark_2_1: observable Bool, 
+did_oplayer_mark_2_2: observable Bool, 
+did_oplayer_mark_2_3: observable Bool, 
+did_oplayer_mark_3_1: observable Bool, 
+did_oplayer_mark_3_2: observable Bool, 
+did_oplayer_mark_3_3: observable Bool,
+did_oplayer_noop: observable Bool
+)
+begin
+	do
+	(control_oplayer /\ cell_1_1_b /\ neg (tried_oplayer_1_1)) \/ 
+(control_oplayer /\ cell_1_1_x /\ neg (tried_oplayer_1_1)) \/
+(control_oplayer /\ cell_1_1_o /\ neg (tried_oplayer_1_1)) -> <<Mark_1_1>>
+	[] (control_oplayer /\ cell_1_2_b /\ neg (tried_oplayer_1_2)) \/ 
+(control_oplayer /\ cell_1_2_x /\ neg (tried_oplayer_1_2)) \/
+(control_oplayer /\ cell_1_2_o /\ neg (tried_oplayer_1_2)) -> <<Mark_1_2>>
+	[] (control_oplayer /\ cell_1_3_b /\ neg (tried_oplayer_1_3)) \/ 
+(control_oplayer /\ cell_1_3_x /\ neg (tried_oplayer_1_3)) \/
+(control_oplayer /\ cell_1_3_o /\ neg (tried_oplayer_1_3)) -> <<Mark_1_3>>
+	[] (control_oplayer /\ cell_2_1_b /\ neg (tried_oplayer_2_1)) \/ 
+(control_oplayer /\ cell_2_1_x /\ neg (tried_oplayer_2_1)) \/
+(control_oplayer /\ cell_2_1_o /\ neg (tried_oplayer_2_1)) -> <<Mark_2_1>>
+	[] (control_oplayer /\ cell_2_2_b /\ neg (tried_oplayer_2_2)) \/ 
+(control_oplayer /\ cell_2_2_x /\ neg (tried_oplayer_2_2)) \/
+(control_oplayer /\ cell_2_2_o /\ neg (tried_oplayer_2_2)) -> <<Mark_2_2>>
+	[] (control_oplayer /\ cell_2_3_b /\ neg (tried_oplayer_2_3)) \/ 
+(control_oplayer /\ cell_2_3_x /\ neg (tried_oplayer_2_3)) \/
+(control_oplayer /\ cell_2_3_o /\ neg (tried_oplayer_2_3)) -> <<Mark_2_3>>
+	[] (control_oplayer /\ cell_3_1_b /\ neg (tried_oplayer_3_1)) \/ 
+(control_oplayer /\ cell_3_1_x /\ neg (tried_oplayer_3_1)) \/
+(control_oplayer /\ cell_3_1_o /\ neg (tried_oplayer_3_1)) -> <<Mark_3_1>>
+	[] (control_oplayer /\ cell_3_2_b /\ neg (tried_oplayer_3_2)) \/ 
+(control_oplayer /\ cell_3_2_x /\ neg (tried_oplayer_3_2)) \/
+(control_oplayer /\ cell_3_2_o /\ neg (tried_oplayer_3_2)) -> <<Mark_3_2>>
+	[] (control_oplayer /\ cell_3_3_b /\ neg (tried_oplayer_3_3)) \/ 
+(control_oplayer /\ cell_3_3_x /\ neg (tried_oplayer_3_3)) \/
+(control_oplayer /\ cell_3_3_o /\ neg (tried_oplayer_3_3)) -> <<Mark_3_3>>
+	[] control_xplayer -> <<Noop>>
+	od
+end	
+
+
+
+
+
