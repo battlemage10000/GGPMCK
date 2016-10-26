@@ -72,23 +72,24 @@ if R_p2.STOP -> did_p2 := STOP
 [] R_p2.M_2 -> did_p2 := M_2 
 fi;
 
-step_2 := step_1;
-step_3 := step_2;
-step_4 := step_3;
-step_5 := step_4;
-step_6 := step_5;
-step_7 := step_6;
-step_8 := step_7;
-step_9 := step_8;
-step_10 := step_9;
-step_11 := step_10;
-step_12 := step_11;
-step_13 := step_12;
-step_14 := step_13;
-step_15 := step_14;
 step_16 := step_15;
+step_15 := step_14;
+step_14 := step_13;
+step_13 := step_12;
+step_12 := step_11;
+step_11 := step_10;
+step_10 := step_9;
+step_9 := step_8;
+step_8 := step_7;
+step_7 := step_6;
+step_6 := step_5;
+step_5 := step_4;
+step_4 := step_3;
+step_3 := step_2;
+step_2 := step_1;
+step_1 := False;
 
-terminal := step_2
+terminal := step_16
 
 end
 
