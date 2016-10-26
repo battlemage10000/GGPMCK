@@ -1,0 +1,118 @@
+-- Manually constructed mck file for testing specifications
+-- env vars
+
+type Act_p1 = {M_1, M_2, INIT, STOP}
+type Act_p2 = {M_1, M_2, INIT, STOP}
+
+terminal : Bool
+legal_p1_1 : Bool
+legal_p1_2 : Bool
+legal_p2_1 : Bool
+legal_p2_2 : Bool
+step_1 : Bool
+step_2 : Bool
+step_3 : Bool
+step_4 : Bool
+step_5 : Bool
+step_6 : Bool
+step_7 : Bool
+step_8 : Bool
+step_9 : Bool
+step_10 : Bool
+step_11 : Bool
+step_12 : Bool
+step_13 : Bool
+step_14 : Bool
+step_15 : Bool
+step_16 : Bool
+did_p1 : Act_p1
+did_p2 : Act_p2
+
+-- init
+init_cond = 
+terminal == False /\
+legal_p1_1 == True /\
+legal_p1_2 == True /\
+legal_p2_1 == True /\
+legal_p2_2 == True /\
+step_1 == True /\
+step_2 == False /\
+step_3 == False /\
+step_4 == False /\
+step_5 == False /\
+step_6 == False /\
+step_7 == False /\
+step_8 == False /\
+step_9 == False /\
+step_10 == False /\
+step_11 == False /\
+step_12 == False /\
+step_13 == False /\
+step_14 == False /\
+step_15 == False /\
+step_16 == False /\
+did_p1 == INIT /\
+did_p2 == INIT
+
+-- agents
+agent R_p1 "p1" (terminal, legal_p1_1, legal_p1_2, did_p1)
+agent R_p2 "p2" (terminal, legal_p2_1, legal_p2_2, did_p2)
+
+-- transitions
+transitions
+begin
+
+if R_p1.STOP -> did_p1 := STOP
+[] R_p1.M_1 -> did_p1 := M_1
+[] R_p1.M_2 -> did_p1 := M_2 
+fi;
+
+if R_p2.STOP -> did_p2 := STOP
+[] R_p2.M_1 -> did_p2 := M_1
+[] R_p2.M_2 -> did_p2 := M_2 
+fi;
+
+step_2 := step_1;
+step_3 := step_2;
+step_4 := step_3;
+step_5 := step_4;
+step_6 := step_5;
+step_7 := step_6;
+step_8 := step_7;
+step_9 := step_8;
+step_10 := step_9;
+step_11 := step_10;
+step_12 := step_11;
+step_13 := step_12;
+step_14 := step_13;
+step_15 := step_14;
+step_16 := step_15;
+
+terminal := step_2
+
+end
+
+-- spec
+spec_obs = AF terminal
+
+
+-- protocol
+
+protocol "p1" (terminal : Bool, legal_p1_1 : Bool, legal_p1_2 : Bool, did_p1 : Act_p1) 
+begin
+  if terminal -> <<STOP>>
+  [] otherwise -> 
+    if legal_p1_1 -> <<M_1>>
+    [] legal_p1_2 -> <<M_2>>
+    fi
+  fi
+end
+protocol "p2" (terminal : Bool, legal_p2_1 : Bool, legal_p2_2 : Bool, did_p2 : Act_p2) 
+begin
+  if terminal -> <<STOP>>
+  [] otherwise -> 
+    if legal_p2_1 -> <<M_1>>
+    [] legal_p2_2 -> <<M_2>>
+    fi
+  fi
+end
