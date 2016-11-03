@@ -7,6 +7,7 @@ import util.grammar.GdlNode;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author vedantds
@@ -20,8 +21,8 @@ public class DependencyGraph {
 	 * 
 	 */
 	public DependencyGraph() {
-		adjacencyMap = new HashMap<String, ArrayList<String>>();
-		stratumMap = new HashMap<String, Integer>();
+		adjacencyMap = Collections.synchronizedMap(new HashMap<String, ArrayList<String>>());
+		stratumMap = Collections.synchronizedMap(new HashMap<String, Integer>());
 	}
 
 	/**

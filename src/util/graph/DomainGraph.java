@@ -6,6 +6,7 @@ import util.grammar.GdlNode.GdlType;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author vedantds
@@ -18,7 +19,7 @@ public class DomainGraph {
 	 * 
 	 */
 	public DomainGraph() {
-		adjacencyMap = new HashMap<Term, ArrayList<Term>>();
+		adjacencyMap = Collections.synchronizedMap(new HashMap<Term, ArrayList<Term>>());
 	}
 
 	/**

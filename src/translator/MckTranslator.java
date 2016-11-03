@@ -514,24 +514,20 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- Protocol Definitions");
 		mck.append(System.lineSeparator() + protocols.toString());
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Tautologies (ATt)");
-		mck.append(System.lineSeparator());
-		for (String tautology : ATt) {
-			mck.append(System.lineSeparator() + "-- " + tautology);
+		if (DEBUG) {
+			mck.append(System.lineSeparator());
+			mck.append(System.lineSeparator() + "-- Tautologies (ATt)");
+			mck.append(System.lineSeparator());
+			for (String tautology : ATt) {
+				mck.append(System.lineSeparator() + "-- " + tautology);
+			}
+			mck.append(System.lineSeparator());
+			mck.append(System.lineSeparator() + "-- Contradiction (ATc)");
+			mck.append(System.lineSeparator());
+			for (String contradiction : ATc) {
+				mck.append(System.lineSeparator() + "-- " + contradiction);
+			}
 		}
-		mck.append(System.lineSeparator());
-		mck.append(System.lineSeparator() + "-- Contradiction (ATc)");
-		mck.append(System.lineSeparator());
-		for (String contradiction : ATc) {
-			mck.append(System.lineSeparator() + "-- " + contradiction);
-		}
-		// mck.append(System.lineSeparator());
-		// mck.append(System.lineSeparator() + "-- Heads (ATh)");
-		// mck.append(System.lineSeparator());
-		// for (String heads : ATh) {
-		// mck.append(System.lineSeparator() + "-- " + heads);
-		// }
 
 		return mck.toString();
 	}
