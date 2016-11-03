@@ -191,8 +191,7 @@ public class GdlParser {
 	/**
 	 * Overloaded method which doesn't require casting to Reader for common use
 	 * cases
-	 */
-	/**
+	 * 
 	 * @param gdl
 	 * @return
 	 * @throws IOException
@@ -206,10 +205,6 @@ public class GdlParser {
 	 * structure is a variation on the dependency graph defined for stratisfied
 	 * Datalog rules in the GDL Spec for GGP paper
 	 * 
-	 * @param root
-	 * @return
-	 */
-	/**
 	 * @param root
 	 * @return
 	 */
@@ -270,8 +265,7 @@ public class GdlParser {
 
 	/**
 	 * Follows the domain graph definition in the ggp book
-	 */
-	/**
+	 * 
 	 * @param root
 	 * @return
 	 */
@@ -411,8 +405,7 @@ public class GdlParser {
 
 	/**
 	 * Save string to file.
-	 */
-	/**
+	 * 
 	 * @param text
 	 * @param filename
 	 */
@@ -441,8 +434,7 @@ public class GdlParser {
 
 	/**
 	 * Outputs parse tree in lparse format
-	 */
-	/**
+	 * 
 	 * @param root
 	 * @return
 	 */
@@ -460,11 +452,6 @@ public class GdlParser {
 	/**
 	 * Print the getAtom()s of the nodes of the tree
 	 * 
-	 * @param root
-	 * @param indent
-	 */
-	/**
-	 * @param root
 	 * @param prefix
 	 * @param indent
 	 */
@@ -498,27 +485,21 @@ public class GdlParser {
 		StringBuilder sb = new StringBuilder();
 		switch (root.getType()) {
 		case ROOT:
-			// System.out.println(prefix + "ROOT " + root.getAtom());
 			sb.append(System.lineSeparator() + prefix + "ROOT " + root.getAtom());
 			break;
 		case CLAUSE:
-			// System.out.println(prefix + "CLAUSE " + root.getAtom());
 			sb.append(System.lineSeparator() + prefix + "CLAUSE " + root.getAtom());
 			break;
 		case FORMULA:
-			// System.out.println(prefix + "FORMULA " + root.getAtom());
 			sb.append(System.lineSeparator() + prefix + "FORMULA " + root.getAtom());
 			break;
 		case FUNCTION:
-			// System.out.println(prefix + "FUNCTION " + root.getAtom());
 			sb.append(System.lineSeparator() + prefix + "FUNCTION " + root.getAtom());
 			break;
 		case CONSTANT:
-			// System.out.println(prefix + "CONSTANT " + root.getAtom());
 			sb.append(System.lineSeparator() + prefix + "CONSTANT " + root.getAtom());
 			break;
 		case VARIABLE:
-			// System.out.println(prefix + "VARIABLE " + root.getAtom());
 			sb.append(System.lineSeparator() + prefix + "VARIABLE" + root.getAtom());
 			break;
 		}
@@ -548,21 +529,16 @@ public class GdlParser {
 				for (GdlNode literal : clause.getChildren()) {
 					if (literal == clause.getChildren().get(0)) {
 						sb.append(System.lineSeparator() + "(<= " + literal.toString());
-						//System.out.println("(<= " + literal.toString());
 					} else if (literal == clause.getChildren().get(clause.getChildren().size() - 1)) {
 						sb.append(System.lineSeparator() + "   " + literal.toString() + ")");
-						//System.out.println("   " + literal.toString() + ")");
 					} else {
 						sb.append(System.lineSeparator() + "   " + literal.toString());
-						//System.out.println("   " + literal.toString());
 					}
 				}
 			} else {
 				sb.append(System.lineSeparator() + clause);
-				//System.out.println(clause);
 			}
 			sb.append(System.lineSeparator());
-			//System.out.println();
 		}
 		return sb.toString();
 	}
