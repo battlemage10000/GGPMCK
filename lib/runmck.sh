@@ -11,10 +11,28 @@ function usage
 	echo "Usage: runmck.sh mck-file [log-file]"
 }
 
+function redirectStdout
+{
+	logFile="$1"
+	if [ "$logFile" != "" ]; then
+		exec 1<&- # close out
+		exec 2<&- # close err
+		exec 1<>"$logFile" # out to log file
+		exec 2>&1 # err to out
+	fi
+}
+
 function main 
 {
 	# Configure
 	startTime=$(date +%s)
+	
+	if [ "$1" == "-d" ]; then
+		daemon="true"
+		shift
+	else
+		daemon="false"
+	fi
 
 	if [ "$1" != "" ]; then
 		mckFile="$1"
@@ -22,33 +40,35 @@ function main
 	else
 		echo "Invalid argument: not a file"
 		usage
-		exit
+		exit 1
 	fi
+
 
 	if [ "$1" != "" ]; then
 		logFile="$1"
 	else
 		logFile="$mckFile"$(date +".%m.%d_%H.%M.%S")".log"
 	fi
+	
+	redirectStdout "$logFile"
 
 	# Print System info
-	header="Start time: "$(date)"\n"
-	header="$header""System Info: "$(uname -mprs)"\n"
+	echo "Start time: "$(date)
+	echo "System Info: "$(uname -mprs)
 
 	# Run
 	if [ -f $mckFile ]; then
-		header="$header""Input File: "$mckFile"\n"
-		log=$(mckAlt $mckFile)
-	else 
+		echo "Input File: "$mckFile
+		log=$(mck $mckFile)
+	else
 		usage
 		exit
 	fi
 
 	# Timer (don't do computations after this line)
-	header="$header""Runtime: "$(($(date +"%s") - $startTime))" seconds\n"
+	echo "Runtime: "$(($(date +"%s") - $startTime))" seconds"
 
 	# Output
-	echo "$header" > "$logFile"
 	echo "$log" >> "$logFile"
 }
 
