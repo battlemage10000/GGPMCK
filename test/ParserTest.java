@@ -13,39 +13,39 @@ import java.util.ArrayList;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class TranslatorTest {	
+public class ParserTest {
 	static final String testGoals = "(<= (goal ?player 100) (true (win ?player))) (<= (goal red 50) (true (draw))) (<= (goal blue 50) (true (draw))) (<= (goal red 0) (true (not (win blue)))) (<= (goal blue 0) (true (not (win red))))";
 	static final String testGoalGrounding = "(<= (goal ?player 100) (true (win ?player)))";
 
 	static final String testGdlPath = "test/gdlii/paperScissorsRock.kif";
 	static final String groundedTestGdlPath = "test/gdlii/paperScissorsRock.ground.kif";
 
-	
 	@Test
-	public void testSimpleDependencyGraph(){
+	public void testSimpleDependencyGraph() {
 		List<String> tokens = null;
-			tokens = GdlParser.tokenizeString(testGoals);
+		tokens = GdlParser.tokenizeString(testGoals);
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
-		Map<String, ArrayList<String>> dependencyMap = GdlParser.constructDependencyGraph(root)
-				.getDependencyMap();
+		Map<String, ArrayList<String>> dependencyMap = GdlParser.constructDependencyGraph(root).getDependencyMap();
 
 		assertThat(dependencyMap.keySet(), hasItem("goal"));
-		//assertThat(domainMap.keySet(), hasItem(not(new DomainGraph.Term("?1_?player", 0))));
-		//assertThat(domainMap.get(new DomainGraph.Term("goal", 1)).size(), is(2));
-		//assertThat(domainMap.get(new DomainGraph.Term("goal", 2)).size(), is(3));
+		// assertThat(domainMap.keySet(), hasItem(not(new
+		// DomainGraph.Term("?1_?player", 0))));
+		// assertThat(domainMap.get(new DomainGraph.Term("goal", 1)).size(),
+		// is(2));
+		// assertThat(domainMap.get(new DomainGraph.Term("goal", 2)).size(),
+		// is(3));
 	}
-	
+
 	@Test
 	public void testSimpleDomainGraph() {
 		List<String> tokens = null;
-			tokens = GdlParser.tokenizeString(testGoals);
+		tokens = GdlParser.tokenizeString(testGoals);
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
-		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = GdlParser.constructDomainGraph(root)
-				.getMap();
+		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = GdlParser.constructDomainGraph(root).getMap();
 
 		assertThat(domainMap.keySet(), hasItems(new DomainGraph.Term("goal", 0)));
 		assertThat(domainMap.keySet(), hasItem(not(new DomainGraph.Term("?1_?player", 0))));
@@ -81,7 +81,7 @@ public class TranslatorTest {
 		domainMap.put(new DomainGraph.Term("win", 1), domain);
 
 		List<String> tokens = new ArrayList<String>();
-			tokens = GdlParser.tokenizeString(testGoalGrounding);
+		tokens = GdlParser.tokenizeString(testGoalGrounding);
 
 		String groundedClauses = GdlParser.groundClause(GdlParser.expandParseTree(tokens), domainMap);
 
@@ -92,7 +92,7 @@ public class TranslatorTest {
 	@Test
 	public void testParseTreeIterator() {
 		List<String> tokens = null;
-			tokens = GdlParser.tokenizeString(testGoalGrounding);
+		tokens = GdlParser.tokenizeString(testGoalGrounding);
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 

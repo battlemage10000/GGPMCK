@@ -11,6 +11,17 @@ function usage
 	echo "Usage: runmck.sh mck-file [log-file]"
 }
 
+# doesnt work
+function daemonize
+{
+	{
+		cd /
+		#umask 0
+	} &
+	disown -h
+}
+
+# $1 = logFile
 function redirectStdout
 {
 	logFile="$1"
@@ -49,14 +60,17 @@ function main
 	else
 		logFile="$mckFile"$(date +".%m.%d_%H.%M.%S")".log"
 	fi
-	
 	redirectStdout "$logFile"
+	
+	if [ $daemon = "true" ]; then
+		daemonize
+	fi
 
 	# Print System info
 	echo "Start time: "$(date)
 	echo "System Info: "$(uname -mprs)
 
-	# Run
+	 Run
 	if [ -f $mckFile ]; then
 		echo "Input File: "$mckFile
 		log=$(mck $mckFile)

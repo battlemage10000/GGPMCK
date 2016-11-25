@@ -8,10 +8,12 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 import util.grammar.GdlNode;
@@ -27,13 +29,19 @@ import util.graph.DomainGraph;
  */
 public class GdlParser {
 
-	public final static char SEMICOLON = ';';
-	public final static char OPEN_P = '(';
-	public final static char CLOSE_P = ')';
-	public final static char SPACE = ' ';
-	public final static char TAB = '\t';
-	public final static char NEW_LINE = '\n';
-	public final static char RETURN = '\r';
+	public final static char OPEN_P_Char = '(';// block/scope
+	public final static char CLOSE_P_Char = ')';// block/scope
+	public final static char SPACE = ' ';// delimiter
+	public final static char TAB = '\t';// delimiter
+	public final static char SEMICOLON = ';';// comment start
+	public final static char NEW_LINE = '\n';// comment end
+	public final static char RETURN = '\r';// comment end
+	public final static char Q_MARK_Char = '?';
+	
+	public final static String OPEN_P_Str = "(";
+	public final static String CLOSE_P_Str = ")";
+	public final static String Q_MARK_Str = "?";
+	public final static String UNDERSCORE = "_"; // underscore
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
@@ -50,14 +58,23 @@ public class GdlParser {
 		boolean comment = false;
 		while ((character = reader.read()) != -1) {
 			switch (character) {
-			case OPEN_P:
-			case CLOSE_P:
+			case OPEN_P_Char:
 				// parenthesis
 				if (sb.length() > 0 && !comment) {
 					tokens.add(sb.toString());
 				}
 				if (!comment) {
-					tokens.add(String.valueOf((char) character));
+					tokens.add(OPEN_P_Str);
+				}
+				sb = new StringBuilder();
+				break;
+			case CLOSE_P_Char:
+				// parenthesis
+				if (sb.length() > 0 && !comment) {
+					tokens.add(sb.toString());
+				}
+				if (!comment) {
+					tokens.add(CLOSE_P_Str);
 				}
 				sb = new StringBuilder();
 				break;
@@ -139,10 +156,10 @@ public class GdlParser {
 		int scopeNumber = 1;
 		for (String token : tokens) {
 			switch (token) {
-			case "(":
+			case OPEN_P_Str:
 				openBracket = true;
 				break;
-			case ")":
+			case CLOSE_P_Str:
 				parent = parent.getParent();
 				if (scopedVariable == true && parent.getType() == GdlType.ROOT) {
 					scopedVariable = false;
@@ -158,9 +175,9 @@ public class GdlParser {
 				}
 				break;
 			default:
-				if (token.charAt(0) == '?') {
+				if (token.charAt(0) == Q_MARK_Char) {
 					scopedVariable = true;
-					token = "?" + scopeNumber + "_" + token;
+					token = Q_MARK_Str + scopeNumber + UNDERSCORE + token;
 				}
 				if (parent.getType() == GdlType.CLAUSE || parent.getType() == GdlType.ROOT) {
 					newNode = GdlNodeFactory.createGdlFormula(token, parent);
@@ -257,7 +274,7 @@ public class GdlParser {
 		sb.append(node.getAtom());
 		if (!node.getChildren().isEmpty()) {
 			for (GdlNode child : node.getChildren()) {
-				sb.append("_" + formatGdlNode(child));
+				sb.append(UNDERSCORE + formatGdlNode(child));
 			}
 		}
 		return sb.toString();
@@ -301,9 +318,9 @@ public class GdlParser {
 			}
 		}
 
-		graph.addEdge("base", 1, "true", 1);
-		graph.addEdge("input", 1, "does", 1);
-		graph.addEdge("input", 2, "does", 2);
+		graph.addEdge(GdlNode.GDL_BASE, 1, GdlNode.GDL_TRUE, 1);
+		graph.addEdge(GdlNode.GDL_INPUT, 1, GdlNode.GDL_DOES, 1);
+		graph.addEdge(GdlNode.GDL_INPUT, 2, GdlNode.GDL_DOES, 2);
 		return graph;
 	}
 
@@ -391,7 +408,7 @@ public class GdlParser {
 				String subClause = subClauses.remove();
 				for (String term : domain) {
 					String nextTerm = subClause.replace(variable, term);
-					if (nextTerm.contains("?")) {
+					if (nextTerm.contains(Q_MARK_Str)) {
 						subClausesAlt.add(nextTerm);
 					} else {
 						groundedClauses.append(nextTerm);
@@ -401,6 +418,62 @@ public class GdlParser {
 		}
 
 		return groundedClauses.toString();
+	}
+	
+
+	public static String orderGdlRules(GdlNode root) {
+		return orderGdlRules(root, GdlParser.constructDependencyGraph(root));
+	}
+
+	/**
+	 * Use a priority list to order by stratum.
+	 * 
+	 * @param root
+	 * @param graph
+	 * @return
+	 */
+	public static String orderGdlRules(GdlNode root, DependencyGraph graph) {
+		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
+			@Override
+			public int compare(GdlNode fromHead, GdlNode toHead) {
+				if (fromHead instanceof util.grammar.GdlRule && toHead instanceof util.grammar.GdlRule) {
+					int stratDiff = ((util.grammar.GdlRule) fromHead).getStratum()
+							- ((util.grammar.GdlRule) toHead).getStratum();
+					if (stratDiff != 0) {
+						return stratDiff;
+					} else {
+						return fromHead.getChildren().get(0).toString()
+								.compareTo(toHead.getChildren().get(0).toString());
+					}
+				} else if (fromHead instanceof util.grammar.GdlRule) {
+					return 1;
+				} else if (toHead instanceof util.grammar.GdlRule) {
+					return -1;
+				}
+				return fromHead.toString().compareTo(toHead.toString());
+			}
+		};
+
+		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(100, gdlHeadComparator);
+		graph.computeStratum();
+		for (GdlNode clause : root.getChildren()) {
+			if (clause instanceof util.grammar.GdlRule) {
+				if (((util.grammar.GdlRule)clause).getHead().getAtom().equals(GdlNode.GDL_NEXT)) {
+					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(
+							"true_" + formatGdlNode(((util.grammar.GdlRule)clause).getHead().getChildren().get(0))));
+				} else {
+					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(clause.getChildren().get(0).getAtom()));
+				}
+			}
+			unordered.add(clause);
+		}
+
+		StringBuilder ordered = new StringBuilder();
+		while (!unordered.isEmpty()) {
+			GdlNode node = unordered.remove();
+			ordered.append(node.toString());
+		}
+		return ordered.toString();
 	}
 
 	/**

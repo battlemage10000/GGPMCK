@@ -50,9 +50,13 @@ public class MckTranslator {
 	private Map<String, List<String>> ATd;
 	// [Role -> Sees] observation map from sees
 	private Map<String, List<String>> ATs;
+	// Sets of mutually exclusive predicates
+	private Map<String, List<String>> ATx;
 
 	private GdlNode root;
-
+	
+	private DependencyGraph graph;
+	
 	private boolean DEBUG;
 
 	public MckTranslator(GdlNode root, boolean DEBUG) {
@@ -66,6 +70,8 @@ public class MckTranslator {
 		this.ATh = Collections.synchronizedSet(new HashSet<String>());
 		this.ATd = Collections.synchronizedMap(new HashMap<String, List<String>>());
 		this.ATs = Collections.synchronizedMap(new HashMap<String, List<String>>());
+		this.ATx = Collections.synchronizedMap(new HashMap<String, List<String>>());
+		initialize();
 	}
 
 	public static String orderGdlRules(GdlNode root) {
@@ -89,7 +95,8 @@ public class MckTranslator {
 					if (stratDiff != 0) {
 						return stratDiff;
 					} else {
-						return fromHead.getChildren().get(0).toString().compareTo(toHead.getChildren().get(0).toString());
+						return fromHead.getChildren().get(0).toString()
+								.compareTo(toHead.getChildren().get(0).toString());
 					}
 				} else if (fromHead instanceof util.grammar.GdlRule) {
 					return 1;
@@ -105,8 +112,8 @@ public class MckTranslator {
 		for (GdlNode clause : root.getChildren()) {
 			if (clause instanceof util.grammar.GdlRule) {
 				if (clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_NEXT)) {
-					((util.grammar.GdlRule) clause).setStratum(graph
-							.getStratum(MCK_TRUE_PREFIX + formatMckNode(clause.getChildren().get(0).getChildren().get(0))));
+					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(
+							MCK_TRUE_PREFIX + formatMckNode(clause.getChildren().get(0).getChildren().get(0))));
 				} else {
 					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(clause.getChildren().get(0).getAtom()));
 				}
@@ -142,7 +149,7 @@ public class MckTranslator {
 				nodeString.append(node.getAtom() + "_");
 			}
 			for (GdlNode child : node.getChildren()) {
-				nodeString.append(formatMckNode(child) + "_");
+				nodeString.append(formatMckNodeAbs(child) + "_");
 			}
 			nodeString.deleteCharAt(nodeString.length() - 1);
 		}
@@ -150,6 +157,41 @@ public class MckTranslator {
 	}
 
 	/**
+	 * Absolute version of format node which doesn't do any manipulation
+	 * @param node
+	 * @return
+	 */
+	public static String formatMckNodeAbs(GdlNode node) {
+		StringBuilder nodeString = new StringBuilder();
+
+		//if (node.getAtom().equals(GdlNode.GDL_NOT)) {
+		//	nodeString.append("neg ");
+		//} else 
+		//if (node.getAtom().equals(GdlNode.GDL_TRUE) || node.getAtom().equals(GdlNode.GDL_NEXT)) {
+		//
+		//} else 
+		//if (node.getAtom().contains("+")) {
+		//	nodeString.append(node.getAtom().replace("+", "plus") + "_");
+		//} else {
+			nodeString.append(node.getAtom() + "_");
+		//}
+		for (GdlNode child : node.getChildren()) {
+			nodeString.append(formatMckNodeAbs(child) + "_");
+		}
+		nodeString.deleteCharAt(nodeString.length() - 1);
+		return nodeString.toString();
+	}
+
+	public String formatClause(GdlNode headNode, List<GdlNode> bodyList){
+		return formatClause(graph, headNode, bodyList);
+	}
+	
+	/**
+	 * Reformat a clause from gdl to an equivalent one in mck
+	 * 
+	 * TODO: add typed variable processing (currently only handles rules
+	 * resulting true/false)
+	 * 
 	 * @param ATf
 	 * @param graph
 	 * @param headNode
@@ -165,12 +207,12 @@ public class MckTranslator {
 			sees = true;
 		}
 
-		/*int headStratum;
-		if (headNode.getAtom().equals(GdlNode.GDL_NEXT)) {
-			headStratum = graph.getStratum(formatMckNode(headNode.getChildren().get(0)));
-		} else {
-			headStratum = graph.getStratum(formatMckNode(headNode));
-		}*/
+		/*
+		 * int headStratum; if (headNode.getAtom().equals(GdlNode.GDL_NEXT)) {
+		 * headStratum =
+		 * graph.getStratum(formatMckNode(headNode.getChildren().get(0))); }
+		 * else { headStratum = graph.getStratum(formatMckNode(headNode)); }
+		 */
 		StringBuilder disjunctBody = new StringBuilder();
 		boolean disjunctBodyHasOtherThanFalse = false;
 		for (GdlNode clause : bodyList) {
@@ -197,7 +239,9 @@ public class MckTranslator {
 					conjuntBody.append(MCK_FALSE + MCK_AND);
 					conjunctBodyHasFalse = true;
 					conjunctBodyHasOtherThanTrue = true;
-				} else if (!ATh.contains(mckFormatted) && !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
+				} else if (!ATh.contains(mckFormatted)
+						&& !ATi.contains(mckFormatted)
+						&& !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
 					conjuntBody.append(MCK_FALSE + MCK_AND);
 					conjunctBodyHasFalse = true;
 					conjunctBodyHasOtherThanTrue = true;
@@ -253,7 +297,7 @@ public class MckTranslator {
 			if (!ATt.contains(formatMckNode(headNode))) {
 				ATt.add(formatMckNode(headNode));
 			}
-			
+
 		} else if (ONE_LINE_TRANSITIONS) {
 			mckNode.append(System.lineSeparator() + formatMckNode(headNode) + " := " + disjunctBody.toString() + ";");
 		} else {
@@ -265,14 +309,11 @@ public class MckTranslator {
 		return mckNode.toString();
 	}
 
-	/**
-	 * @param root
-	 * @return
-	 */
-	public String toMck() {
-
+	public void initialize(){
+	
 		// Pre-processing
-		DependencyGraph graph = GdlParser.constructDependencyGraph(root);
+		//DependencyGraph 
+		graph = GdlParser.constructDependencyGraph(root);
 		graph.computeStratum();
 		for (String old : graph.getDependencyMap().keySet()) {
 			if (old.length() >= 5 && old.substring(old.length() - 4).equals(MCK_OLD_SUFFIX)) {
@@ -327,7 +368,7 @@ public class MckTranslator {
 				case GdlNode.GDL_SEES:
 					// Add to ATs
 					String roleS = formatMckNode(node.getChildren().get(0));
-					String sees = formatMckNode(node.getChildren().get(1));
+					String sees = formatMckNodeAbs(node.getChildren().get(1));
 					if (!ATs.containsKey(roleS)) {
 						ATs.put(roleS, new ArrayList<String>());
 					}
@@ -341,7 +382,7 @@ public class MckTranslator {
 					}
 					// Add to ATd
 					String role = formatMckNode(node.getChildren().get(0));
-					String move = formatMckNode(node.getChildren().get(1));
+					String move = formatMckNodeAbs(node.getChildren().get(1));
 					if (!ATd.containsKey(role)) {
 						ATd.put(role, new ArrayList<String>());
 					}
@@ -378,7 +419,16 @@ public class MckTranslator {
 				ATi.add(initTrue);
 			}
 		}
-
+	
+	}
+	
+	/**
+	 * @param root
+	 * @return
+	 */
+	public String toMck() {
+		//initialize();
+		
 		// Initialize string builders for different parts of the output
 		StringBuilder agents = new StringBuilder();
 		StringBuilder state_trans = new StringBuilder();
@@ -434,7 +484,8 @@ public class MckTranslator {
 			}
 			state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_STOP + " -> ");
 			state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_STOP);
-			//state_trans.delete(state_trans.length() - 4, state_trans.length());
+			// state_trans.delete(state_trans.length() - 4,
+			// state_trans.length());
 			state_trans.append(System.lineSeparator() + "fi;");
 		}
 		state_trans.append(System.lineSeparator());
@@ -457,7 +508,7 @@ public class MckTranslator {
 			// Type of clause that isn't BASE or INPUT
 			if (clause.getType() == GdlType.CLAUSE && !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_BASE)
 					&& !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INPUT)) {
-				
+
 				if (repeatHead != null && clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
 					repeatHeadList.add(clause);
 				} else {
