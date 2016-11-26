@@ -163,6 +163,7 @@ public class Main {
 			if (outputDepDotSwitch) {
 				System.out.print("Generating dependency.dot ... ");
 				graph = GdlParser.constructDependencyGraph(root);
+				graph.computeStratum();
 				GdlParser.saveFile(graph.dotEncodedGraph(), outputDir.getName() + "/dependency.dot");
 
 				System.out.println("finished");
@@ -175,9 +176,9 @@ public class Main {
 			if (orderedSwitch) {
 				System.out.print("Ordering rules ... ");
 				if (graph == null) {
-					root = GdlParser.parseString(MckTranslator.orderGdlRules(root));
+					root = GdlParser.parseString(GdlParser.orderGdlRules(root));
 				} else {
-					root = GdlParser.parseString(MckTranslator.orderGdlRules(root, graph));
+					root = GdlParser.parseString(GdlParser.orderGdlRules(root, graph));
 				}
 
 				System.out.println("finished");
@@ -209,7 +210,7 @@ public class Main {
 			if (outputFileSwitch || outputMckSwitch) {
 				if (!orderedSwitch) {
 					System.out.print("Ordering rules ... ");
-					root = GdlParser.parseString(MckTranslator.orderGdlRules(root));
+					root = GdlParser.parseString(GdlParser.orderGdlRules(root));
 
 					System.out.println("finished");
 					totalTime = (int) (System.currentTimeMillis() - startTime);

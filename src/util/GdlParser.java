@@ -18,6 +18,7 @@ import java.util.Queue;
 
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
+import util.grammar.GdlRule;
 import util.grammar.LparseNode;
 import util.grammar.GdlNode.GdlType;
 import util.graph.DependencyGraph;
@@ -37,11 +38,12 @@ public class GdlParser {
 	public final static char NEW_LINE = '\n';// comment end
 	public final static char RETURN = '\r';// comment end
 	public final static char Q_MARK_Char = '?';
-	
+
 	public final static String OPEN_P_Str = "(";
 	public final static String CLOSE_P_Str = ")";
 	public final static String Q_MARK_Str = "?";
 	public final static String UNDERSCORE = "_"; // underscore
+	public final static String TRUE_PREFIX = "true" + UNDERSCORE;
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
@@ -229,15 +231,16 @@ public class GdlParser {
 		DependencyGraph graph = new DependencyGraph();
 
 		for (GdlNode node : root) {
-			if (node.getType() == GdlType.CLAUSE) {
-				String headNodeString = node.getChildren().get(0).getAtom();
+			// if (node.getType() == GdlType.CLAUSE) {
+			if (node instanceof GdlRule) {
+				String headNodeString = getRuleHead(((GdlRule) node)).getAtom();
 				switch (headNodeString) {
 				case GdlNode.GDL_BASE:
 				case GdlNode.GDL_INPUT:
 					break;
 				// Skip base and input clauses
 				case GdlNode.GDL_NEXT:
-					headNodeString = "true_" + formatGdlNode(node.getChildren().get(0).getChildren().get(0));
+					headNodeString = TRUE_PREFIX + formatGdlNode(getRuleHead((GdlRule) node).getChildren().get(0));
 				default:
 					for (int i = 1; i < node.getChildren().size(); i++) {
 						boolean isNextTrue = false;
@@ -252,7 +255,7 @@ public class GdlParser {
 						}
 						String toNodeString = toNode.getAtom();
 						if (isNextTrue) {
-							toNodeString = "true_" + formatGdlNode(toNode);
+							toNodeString = TRUE_PREFIX + formatGdlNode(toNode);
 						}
 						if (!headNodeString.equals(toNodeString)) {
 							graph.addEdge(headNodeString, toNodeString);
@@ -419,10 +422,34 @@ public class GdlParser {
 
 		return groundedClauses.toString();
 	}
-	
+
+	static class GdlHeadComparator implements Comparator<GdlNode> {
+		@Override
+		public int compare(GdlNode fromHead, GdlNode toHead) {
+			if (fromHead instanceof GdlRule) {
+				if (toHead instanceof GdlRule) {
+					int stratDiff = ((GdlRule) fromHead).getStratum() - ((GdlRule) toHead).getStratum();
+					if (stratDiff != 0) {
+						return stratDiff;
+					} else {
+						return getRuleHead((GdlRule) fromHead).toString()
+								.compareTo(getRuleHead((GdlRule) toHead).toString());
+					}
+				} else {
+					return 1;
+				}
+			} else if (toHead instanceof GdlRule) {
+				return -1;
+			} else {
+				return fromHead.toString().compareTo(toHead.toString());
+			}
+		}
+	};
 
 	public static String orderGdlRules(GdlNode root) {
-		return orderGdlRules(root, GdlParser.constructDependencyGraph(root));
+		DependencyGraph graph = constructDependencyGraph(root);
+		graph.computeStratum();
+		return orderGdlRules(root, graph);
 	}
 
 	/**
@@ -433,36 +460,15 @@ public class GdlParser {
 	 * @return
 	 */
 	public static String orderGdlRules(GdlNode root, DependencyGraph graph) {
-		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
-			@Override
-			public int compare(GdlNode fromHead, GdlNode toHead) {
-				if (fromHead instanceof util.grammar.GdlRule && toHead instanceof util.grammar.GdlRule) {
-					int stratDiff = ((util.grammar.GdlRule) fromHead).getStratum()
-							- ((util.grammar.GdlRule) toHead).getStratum();
-					if (stratDiff != 0) {
-						return stratDiff;
-					} else {
-						return fromHead.getChildren().get(0).toString()
-								.compareTo(toHead.getChildren().get(0).toString());
-					}
-				} else if (fromHead instanceof util.grammar.GdlRule) {
-					return 1;
-				} else if (toHead instanceof util.grammar.GdlRule) {
-					return -1;
-				}
-				return fromHead.toString().compareTo(toHead.toString());
-			}
-		};
 
-		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(100, gdlHeadComparator);
-		graph.computeStratum();
+		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(100, new GdlHeadComparator());
 		for (GdlNode clause : root.getChildren()) {
-			if (clause instanceof util.grammar.GdlRule) {
-				if (((util.grammar.GdlRule)clause).getHead().getAtom().equals(GdlNode.GDL_NEXT)) {
-					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(
-							"true_" + formatGdlNode(((util.grammar.GdlRule)clause).getHead().getChildren().get(0))));
+			if (clause instanceof GdlRule) {
+				if (((GdlRule) clause).getHead().getAtom().equals(GdlNode.GDL_NEXT)) {
+					((GdlRule) clause).setStratum(graph.getStratum(
+							TRUE_PREFIX + formatGdlNode(getRuleHead((GdlRule) clause).getChildren().get(0))));
 				} else {
-					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(clause.getChildren().get(0).getAtom()));
+					((GdlRule) clause).setStratum(graph.getStratum(getRuleHead((GdlRule) clause).getAtom()));
 				}
 			}
 			unordered.add(clause);
@@ -573,7 +579,7 @@ public class GdlParser {
 			sb.append(System.lineSeparator() + prefix + "CONSTANT " + root.getAtom());
 			break;
 		case VARIABLE:
-			sb.append(System.lineSeparator() + prefix + "VARIABLE" + root.getAtom());
+			sb.append(System.lineSeparator() + prefix + "VARIABLE " + root.getAtom());
 			break;
 		}
 
@@ -592,15 +598,21 @@ public class GdlParser {
 		return printParseTreeTypes(root, ">", " -");
 	}
 
+	// Syntactic sugar to help readability
+	public static GdlNode getRuleHead(GdlRule rule) {
+		return rule.getChildren().get(0);
+	}
+
 	/**
 	 * @param root
 	 */
 	public static String prettyPrint(GdlNode root) {
 		StringBuilder sb = new StringBuilder();
 		for (GdlNode clause : root.getChildren()) {
-			if (clause.getType() == GdlType.CLAUSE) {
+			// if (clause.getType() == GdlType.CLAUSE) {
+			if (clause instanceof GdlRule) {
 				for (GdlNode literal : clause.getChildren()) {
-					if (literal == clause.getChildren().get(0)) {
+					if (literal == getRuleHead(((GdlRule) clause))) {
 						sb.append(System.lineSeparator() + "(<= " + literal.toString());
 					} else if (literal == clause.getChildren().get(clause.getChildren().size() - 1)) {
 						sb.append(System.lineSeparator() + "   " + literal.toString() + ")");

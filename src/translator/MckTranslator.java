@@ -2,12 +2,10 @@ package translator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 import util.GdlParser;
@@ -21,18 +19,18 @@ import util.graph.DependencyGraph;
  * @author vedantds
  */
 public class MckTranslator {
-	public static String MCK_INIT = "INIT";
-	public static String MCK_STOP = "STOP";
+	public static String MCK_INIT = "INIT".intern();
+	public static String MCK_STOP = "STOP".intern();
 	public static String MCK_ROLE_PREFIX = "R_";
 	public static String MCK_MOVE_PREFIX = "M_";
 	public static String MCK_DOES_PREFIX = "did_";
 	public static String MCK_ACTION_PREFIX = "Act_";
-	public static String MCK_TRUE_PREFIX = "true_";
+	public static String MCK_TRUE_PREFIX = GdlParser.TRUE_PREFIX; // "true_";
 	public static String MCK_OLD_SUFFIX = "_old";
 	public static String MCK_AND = " /\\ ";
 	public static String MCK_OR = " \\/ ";
-	public static String MCK_TRUE = "True";
-	public static String MCK_FALSE = "False";
+	public static String MCK_TRUE = "True".intern();
+	public static String MCK_FALSE = "False".intern();
 	public static boolean ONE_LINE_TRANSITIONS = true;
 	// Variables
 	private Set<String> AT;
@@ -74,61 +72,6 @@ public class MckTranslator {
 		initialize();
 	}
 
-	public static String orderGdlRules(GdlNode root) {
-		return orderGdlRules(root, GdlParser.constructDependencyGraph(root));
-	}
-
-	/**
-	 * Use a priority list to order by stratum.
-	 * 
-	 * @param root
-	 * @param graph
-	 * @return
-	 */
-	public static String orderGdlRules(GdlNode root, DependencyGraph graph) {
-		Comparator<GdlNode> gdlHeadComparator = new Comparator<GdlNode>() {
-			@Override
-			public int compare(GdlNode fromHead, GdlNode toHead) {
-				if (fromHead instanceof util.grammar.GdlRule && toHead instanceof util.grammar.GdlRule) {
-					int stratDiff = ((util.grammar.GdlRule) fromHead).getStratum()
-							- ((util.grammar.GdlRule) toHead).getStratum();
-					if (stratDiff != 0) {
-						return stratDiff;
-					} else {
-						return fromHead.getChildren().get(0).toString()
-								.compareTo(toHead.getChildren().get(0).toString());
-					}
-				} else if (fromHead instanceof util.grammar.GdlRule) {
-					return 1;
-				} else if (toHead instanceof util.grammar.GdlRule) {
-					return -1;
-				}
-				return fromHead.toString().compareTo(toHead.toString());
-			}
-		};
-
-		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(100, gdlHeadComparator);
-		graph.computeStratum();
-		for (GdlNode clause : root.getChildren()) {
-			if (clause instanceof util.grammar.GdlRule) {
-				if (clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_NEXT)) {
-					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(
-							MCK_TRUE_PREFIX + formatMckNode(clause.getChildren().get(0).getChildren().get(0))));
-				} else {
-					((util.grammar.GdlRule) clause).setStratum(graph.getStratum(clause.getChildren().get(0).getAtom()));
-				}
-			}
-			unordered.add(clause);
-		}
-
-		StringBuilder ordered = new StringBuilder();
-		while (!unordered.isEmpty()) {
-			GdlNode node = unordered.remove();
-			ordered.append(node.toString());
-		}
-		return ordered.toString();
-	}
-
 	/**
 	 * @param node
 	 * @return
@@ -144,16 +87,16 @@ public class MckTranslator {
 			} else if (node.getAtom().equals(GdlNode.GDL_TRUE) || node.getAtom().equals(GdlNode.GDL_NEXT)) {
 
 			} else if (node.getAtom().contains("+")) {
-				nodeString.append(node.getAtom().replace("+", "plus") + "_");
+				nodeString.append(node.getAtom().replace("+", "plus") + GdlParser.UNDERSCORE);
 			} else {
-				nodeString.append(node.getAtom() + "_");
+				nodeString.append(node.getAtom() + GdlParser.UNDERSCORE);
 			}
 			for (GdlNode child : node.getChildren()) {
-				nodeString.append(formatMckNodeAbs(child) + "_");
+				nodeString.append(formatMckNodeAbs(child) + GdlParser.UNDERSCORE);
 			}
 			nodeString.deleteCharAt(nodeString.length() - 1);
 		}
-		return nodeString.toString();
+		return nodeString.toString().intern();
 	}
 
 	/**
@@ -173,10 +116,10 @@ public class MckTranslator {
 		//if (node.getAtom().contains("+")) {
 		//	nodeString.append(node.getAtom().replace("+", "plus") + "_");
 		//} else {
-			nodeString.append(node.getAtom() + "_");
+			nodeString.append(node.getAtom() + GdlParser.UNDERSCORE);
 		//}
 		for (GdlNode child : node.getChildren()) {
-			nodeString.append(formatMckNodeAbs(child) + "_");
+			nodeString.append(formatMckNodeAbs(child) + GdlParser.UNDERSCORE);
 		}
 		nodeString.deleteCharAt(nodeString.length() - 1);
 		return nodeString.toString();
@@ -219,7 +162,7 @@ public class MckTranslator {
 			boolean conjunctBodyHasFalse = false;
 			boolean conjunctBodyHasOtherThanTrue = false;
 			StringBuilder conjuntBody = new StringBuilder();
-			conjuntBody.append("(");
+			conjuntBody.append(GdlParser.OPEN_P_Str); // "("
 			for (int i = 1; i < clause.getChildren().size(); i++) {
 				String mckFormatted;
 				if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
@@ -271,7 +214,7 @@ public class MckTranslator {
 			if (conjuntBody.length() >= MCK_AND.length()) {
 				// Prune last AND
 				conjuntBody.delete(conjuntBody.length() - MCK_AND.length(), conjuntBody.length());
-				conjuntBody.append(")");
+				conjuntBody.append(GdlParser.CLOSE_P_Str); // ")"
 				// If conjunctive body has a false then it's a contradiction and
 				// can be pruned
 				if (DEBUG) {
@@ -423,7 +366,7 @@ public class MckTranslator {
 	}
 	
 	/**
-	 * @param root
+	 * 
 	 * @return
 	 */
 	public String toMck() {
