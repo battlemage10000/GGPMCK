@@ -26,7 +26,7 @@ public class Main {
 		boolean inputFileToken = false;
 		boolean outputFileSwitch = false;
 		boolean outputFileToken = false;
-		boolean groundSwitch = false;
+		boolean groundSwitch = true; // default currently no way to turn off
 		boolean orderedSwitch = false;
 		boolean debugSwitch = false;
 		boolean outputMckSwitch = false;
@@ -105,14 +105,14 @@ public class Main {
 			System.out.println("usage: java -jar MckTranslator.jar [options] [gdlFileInput]");
 			System.out.println("Options:");
 			System.out.println("  -h --help     print this help file");
-			System.out.println("  -i --input    path to input file (default: stdin)");
-			System.out.println("  -o --output   path to output file (default: stdout)");
+			System.out.println("  -i --input    path to input file");
+			System.out.println("  -o --output   path to output file");
 			System.out.println("  --to-mck      output file is in mck format (default)");
 			System.out.println("  --to-lparse   output file is in lparse format");
 			System.out.println("  --to-dot      output domain graph in dot format. Use with --ground");
 			System.out.println("  --to-dep-dot  output dependency graph in dot format");
 			System.out.println("  --pretty      formatted gdl. Use with --ground");
-			System.out.println("  -g --ground   use internal grounder(default)");
+			System.out.println("  -g --ground   use internal grounder");
 			System.out.println("  -d --debug    manually select outputs in debug mode");
 			System.out.println("  --ordered     order the gdl rules (default true for --to-mck)");
 			System.out.println("  --parse-tree  print parse tree for debug");
