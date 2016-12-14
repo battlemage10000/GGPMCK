@@ -41,23 +41,25 @@ public class TranslatorTest {
 		
 		GdlNode root = GdlParser.parseString(GDL_STRING);
 		DomainGraph graph = GdlParser.constructDomainGraph(root);
-		System.out.println(graph.dotEncodedGraph());
+		//System.out.println(graph.dotEncodedGraph());
+		System.out.println(root.toString());
 		root = GdlParser.groundGdl(root, graph);
+		System.out.println(root.toString());
 		MckTranslator translator = new MckTranslator(root, false);
 		
-		GdlNode headNode = root.getChildren().get(2).getChildren().get(0);
+		GdlNode headNode = root.getChildren().get(7).getChildren().get(0);
 		ArrayList<GdlNode> bodyList = new ArrayList<GdlNode>();
-		bodyList.add(root.getChildren().get(2));
+		bodyList.add(root.getChildren().get(7));
 		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_2 := (step_1);"));
 		
-		headNode = root.getChildren().get(6).getChildren().get(0);
+		headNode = root.getChildren().get(8).getChildren().get(0);
 		bodyList = new ArrayList<GdlNode>();
-		bodyList.add(root.getChildren().get(6));
+		bodyList.add(root.getChildren().get(8));
 		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_3 := (step_2);"));
 		
-		headNode = root.getChildren().get(7).getChildren().get(0);
+		headNode = root.getChildren().get(9).getChildren().get(0);
 		bodyList = new ArrayList<GdlNode>();
-		bodyList.add(root.getChildren().get(7));
+		bodyList.add(root.getChildren().get(9));
 		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_4 := (step_3);"));
 	}
 }

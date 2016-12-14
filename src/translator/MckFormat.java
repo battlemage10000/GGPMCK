@@ -1,10 +1,7 @@
 package translator;
 
-import java.util.List;
-
 import util.GdlParser;
 import util.grammar.GdlNode;
-import util.graph.DependencyGraph;
 
 public class MckFormat {
 
