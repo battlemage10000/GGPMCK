@@ -52,30 +52,50 @@ public class MckTranslator {
 	private Map<String, List<String>> ATx;
 
 	private GdlNode root;
-	
+
 	private DependencyGraph graph;
-	
+
 	private boolean DEBUG;
+	private boolean SHOW_PRUNED_VARS = true;
+	private boolean SYNCHRONIZED_COLLECTIONS = false;
 
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this.root = root;
 		this.DEBUG = DEBUG;
-		this.AT = Collections.synchronizedSet(new HashSet<String>());
-		this.ATf = Collections.synchronizedSet(new HashSet<String>());
-		this.ATi = Collections.synchronizedSet(new HashSet<String>());
-		this.ATt = Collections.synchronizedSet(new HashSet<String>());
-		this.ATc = Collections.synchronizedSet(new HashSet<String>());
-		this.ATh = Collections.synchronizedSet(new HashSet<String>());
-		this.ATd = Collections.synchronizedMap(new HashMap<String, List<String>>());
-		this.ATs = Collections.synchronizedMap(new HashMap<String, List<String>>());
-		this.ATx = Collections.synchronizedMap(new HashMap<String, List<String>>());
+		if (SYNCHRONIZED_COLLECTIONS) {
+			this.AT = Collections.synchronizedSet(new HashSet<String>());
+			this.ATf = Collections.synchronizedSet(new HashSet<String>());
+			this.ATi = Collections.synchronizedSet(new HashSet<String>());
+			this.ATt = Collections.synchronizedSet(new HashSet<String>());
+			this.ATc = Collections.synchronizedSet(new HashSet<String>());
+			this.ATh = Collections.synchronizedSet(new HashSet<String>());
+			this.ATd = Collections.synchronizedMap(new HashMap<String, List<String>>());
+			this.ATs = Collections.synchronizedMap(new HashMap<String, List<String>>());
+			this.ATx = Collections.synchronizedMap(new HashMap<String, List<String>>());
+		} else {
+			this.AT = new HashSet<String>();
+			this.ATf = new HashSet<String>();
+			this.ATi = new HashSet<String>();
+			this.ATt = new HashSet<String>();
+			this.ATc = new HashSet<String>();
+			this.ATh = new HashSet<String>();
+			this.ATd = new HashMap<String, List<String>>();
+			this.ATs = new HashMap<String, List<String>>();
+			this.ATx = new HashMap<String, List<String>>();
+
+		}
 		initialize();
 	}
 
+	public static String formatMckNode(GdlNode node){
+		return MckFormat.formatMckNode(node);
+	}
+	
 	/**
 	 * @param node
 	 * @return
 	 */
+	/*
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder nodeString = new StringBuilder();
 		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
@@ -98,37 +118,46 @@ public class MckTranslator {
 		}
 		return nodeString.toString().intern();
 	}
+	*/
 
+	public static String formatMckNodeAbs(GdlNode node){
+		return MckFormat.formatMckNodeAbs(node);
+	}
+	
 	/**
 	 * Absolute version of format node which doesn't do any manipulation
+	 * 
 	 * @param node
 	 * @return
 	 */
+	/*
 	public static String formatMckNodeAbs(GdlNode node) {
 		StringBuilder nodeString = new StringBuilder();
 
-		//if (node.getAtom().equals(GdlNode.GDL_NOT)) {
-		//	nodeString.append("neg ");
-		//} else 
-		//if (node.getAtom().equals(GdlNode.GDL_TRUE) || node.getAtom().equals(GdlNode.GDL_NEXT)) {
+		// if (node.getAtom().equals(GdlNode.GDL_NOT)) {
+		// nodeString.append("neg ");
+		// } else
+		// if (node.getAtom().equals(GdlNode.GDL_TRUE) ||
+		// node.getAtom().equals(GdlNode.GDL_NEXT)) {
 		//
-		//} else 
-		//if (node.getAtom().contains("+")) {
-		//	nodeString.append(node.getAtom().replace("+", "plus") + "_");
-		//} else {
-			nodeString.append(node.getAtom() + GdlParser.UNDERSCORE);
-		//}
+		// } else
+		// if (node.getAtom().contains("+")) {
+		// nodeString.append(node.getAtom().replace("+", "plus") + "_");
+		// } else {
+		nodeString.append(node.getAtom() + GdlParser.UNDERSCORE);
+		// }
 		for (GdlNode child : node.getChildren()) {
 			nodeString.append(formatMckNodeAbs(child) + GdlParser.UNDERSCORE);
 		}
 		nodeString.deleteCharAt(nodeString.length() - 1);
 		return nodeString.toString();
 	}
+	*/
 
-	public String formatClause(GdlNode headNode, List<GdlNode> bodyList){
+	public String formatClause(GdlNode headNode, List<GdlNode> bodyList) {
 		return formatClause(graph, headNode, bodyList);
 	}
-	
+
 	/**
 	 * Reformat a clause from gdl to an equivalent one in mck
 	 * 
@@ -182,8 +211,7 @@ public class MckTranslator {
 					conjuntBody.append(MCK_FALSE + MCK_AND);
 					conjunctBodyHasFalse = true;
 					conjunctBodyHasOtherThanTrue = true;
-				} else if (!ATh.contains(mckFormatted)
-						&& !ATi.contains(mckFormatted)
+				} else if (!ATh.contains(mckFormatted) && !ATi.contains(mckFormatted)
 						&& !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
 					conjuntBody.append(MCK_FALSE + MCK_AND);
 					conjunctBodyHasFalse = true;
@@ -252,10 +280,10 @@ public class MckTranslator {
 		return mckNode.toString();
 	}
 
-	public void initialize(){
-	
+	public void initialize() {
+
 		// Pre-processing
-		//DependencyGraph 
+		// DependencyGraph
 		graph = GdlParser.constructDependencyGraph(root);
 		graph.computeStratum();
 		for (String old : graph.getDependencyMap().keySet()) {
@@ -362,16 +390,16 @@ public class MckTranslator {
 				ATi.add(initTrue);
 			}
 		}
-	
+
 	}
-	
+
 	/**
 	 * 
 	 * @return
 	 */
 	public String toMck() {
-		//initialize();
-		
+		// initialize();
+
 		// Initialize string builders for different parts of the output
 		StringBuilder agents = new StringBuilder();
 		StringBuilder state_trans = new StringBuilder();
@@ -508,7 +536,7 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- Protocol Definitions");
 		mck.append(System.lineSeparator() + protocols.toString());
-		if (DEBUG) {
+		if (SHOW_PRUNED_VARS) {
 			mck.append(System.lineSeparator());
 			mck.append(System.lineSeparator() + "-- Tautologies (ATt)");
 			mck.append(System.lineSeparator());

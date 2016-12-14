@@ -44,6 +44,7 @@ public class GdlParser {
 	public final static String Q_MARK_Str = "?";
 	public final static String UNDERSCORE = "_"; // underscore
 	public final static String TRUE_PREFIX = "true" + UNDERSCORE;
+	public final static String OLD_SUFFIX = UNDERSCORE + "old";
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments

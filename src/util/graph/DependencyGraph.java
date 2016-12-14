@@ -2,6 +2,7 @@ package util.graph;
 
 import java.util.Map;
 
+import util.GdlParser;
 import util.grammar.GdlNode;
 
 import java.util.HashMap;
@@ -17,12 +18,19 @@ public class DependencyGraph {
 	private final Map<String, ArrayList<String>> adjacencyMap;
 	private final Map<String, Integer> stratumMap;
 
+	private final boolean SYNCHRONIZED_COLLECTIONS = false;
+
 	/**
 	 * 
 	 */
 	public DependencyGraph() {
-		adjacencyMap = Collections.synchronizedMap(new HashMap<String, ArrayList<String>>());
-		stratumMap = Collections.synchronizedMap(new HashMap<String, Integer>());
+		if (SYNCHRONIZED_COLLECTIONS) {
+			adjacencyMap = Collections.synchronizedMap(new HashMap<String, ArrayList<String>>());
+			stratumMap = Collections.synchronizedMap(new HashMap<String, Integer>());
+		} else {
+			adjacencyMap = new HashMap<String, ArrayList<String>>();
+			stratumMap = new HashMap<String, Integer>();
+		}
 	}
 
 	/**
@@ -51,9 +59,9 @@ public class DependencyGraph {
 	}
 
 	/**
-	 * Returns the stratum of the term,
-	 * -1 if it couln't be stratisfied
-	 * -2 if it doesn't exist in the graph
+	 * Returns the stratum of the term, -1 if it couln't be stratisfied -2 if it
+	 * doesn't exist in the graph
+	 * 
 	 * @param term
 	 * @return
 	 */
@@ -92,14 +100,14 @@ public class DependencyGraph {
 	 * @return
 	 */
 	public Map<String, Integer> getStratumMap() {
-		if(stratumMap.isEmpty()){
+		if (stratumMap.isEmpty()) {
 			computeStratum();
 		}
 		return stratumMap;
 	}
-	
-	private String dotEncoded(String string){
-		if (string.contains("+")){
+
+	private String dotEncoded(String string) {
+		if (string.contains("+")) {
 			string = string.replace("+", "plus");
 		}
 		return string;
@@ -115,7 +123,8 @@ public class DependencyGraph {
 
 		// Declare nodes and assign attributes
 		for (String from : adjacencyMap.keySet()) {
-			dot.append(System.lineSeparator() + dotEncoded(from) + " [label=\"" + dotEncoded(from) + " " + stratumMap.get(from) + "\"]");
+			dot.append(System.lineSeparator() + dotEncoded(from) + " [label=\"" + dotEncoded(from) + " "
+					+ stratumMap.get(from) + "\"]");
 		}
 		dot.append(System.lineSeparator());
 
@@ -136,10 +145,11 @@ public class DependencyGraph {
 	 * @param child
 	 */
 	public void addOldValueForSees(String node, String child) {
-		if (child.length() >= 5 && child.substring(0, 5).equals("true_") && !child.substring(child.length()-4).equals("_old")) {
+		if (child.length() >= 5 && child.substring(0, 5).equals(GdlParser.TRUE_PREFIX)
+				&& !child.substring(child.length() - 4).equals(GdlParser.OLD_SUFFIX)) {
 			adjacencyMap.get(node).remove(child);
-			addEdge(node, child + "_old");
-			stratumMap.put(child + "_old", 0);
+			addEdge(node, child + GdlParser.OLD_SUFFIX);
+			stratumMap.put(child + GdlParser.OLD_SUFFIX, 0);
 		}
 		ArrayList<String> grandChildList = adjacencyMap.get(child);
 		adjacencyMap.put(child, new ArrayList<String>());
@@ -150,7 +160,7 @@ public class DependencyGraph {
 	}
 
 	/**
-	 * Determine for each node which stratum or level it is in. 
+	 * Determine for each node which stratum or level it is in.
 	 */
 	public void computeStratum() {
 		LinkedList<String> unstratified = new LinkedList<String>();
@@ -180,7 +190,7 @@ public class DependencyGraph {
 					} else if (stratumMap.get(to) < 0) {
 						if (oldifyList.contains(to)) {
 							continue;
-						} else if (hasCycle && to.substring(0, 5).equals("true_")) {
+						} else if (hasCycle && to.substring(0, 5).equals(GdlParser.TRUE_PREFIX)) { // "true_"
 							oldifyList.add(to);
 							hasCycle = false;
 						} else {
@@ -198,9 +208,9 @@ public class DependencyGraph {
 					adjacencyMap.put(from, new ArrayList<String>());
 					for (String to : bodyList) {
 						if (oldifyList.contains(to)) {
-							addEdge(from, to + "_old");
-							stratumMap.put(to + "_old", 0);
-						}else {
+							addEdge(from, to + GdlParser.OLD_SUFFIX);
+							stratumMap.put(to + GdlParser.OLD_SUFFIX, 0);
+						} else {
 							addEdge(from, to);
 						}
 					}

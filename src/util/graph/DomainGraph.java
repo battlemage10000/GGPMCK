@@ -14,12 +14,18 @@ import java.util.Collections;
  */
 public class DomainGraph {
 	private Map<Term, ArrayList<Term>> adjacencyMap;
+	
+	private boolean SYNCHRONIZED_COLLECTIONS = false;
 
 	/**
 	 * 
 	 */
 	public DomainGraph() {
-		adjacencyMap = Collections.synchronizedMap(new HashMap<Term, ArrayList<Term>>());
+		if (SYNCHRONIZED_COLLECTIONS) {
+			adjacencyMap = Collections.synchronizedMap(new HashMap<Term, ArrayList<Term>>());
+		} else {
+			adjacencyMap = new HashMap<Term, ArrayList<Term>>();
+		}
 	}
 
 	/**
