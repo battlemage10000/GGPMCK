@@ -1,5 +1,7 @@
 import static org.junit.Assert.assertThat;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -11,6 +13,8 @@ import util.grammar.GdlNode;
 import util.graph.DomainGraph;
 
 public class TranslatorTest {
+	
+	private String montyHallGame = "res/gdlii/MontyHall.gdl";
 
 	@Test
 	public void testFormatMckNodeMethod() {
@@ -35,7 +39,10 @@ public class TranslatorTest {
 				+ "(<= (next (step 2)) (true (step 1)))"
 				+ "(<= (next (step 3)) (true (step 2)))"
 				+ "(<= (next (step 4)) (true (step 3)))"
-				+ "(<= terminal (true (step 4)))"
+				+ "(<= terminal (true (step 4)) (does p1 (move 1)))"
+				+ "(<= terminal (true (step 4)) (does p1 (move 2)))"
+				+ "(<= terminal (true (step 4)) (does p2 (move 1)))"
+				+ "(<= terminal (true (step 4)) (does p2 (move 2)))"
 				+ "(<= (goal ?p 100) (role ?p) (true (step 4)))"
 				+ "(<= (sees ?p (does ?q ?m)) (role ?p) (role ?q) (does ?q ?m))";
 		
@@ -61,5 +68,22 @@ public class TranslatorTest {
 		bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(9));
 		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_4 := (step_3);"));
+	}
+
+	@Test
+	public void testMontyHallTranslation(){
+		try {
+			GdlNode mhRoot = GdlParser.parseFile(montyHallGame);
+			DomainGraph graph = GdlParser.constructDomainGraph(mhRoot);
+			System.out.println(mhRoot.toString());
+			mhRoot = GdlParser.groundGdl(mhRoot, graph);
+			System.out.println(mhRoot.toString());
+			
+			
+		}catch (URISyntaxException e){
+			e.printStackTrace();
+		}catch (IOException e){
+			e.printStackTrace();
+		}
 	}
 }
