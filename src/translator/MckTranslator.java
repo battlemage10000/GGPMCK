@@ -57,7 +57,7 @@ public class MckTranslator {
 	private boolean DEBUG;
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
-	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol instead of as a state transition
+	private boolean ASSIGNMENT_IN_ACTION = true; // assign did_role in protocol instead of as a state transition
 
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this.root = root;
