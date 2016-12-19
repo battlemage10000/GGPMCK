@@ -29,7 +29,7 @@ public class MckFormat {
 		StringBuilder nodeString = new StringBuilder();
 		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
 			nodeString.append(DOES_PREFIX + node.getChildren().get(0));
-			nodeString.append(" == " + MOVE_PREFIX + formatMckNode(node.getChildren().get(1)));
+			nodeString.append(" == " + MOVE_PREFIX + formatMckNode(node.getChildren().get(1)) + "_" + formatMckNode(node.getChildren().get(0)));
 		} else {
 			if (node.getAtom().equals(GdlNode.GDL_NOT)) {
 				nodeString.append("neg ");

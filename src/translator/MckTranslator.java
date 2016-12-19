@@ -57,7 +57,7 @@ public class MckTranslator {
 	private boolean DEBUG;
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
-	private boolean ASSIGNMENT_IN_ACTION = true; // assign did_role in protocol instead of as a state transition
+	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol instead of as a state transition
 
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this.root = root;
@@ -409,17 +409,17 @@ public class MckTranslator {
 			protocols.append(")");
 			protocols.append(System.lineSeparator() + MCK_BEGIN);
 			if (ASSIGNMENT_IN_ACTION) {
-				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_DOES_PREFIX + role + ".write(" + MCK_MOVE_PREFIX + role + "_" + MCK_STOP + ") >>");
+				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_DOES_PREFIX + role + ".write(" + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + ") >>");
 			} else {
-				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_MOVE_PREFIX + role + "_" + MCK_STOP + " >>");
+				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + " >>");
 			}
 			protocols.append(System.lineSeparator() + "  [] otherwise ->");
 			protocols.append(System.lineSeparator() + "    if  ");
 			for (String move : ATd.get(role)) {
 				if (ASSIGNMENT_IN_ACTION) {
-					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_DOES_PREFIX + role + ".write(" + MCK_MOVE_PREFIX + move + ") >>");
+					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_DOES_PREFIX + role + ".write(" + MCK_MOVE_PREFIX + move +  "_" + role + ") >>");
 				} else {
-					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_MOVE_PREFIX + move + " >>");
+					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_MOVE_PREFIX + move + "_" + role + " >>");
 				}
 				protocols.append(System.lineSeparator() + "    []  ");
 			}
@@ -446,15 +446,15 @@ public class MckTranslator {
 			for (String role : ATd.keySet()) {
 				state_trans.append(System.lineSeparator() + "if ");
 				for (String move : ATd.get(role)) {
-					state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + " -> ");
+					state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move +  "_" + role + " -> ");
 					state_trans.append(
-						MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + move + System.lineSeparator() + "[] ");
+						MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + move +  "_" + role + System.lineSeparator() + "[] ");
 				}
 				//state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_INIT + " -> ");
 				//state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_INIT);
 				//state_trans.append(System.lineSeparator() + "[] ");
-				state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + role + "_" + MCK_STOP + " -> ");
-				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + role + "_" + MCK_STOP);
+				state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + MCK_STOP + "_"  + role + " -> ");
+				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_STOP + "_"  + role);
 				state_trans.append(System.lineSeparator() + "fi;");
 			}
 		}
@@ -518,7 +518,7 @@ public class MckTranslator {
 		spec.append(")");
 		spec.append(System.lineSeparator() + "--spec_spr = AG(");
 		for (String role : ATd.keySet()) {
-			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + role + "_" + MCK_STOP + "))");
+			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX +MCK_STOP +  "_" + role + "))");
 			spec.append(MCK_AND);
 		}
 		spec.delete(spec.length() - 4, spec.length());
@@ -660,9 +660,9 @@ public class MckTranslator {
 		for (String role : ATd.keySet()) {
 			env_vars.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
 			for (String move : ATd.get(role)) {
-				env_vars.append(MCK_MOVE_PREFIX + move + ", ");
+				env_vars.append(MCK_MOVE_PREFIX + move +  "_" + role + ", ");
 			}
-			env_vars.append(MCK_INIT + ", " + MCK_MOVE_PREFIX + role + "_" + MCK_STOP + "}");
+			env_vars.append(MCK_INIT + ", " + MCK_MOVE_PREFIX+ MCK_STOP +  "_" + role + "}");
 		}
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator() + "-- AT:");
