@@ -25,6 +25,14 @@ public class TranslatorTest {
 		// case 2
 		node = GdlParser.parseString("(sees player1 (does player2 (move_1)))").getChildren().get(0);
 		assertThat(MckTranslator.formatMckNode(node), is("sees_player1_does_player2_move_1"));
+		
+		// case 3
+		node = GdlParser.parseString("(next (step 2))").getChildren().get(0);
+		assertThat(MckTranslator.formatMckNode(node), is("step_2"));
+		
+		// case 4
+		node = GdlParser.parseString("(not (true (step 1)))").getChildren().get(0);
+		assertThat(MckTranslator.formatMckNode(node), is("neg step_1"));
 	}
 	
 	@Test
