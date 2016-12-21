@@ -133,4 +133,9 @@ public class GdlRule implements GdlNode, LparseNode {
 	public int hashCode() {
 		return getAtom().hashCode();
 	}
+
+	@Override
+	public GdlNode getChild(int index) {
+		return children.get(index);
+	}
 }

@@ -80,4 +80,9 @@ public class Gdl implements GdlNode, LparseNode {
 		}
 		return sb.toString();
 	}
+
+	@Override
+	public GdlNode getChild(int index) {
+		return children.get(index);
+	}
 }

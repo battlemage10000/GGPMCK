@@ -28,4 +28,6 @@ public interface GdlNode extends Iterable<GdlNode> {
 	public GdlNode getParent();
 
 	public ArrayList<GdlNode> getChildren();
+	
+	public GdlNode getChild(int index);
 }
