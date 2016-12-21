@@ -33,6 +33,10 @@ public class TranslatorTest {
 		// case 4
 		node = GdlParser.parseString("(not (true (step 1)))").getChildren().get(0);
 		assertThat(MckTranslator.formatMckNode(node), is("neg step_1"));
+
+		// case 5
+		node = GdlParser.parseString("(++ 1 2)").getChildren().get(0);
+		assertThat(MckTranslator.formatMckNode(node), is("plusplus_1_2"));
 	}
 	
 	@Test

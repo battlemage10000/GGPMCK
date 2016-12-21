@@ -43,6 +43,7 @@ public class MckFormat {
 				if (node.getAtom().equals(GdlNode.GDL_NOT)) {
 					nodeString.append(NOT + " ");
 				}
+				// Special unary predicates that are filtered out
 				node = node.getChild(0);
 			}
 			
@@ -52,7 +53,8 @@ public class MckFormat {
 	}
 
 	/**
-	 * Absolute version of format node which doesn't do any manipulation
+	 * Absolute version of format node which doesn't do any manipulation.
+	 * Only to be used to bypass recommended filtering in foramtMckNode method
 	 * 
 	 * @param node
 	 * @return
@@ -76,7 +78,7 @@ public class MckFormat {
 	 */
 	public static String formatSpecialCharacters(String string){
 		if (string.contains("+")){
-			string.replace("+", "plus");
+			string = string.replace("+", "plus");
 		}
 		return string;
 	}
