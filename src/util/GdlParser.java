@@ -25,6 +25,7 @@ import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
 
 /**
+ * Essential utility methods for parsing gdl
  * @author vedantds
  *
  */
@@ -43,8 +44,8 @@ public class GdlParser {
 	public final static String CLOSE_P_Str = ")";
 	public final static String Q_MARK_Str = "?";
 	public final static String UNDERSCORE = "_"; // underscore
-	public final static String TRUE_PREFIX = "true" + UNDERSCORE.intern();
-	public final static String OLD_SUFFIX = UNDERSCORE + "old".intern();
+	public final static String TRUE_PREFIX = ("true" + UNDERSCORE).intern();
+	public final static String OLD_SUFFIX = (UNDERSCORE + "old").intern();
 
 	/**
 	 * Tokenises a file for GDL and also removes ';' comments
@@ -145,7 +146,7 @@ public class GdlParser {
 	}
 
 	/**
-	 * Takes tokens and produces a parse tree returns ParseNode root of tree
+	 * Takes a list of tokens and produces a parse tree. Returns the root node of the tree.
 	 *
 	 * @param tokens
 	 * @return
@@ -199,6 +200,8 @@ public class GdlParser {
 	}
 
 	/**
+	 * Overloaded method which doesn't require casting to Reader for game descriptions in Files
+	 * 
 	 * @param filePath
 	 * @return
 	 * @throws IOException
@@ -209,8 +212,7 @@ public class GdlParser {
 	}
 
 	/**
-	 * Overloaded method which doesn't require casting to Reader for common use
-	 * cases
+	 * Overloaded method which doesn't require casting to Reader for game descriptions in Strings
 	 * 
 	 * @param gdl
 	 * @return
@@ -270,6 +272,8 @@ public class GdlParser {
 	}
 
 	/**
+	 * Format gdl node to graphviz syntax
+	 * 
 	 * @param node
 	 * @return
 	 */
@@ -285,6 +289,7 @@ public class GdlParser {
 	}
 
 	/**
+	 * Construct a graph that is used to derive the domain of parameters in literals and terms.
 	 * Follows the domain graph definition in the ggp book
 	 * 
 	 * @param root
@@ -329,6 +334,7 @@ public class GdlParser {
 	}
 
 	/**
+	 * Check if there is a variable in the sub-tree rooted at node
 	 * @param node
 	 * @return
 	 */
@@ -346,6 +352,7 @@ public class GdlParser {
 	}
 
 	/**
+	 * Ground a game description
 	 * @param root
 	 * @param domainGraph
 	 * @return
@@ -371,6 +378,7 @@ public class GdlParser {
 	}
 
 	/**
+	 * Ground a clause in a game description
 	 * @param clauseNode
 	 * @param domainMap
 	 * @return
@@ -424,29 +432,11 @@ public class GdlParser {
 		return groundedClauses.toString();
 	}
 
-	static class GdlHeadComparator implements Comparator<GdlNode> {
-		@Override
-		public int compare(GdlNode fromHead, GdlNode toHead) {
-			if (fromHead instanceof GdlRule) {
-				if (toHead instanceof GdlRule) {
-					int stratDiff = ((GdlRule) fromHead).getStratum() - ((GdlRule) toHead).getStratum();
-					if (stratDiff != 0) {
-						return stratDiff;
-					} else {
-						return getRuleHead((GdlRule) fromHead).toString()
-								.compareTo(getRuleHead((GdlRule) toHead).toString());
-					}
-				} else {
-					return 1;
-				}
-			} else if (toHead instanceof GdlRule) {
-				return -1;
-			} else {
-				return fromHead.toString().compareTo(toHead.toString());
-			}
-		}
-	};
-
+	/**
+	 * Use a priority list to order by stratum
+	 * @param root
+	 * @return
+	 */
 	public static String orderGdlRules(GdlNode root) {
 		DependencyGraph graph = constructDependencyGraph(root);
 		graph.computeStratum();
@@ -530,10 +520,12 @@ public class GdlParser {
 	}
 
 	/**
-	 * Print the getAtom()s of the nodes of the tree
+	 * Print the names of the nodes of the tree using the getAtom() method
 	 * 
+	 * @param root
 	 * @param prefix
 	 * @param indent
+	 * @return
 	 */
 	public static String printParseTree(GdlNode root, String prefix, String indent) {
 		StringBuilder sb = new StringBuilder();
@@ -548,14 +540,17 @@ public class GdlParser {
 	}
 
 	/**
+	 * Print the names of the nodes of the tree using the getAtom() method
+	 * 
 	 * @param root
+	 * @return
 	 */
 	public static String printParseTree(GdlNode root) {
 		return printParseTree(root, ">", " -");
 	}
 
 	/**
-	 * Print the GdlType of the nodes of the tree
+	 * Print the GdlType of the nodes of the tree. Type is based on the value of GdlNode.getType()
 	 * 
 	 * @param root
 	 * @param prefix
@@ -593,6 +588,8 @@ public class GdlParser {
 	}
 
 	/**
+	 * Print the GdlType of the nodes of the tree. Type is based on the value of GdlNode.getType()
+	 * 
 	 * @param root
 	 */
 	public static String printParseTreeTypes(GdlNode root) {
@@ -600,11 +597,13 @@ public class GdlParser {
 	}
 
 	// Syntactic sugar to help readability
+	@Deprecated
 	public static GdlNode getRuleHead(GdlRule rule) {
 		return rule.getChildren().get(0);
 	}
 
 	/**
+	 * Output parse tree as a String in kif format
 	 * @param root
 	 */
 	public static String prettyPrint(GdlNode root) {
@@ -628,4 +627,32 @@ public class GdlParser {
 		}
 		return sb.toString();
 	}
+	
+	/**
+	 * Comparator used to order clauses in a game description, first by stratum and then by name to group clauses with the same name together
+	 * @author vedantds
+	 *
+	 */
+	public static class GdlHeadComparator implements Comparator<GdlNode> {
+		@Override
+		public int compare(GdlNode fromHead, GdlNode toHead) {
+			if (fromHead instanceof GdlRule) {
+				if (toHead instanceof GdlRule) {
+					int stratDiff = ((GdlRule) fromHead).getStratum() - ((GdlRule) toHead).getStratum();
+					if (stratDiff != 0) {
+						return stratDiff;
+					} else {
+						return getRuleHead((GdlRule) fromHead).toString()
+								.compareTo(getRuleHead((GdlRule) toHead).toString());
+					}
+				} else {
+					return 1;
+				}
+			} else if (toHead instanceof GdlRule) {
+				return -1;
+			} else {
+				return fromHead.toString().compareTo(toHead.toString());
+			}
+		}
+	};
 }
