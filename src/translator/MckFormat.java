@@ -7,6 +7,7 @@ public class MckFormat {
 
 	public static String INIT = "INIT".intern();
 	public static String STOP = "STOP".intern();
+	public static String NOT = "neg".intern();
 	public static String ROLE_PREFIX = "R_";
 	public static String MOVE_PREFIX = "M_";
 	public static String DOES_PREFIX = "did_";
@@ -15,6 +16,7 @@ public class MckFormat {
 	public static String OLD_SUFFIX = "_old";
 	public static String AND = " /\\ ";
 	public static String OR = " \\/ ";
+	public static String UNDERSCORE = "_";
 	public static String TRUE = "True".intern();
 	public static String FALSE = "False".intern();
 
@@ -22,33 +24,29 @@ public class MckFormat {
 	public boolean DEBUG = true;
 
 	/**
+	 * Converts GdlNode to mck readable format
 	 * @param node
 	 * @return
 	 */
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder nodeString = new StringBuilder();
+		
 		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
-			nodeString.append(DOES_PREFIX + node.getChildren().get(0));
-			nodeString.append(" == " + MOVE_PREFIX + formatMckNode(node.getChildren().get(1)) + "_" + formatMckNode(node.getChildren().get(0)));
+			nodeString.append(DOES_PREFIX + formatMckNode(node.getChild(0)));
+			nodeString.append(" == " + MOVE_PREFIX + formatMckNode(node.getChild(1)) + UNDERSCORE + formatMckNode(node.getChild(0)));
 		} else {
-			if (node.getAtom().equals(GdlNode.GDL_NOT)) {
-				nodeString.append("neg ");
-				node = node.getChildren().get(0);
-			} else if (node.getAtom().equals(GdlNode.GDL_TRUE) || node.getAtom().equals(GdlNode.GDL_NEXT)) {
-
-			//}
-			
-			//nodeString.append(formatMckNodeAbs(node));
-			
-			} else if (node.getAtom().contains("+")) {
-				nodeString.append(node.getAtom().replace("+", "plus") + GdlParser.UNDERSCORE);
-			} else {
-				nodeString.append(node.getAtom() + GdlParser.UNDERSCORE);
+			while(node.getAtom().contentEquals(GdlNode.GDL_NOT) ||
+					node.getAtom().contentEquals(GdlNode.GDL_INIT) ||
+					node.getAtom().contentEquals(GdlNode.GDL_TRUE) ||
+					node.getAtom().contentEquals(GdlNode.GDL_NEXT)){
+				
+				if (node.getAtom().equals(GdlNode.GDL_NOT)) {
+					nodeString.append(NOT + " ");
+				}
+				node = node.getChild(0);
 			}
-			for (GdlNode child : node.getChildren()) {
-				nodeString.append(formatMckNodeAbs(child) + GdlParser.UNDERSCORE);
-			}
-			nodeString.deleteCharAt(nodeString.length() - 1);
+			
+			nodeString.append(formatMckNodeAbs(node));	
 		}
 		return nodeString.toString().intern();
 	}
@@ -62,22 +60,24 @@ public class MckFormat {
 	public static String formatMckNodeAbs(GdlNode node) {
 		StringBuilder nodeString = new StringBuilder();
 
-		// if (node.getAtom().equals(GdlNode.GDL_NOT)) {
-		// nodeString.append("neg ");
-		// } else
-		// if (node.getAtom().equals(GdlNode.GDL_TRUE) ||
-		// node.getAtom().equals(GdlNode.GDL_NEXT)) {
-		//
-		// } else
-		if (node.getAtom().contains("+")) {
-			nodeString.append(node.getAtom().replace("+", "plus") + "_");
-		} else {
-			nodeString.append(node.getAtom() + GdlParser.UNDERSCORE);
-		}
+		nodeString.append(formatSpecialCharacters(node.getAtom()));
+		
 		for (GdlNode child : node.getChildren()) {
-			nodeString.append(formatMckNodeAbs(child) + GdlParser.UNDERSCORE);
+			nodeString.append(GdlParser.UNDERSCORE + formatMckNodeAbs(child));
 		}
-		nodeString.deleteCharAt(nodeString.length() - 1);
 		return nodeString.toString();
+	}
+	
+	/**
+	 * Method for handling character which are special in mck
+	 * TODO: add missing special characters
+	 * @param string
+	 * @return
+	 */
+	public static String formatSpecialCharacters(String string){
+		if (string.contains("+")){
+			string.replace("+", "plus");
+		}
+		return string;
 	}
 }
