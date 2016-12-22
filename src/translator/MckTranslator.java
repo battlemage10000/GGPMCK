@@ -567,7 +567,14 @@ public class MckTranslator {
 		if (repeatHead != null) {
 			state_trans.append(formatClause(graph, repeatHead, repeatHeadList));
 		}
+		//state_trans.append(System.lineSeparator());
+		for(String initial : ATi){
+			if (graph.getStratum(initial) == 0 || graph.getStratum(MCK_TRUE_PREFIX + initial) == 0) {
+				state_trans.append(System.lineSeparator() + initial + " := " + MCK_FALSE + ";");
+			}
+		}
 		state_trans.deleteCharAt(state_trans.length() - 1); // Remove last ';'
+		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator() + MCK_END);
 		state_trans.append(System.lineSeparator());
 		return state_trans.toString();
@@ -633,14 +640,6 @@ public class MckTranslator {
 		// TODO: fix initial condition bugs
 		if (DERIVE_INITIAL_CONDITIONS) {
 			for (GdlNode clause : root.getChildren()) {
-				//if (clause.getType() != GdlType.CLAUSE && clause.getAtom().equals(GdlNode.GDL_LEGAL)) {
-					//if (!ATi.contains(formatMckNode(clause))) {
-					//	ATi.add(formatMckNode(clause)); // head with no body always true
-						// Is it possible for this code to run? Always legal moves are rare but won't they 
-						// always be in ATi already due to previous steps?
-					//}
-					//System.out.println("error: "+clause.toString());
-				//} else {
 				if (clause instanceof GdlRule) {
 					boolean initHeadHasFalse = false;
 					for (int i = 1; i < clause.getChildren().size(); i++) {
@@ -676,7 +675,7 @@ public class MckTranslator {
 				}
 			}
 		}
-		System.out.println("gen init end " + ATi.toString());
+		//System.out.println("gen init end " + ATi.toString());
 
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");
