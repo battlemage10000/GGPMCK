@@ -9,8 +9,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import util.GdlParser;
+import util.grammar.GdlFormula;
 import util.grammar.GdlNode;
 import util.grammar.GdlNode.GdlType;
+import util.grammar.GdlRule;
 import util.graph.DependencyGraph;
 
 /**
@@ -58,7 +60,8 @@ public class MckTranslator {
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
 	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol instead of as a state transition
-
+	private boolean DERIVE_INITIAL_CONDITIONS = false;
+	
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this.root = root;
 		this.DEBUG = DEBUG;
@@ -103,7 +106,7 @@ public class MckTranslator {
 		return MckFormat.formatMckNodeAbs(node);
 	}
 
-	public String formatClause(GdlNode headNode, List<GdlNode> bodyList) {
+	public String formatClause(GdlNode headNode, List<GdlNode> bodyList) throws Exception {
 		return formatClause(graph, headNode, bodyList);
 	}
 
@@ -119,9 +122,12 @@ public class MckTranslator {
 	 * @param bodyList
 	 * @return
 	 */
-	public String formatClause(DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) {
+	public String formatClause(DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) throws Exception{
 		// Recognize sees
 		boolean sees = false;
+		if (bodyList.isEmpty() || headNode.toString().length() == 0){
+			throw new Exception("Body list is empty");
+		}
 		if (bodyList.isEmpty() || headNode.toString().length() == 0) {
 			return "";
 		} else if (headNode.getAtom().equals(GdlNode.GDL_SEES)) {
@@ -134,47 +140,106 @@ public class MckTranslator {
 			boolean conjunctBodyHasFalse = false;
 			boolean conjunctBodyHasOtherThanTrue = false;
 			StringBuilder conjuntBody = new StringBuilder();
-			conjuntBody.append(GdlParser.OPEN_P_Str); // "("
+			conjuntBody.append(GdlParser.OPEN_P_Str + " "); // "("
 			for (int i = 1; i < clause.getChildren().size(); i++) {
+				boolean isNegated = false;
 				String mckFormatted;
 				if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
+					isNegated = true;
 					mckFormatted = formatMckNode(clause.getChildren().get(i).getChildren().get(0));
 				} else {
 					mckFormatted = formatMckNode(clause.getChildren().get(i));
 				}
 
-				if (DEBUG) {
-					conjuntBody.append(mckFormatted + MCK_AND);
-				}
-				if (ATt.contains(mckFormatted)) {
+				if (isNegated) {
 					if (DEBUG) {
-						conjuntBody.append(MCK_TRUE + MCK_AND);
+						if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
+								&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
+							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						} else {	
+							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_AND);
+						}
 					}
-				} else if (ATc.contains(mckFormatted)) {
-					conjuntBody.append(MCK_FALSE + MCK_AND);
-					conjunctBodyHasFalse = true;
-					conjunctBodyHasOtherThanTrue = true;
-				} else if (!ATh.contains(mckFormatted) && !ATi.contains(mckFormatted)
-						&& !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
-					conjuntBody.append(MCK_FALSE + MCK_AND);
-					conjunctBodyHasFalse = true;
-					conjunctBodyHasOtherThanTrue = true;
-					if (!ATc.contains(mckFormatted)) {
-						ATc.add(mckFormatted);
+					
+					if (ATc.contains(mckFormatted)) {
+						// Negation of contradiction is always true
+						if (DEBUG) {
+							conjuntBody.append(MCK_TRUE + MCK_AND);
+						}
+					} else if (ATt.contains(mckFormatted)) {
+						// Negation of tautology is always false
+						conjuntBody.append(MCK_FALSE + MCK_AND);
+						conjunctBodyHasFalse = true;
+						conjunctBodyHasOtherThanTrue = true;
+					} else if (!ATh.contains(mckFormatted) && !ATi.contains(mckFormatted)
+							&& !clause.getChild(i).getChild(0).getAtom().equals(GdlNode.GDL_DOES)) {
+						// TODO: double check logic in this section
+						// Negation of contradiction is always true
+						if (DEBUG) {
+							conjuntBody.append(MCK_TRUE + MCK_AND);
+						}
+					} else if (sees && ATf.contains(mckFormatted)) {
+						// Append sees clause with old ("not" invariant)
+						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjunctBodyHasOtherThanTrue = true;
+					} else if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
+							&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
+						// Append next clause with old ("not" invariant)
+						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjunctBodyHasOtherThanTrue = true;
+					} else {
+						// Everything else
+						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_AND);
+						conjunctBodyHasOtherThanTrue = true;
 					}
-				} else if (sees && ATf.contains(mckFormatted)) {
-					conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
-					conjunctBodyHasOtherThanTrue = true;
-				} else if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
-						&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
-					conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
-					conjunctBodyHasOtherThanTrue = true;
 				} else {
-					conjuntBody.append(mckFormatted + MCK_AND);
-					conjunctBodyHasOtherThanTrue = true;
+					if (DEBUG) {
+						if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
+							&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
+							conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						} else {	
+							conjuntBody.append(mckFormatted + MCK_AND);
+						}
+					}
+					
+					if (ATt.contains(mckFormatted)) {
+						// Always true
+						if (DEBUG) {
+							conjuntBody.append(MCK_TRUE + MCK_AND);
+						}
+					} else if (ATc.contains(mckFormatted)) {
+						// Always false
+						conjuntBody.append(MCK_FALSE + MCK_AND);
+						conjunctBodyHasFalse = true;
+						conjunctBodyHasOtherThanTrue = true;
+					} else if (!ATh.contains(mckFormatted) && !ATi.contains(mckFormatted)
+							&& !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
+						// Not in head, init or does is always false
+						conjuntBody.append(MCK_FALSE + MCK_AND);
+						conjunctBodyHasFalse = true;
+						conjunctBodyHasOtherThanTrue = true;
+						if (!ATc.contains(mckFormatted)) {
+							ATc.add(mckFormatted);
+						}
+					} else if (sees && ATf.contains(mckFormatted)) {
+						// Make clause with sees head old
+						conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjunctBodyHasOtherThanTrue = true;
+					} else if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
+							&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
+						// Make clause with next head old
+						conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjunctBodyHasOtherThanTrue = true;
+					} else {
+						// Default
+						conjuntBody.append(mckFormatted + MCK_AND);
+						conjunctBodyHasOtherThanTrue = true;
+					}
 				}
 			}
+			
 			if (!conjunctBodyHasOtherThanTrue) {
+				// Clause is always true so tautology
 				if (!ATt.contains(formatMckNode(headNode))) {
 					ATt.add(formatMckNode(headNode));
 				}
@@ -185,16 +250,13 @@ public class MckTranslator {
 			if (conjuntBody.length() >= MCK_AND.length()) {
 				// Prune last AND
 				conjuntBody.delete(conjuntBody.length() - MCK_AND.length(), conjuntBody.length());
-				conjuntBody.append(GdlParser.CLOSE_P_Str); // ")"
+				conjuntBody.append(" " + GdlParser.CLOSE_P_Str); // ")"
 				// If conjunctive body has a false then it's a contradiction and
 				// can be pruned
-				if (DEBUG) {
+				if (DEBUG || !conjunctBodyHasFalse) {
 					disjunctBody.append(conjuntBody.toString() + MCK_OR);
 					disjunctBodyHasOtherThanFalse = true;
-				} else if (!conjunctBodyHasFalse) {
-					disjunctBody.append(conjuntBody.toString() + MCK_OR);
-					disjunctBodyHasOtherThanFalse = true;
-				}
+				} 
 			}
 		}
 		if (disjunctBody.length() >= MCK_OR.length()) {
@@ -340,6 +402,15 @@ public class MckTranslator {
 	 * @return
 	 */
 	public String toMck() {
+		// Pre-process state transitions, agents and protocols
+		
+		String stateTrans = "";
+		try {
+			stateTrans = generateStateTransitions();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		
 		// Join all of the sections together
 		StringBuilder mck = new StringBuilder();
 		mck.append("-- MCK file generated using MckTranslator from a GGP game description");
@@ -369,7 +440,7 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + generateAgents());
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- State Transitions");
-		mck.append(System.lineSeparator() + generateStateTransitions());
+		mck.append(System.lineSeparator() + stateTrans);
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- Specifications");
 		mck.append(System.lineSeparator() + generateSpecification());
@@ -432,7 +503,7 @@ public class MckTranslator {
 		return protocols.toString();
 	}
 	
-	private String generateStateTransitions(){
+	private String generateStateTransitions() throws Exception{
 		StringBuilder state_trans = new StringBuilder();
 
 		// State Transitions
@@ -550,28 +621,55 @@ public class MckTranslator {
 	private String generateInitialConditions() {
 		StringBuilder init_cond = new StringBuilder();
 
+		//System.out.println("gen init start " + ATi.toString());
 		// Add all initial true legal clauses to ATi
-		for (GdlNode clause : root.getChildren()) {
-			if (clause.getType() != GdlType.CLAUSE && clause.getAtom().equals(GdlNode.GDL_LEGAL)) {
-				ATi.add(formatMckNode(clause));
-			} else {
-				boolean headTrue = true;
-				for (int i = 1; i < clause.getChildren().size(); i++) {
-					if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
-						if (ATi.contains(formatMckNode(clause.getChildren().get(i).getChildren().get(0)))) {
-							headTrue = false;
-						}
-					} else {
-						if (!ATi.contains(formatMckNode(clause.getChildren().get(i)))) {
-							headTrue = false;
+		// TODO: fix initial condition bugs
+		if (DERIVE_INITIAL_CONDITIONS) {
+			for (GdlNode line : root.getChildren()) {
+				//if (clause.getType() != GdlType.CLAUSE && clause.getAtom().equals(GdlNode.GDL_LEGAL)) {
+					//if (!ATi.contains(formatMckNode(clause))) {
+					//	ATi.add(formatMckNode(clause)); // head with no body always true
+						// Is it possible for this code to run? Always legal moves are rare but won't they 
+						// always be in ATi already due to previous steps?
+					//}
+					//System.out.println("error: "+clause.toString());
+				//} else {
+				if (line instanceof GdlRule) {
+					GdlRule clause = (GdlRule) line;
+					boolean initHeadTrue = true;
+					for (int i = 1; i < clause.getChildren().size(); i++) {
+						GdlNode bodyLiteral = clause.getChildren().get(i);
+						if (bodyLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
+							String formattedNode;
+							if (ATf.contains(bodyLiteral.getChild(0) + MCK_OLD_SUFFIX)) {
+								formattedNode = formatMckNode(bodyLiteral.getChild(0)) + MCK_OLD_SUFFIX;
+							} else {
+								formattedNode = formatMckNode(bodyLiteral.getChild(0));
+							}
+							//System.out.println(formattedNode);
+							if (ATi.contains(formattedNode)) {
+								initHeadTrue = false;
+							}
+						} else {
+							String formattedNode;
+							if (graph.hasTerm(MCK_TRUE_PREFIX + bodyLiteral + MCK_OLD_SUFFIX)) {
+								formattedNode = formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX;
+							} else {
+								formattedNode = formatMckNode(bodyLiteral);
+							}
+							//System.out.println(formattedNode);
+							if (!ATi.contains(formattedNode)) {
+								initHeadTrue = false;
+							}
 						}
 					}
-				}
-				if (headTrue) {
-					ATi.add(formatMckNode(clause.getChildren().get(0)));
+					if (initHeadTrue && !ATi.contains(formatMckNode(clause.getHead()))) {
+						ATi.add(formatMckNode(clause.getHead()));
+					}
 				}
 			}
 		}
+		//System.out.println("gen init end " + ATi.toString());
 
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");
@@ -586,7 +684,7 @@ public class MckTranslator {
 			init_cond.append(MCK_AND);
 		}
 		for (String role : ATd.keySet()) {
-			init_cond.append(System.lineSeparator() + MCK_DOES_PREFIX + role + " == " + MCK_INIT);
+			init_cond.append(System.lineSeparator() + MCK_DOES_PREFIX + role + " == " + MCK_INIT + "_" + role);
 			init_cond.append(MCK_AND);
 		}
 		for (String trueVar : ATf) {
@@ -662,7 +760,7 @@ public class MckTranslator {
 			for (String move : ATd.get(role)) {
 				env_vars.append(MCK_MOVE_PREFIX + move +  "_" + role + ", ");
 			}
-			env_vars.append(MCK_INIT + ", " + MCK_MOVE_PREFIX+ MCK_STOP +  "_" + role + "}");
+			env_vars.append(MCK_INIT + "_" + role + ", " + MCK_MOVE_PREFIX+ MCK_STOP +  "_" + role + "}");
 		}
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator() + "-- AT:");

@@ -40,7 +40,7 @@ public class TranslatorTest {
 	}
 	
 	@Test
-	public void testFormatClauseMethod(){
+	public void testFormatClauseMethod() throws Exception{
 		// case 1
 		String GDL_STRING = 
 				"(role p1)"
