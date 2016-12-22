@@ -45,7 +45,7 @@ public class MckTranslator {
 	// List of variables which are always true(totality)
 	private Set<String> ATt;
 	// List of variables which are always false(contradiction)
-	private Set<String> ATc;
+	public Set<String> ATc;
 	// List of formulae which are heads of clauses or facts
 	private Set<String> ATh;
 	// [Role -> Move] move map from legal
@@ -60,7 +60,7 @@ public class MckTranslator {
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
 	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol instead of as a state transition
-	private boolean DERIVE_INITIAL_CONDITIONS = false;
+	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this.root = root;
@@ -521,8 +521,8 @@ public class MckTranslator {
 					state_trans.append(
 						MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + move +  "_" + role + System.lineSeparator() + "[] ");
 				}
-				//state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_INIT + " -> ");
-				//state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_INIT);
+				//state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_INIT +  "_" + role + " -> ");
+				//state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_INIT +  "_" + role);
 				//state_trans.append(System.lineSeparator() + "[] ");
 				state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + MCK_STOP + "_"  + role + " -> ");
 				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_STOP + "_"  + role);
@@ -621,11 +621,18 @@ public class MckTranslator {
 	private String generateInitialConditions() {
 		StringBuilder init_cond = new StringBuilder();
 
+		// Shouldn't need to reference ATt after this
+		for (String tautology : ATt) {
+			if (!ATi.contains(tautology)) {
+				ATi.add(tautology);
+			}
+		}
+		
 		//System.out.println("gen init start " + ATi.toString());
 		// Add all initial true legal clauses to ATi
 		// TODO: fix initial condition bugs
 		if (DERIVE_INITIAL_CONDITIONS) {
-			for (GdlNode line : root.getChildren()) {
+			for (GdlNode clause : root.getChildren()) {
 				//if (clause.getType() != GdlType.CLAUSE && clause.getAtom().equals(GdlNode.GDL_LEGAL)) {
 					//if (!ATi.contains(formatMckNode(clause))) {
 					//	ATi.add(formatMckNode(clause)); // head with no body always true
@@ -634,42 +641,42 @@ public class MckTranslator {
 					//}
 					//System.out.println("error: "+clause.toString());
 				//} else {
-				if (line instanceof GdlRule) {
-					GdlRule clause = (GdlRule) line;
-					boolean initHeadTrue = true;
+				if (clause instanceof GdlRule) {
+					boolean initHeadHasFalse = false;
 					for (int i = 1; i < clause.getChildren().size(); i++) {
-						GdlNode bodyLiteral = clause.getChildren().get(i);
+						GdlNode bodyLiteral = clause.getChild(i);
 						if (bodyLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
+							bodyLiteral = bodyLiteral.getChild(0); // Child of NOT
 							String formattedNode;
-							if (ATf.contains(bodyLiteral.getChild(0) + MCK_OLD_SUFFIX)) {
-								formattedNode = formatMckNode(bodyLiteral.getChild(0)) + MCK_OLD_SUFFIX;
-							} else {
-								formattedNode = formatMckNode(bodyLiteral.getChild(0));
-							}
-							//System.out.println(formattedNode);
-							if (ATi.contains(formattedNode)) {
-								initHeadTrue = false;
-							}
-						} else {
-							String formattedNode;
-							if (graph.hasTerm(MCK_TRUE_PREFIX + bodyLiteral + MCK_OLD_SUFFIX)) {
+							if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(clause.getChild(0))) && 
+									graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX)) {
 								formattedNode = formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX;
 							} else {
 								formattedNode = formatMckNode(bodyLiteral);
 							}
-							//System.out.println(formattedNode);
+							if (ATi.contains(formattedNode)) {
+								initHeadHasFalse = true;
+							}
+						} else {
+							String formattedNode;
+							if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(clause.getChild(0))) && 
+									graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX)) {
+								formattedNode = formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX;
+							} else {
+								formattedNode = formatMckNode(bodyLiteral);
+							}
 							if (!ATi.contains(formattedNode)) {
-								initHeadTrue = false;
+								initHeadHasFalse = true;
 							}
 						}
 					}
-					if (initHeadTrue && !ATi.contains(formatMckNode(clause.getHead()))) {
-						ATi.add(formatMckNode(clause.getHead()));
+					if (!initHeadHasFalse && !ATi.contains(formatMckNode(clause.getChild(0)))) {
+						ATi.add(formatMckNode(clause.getChild(0)));
 					}
 				}
 			}
 		}
-		//System.out.println("gen init end " + ATi.toString());
+		System.out.println("gen init end " + ATi.toString());
 
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");

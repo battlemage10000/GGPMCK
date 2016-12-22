@@ -69,17 +69,17 @@ public class TranslatorTest {
 		GdlNode headNode = root.getChildren().get(7).getChildren().get(0);
 		ArrayList<GdlNode> bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(7));
-		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_2 := (step_1);"));
+		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_2 := ( step_1 );"));
 		
 		headNode = root.getChildren().get(8).getChildren().get(0);
 		bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(8));
-		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_3 := (step_2);"));
+		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_3 := ( step_2 );"));
 		
 		headNode = root.getChildren().get(9).getChildren().get(0);
 		bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(9));
-		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_4 := (step_3);"));
+		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_4 := ( step_3 );"));
 	}
 
 	@Test
@@ -91,6 +91,9 @@ public class TranslatorTest {
 			mhRoot = GdlParser.groundGdl(mhRoot, graph);
 			System.out.println(mhRoot.toString());
 			
+			MckTranslator mhTrans = new MckTranslator(mhRoot, false);
+			String translation = mhTrans.toMck();
+			System.out.println("Number of contradictions: " + mhTrans.ATc.size());
 			
 		}catch (URISyntaxException e){
 			e.printStackTrace();
