@@ -123,15 +123,29 @@ public class MckTranslator {
 	 * @return
 	 */
 	public String formatClause(DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) throws Exception{
-		// Recognize sees
-		boolean sees = false;
+		// Invalid inputs
 		if (bodyList.isEmpty() || headNode.toString().length() == 0){
-			throw new Exception("Body list is empty");
+			throw new Exception("Body list or head is empty");
+		} else if (graph == null) {
+			throw new Exception("Trying to format clause without dependency graph");
+		} else {
+			for (GdlNode clause : bodyList) {
+				if (!clause.getChild(0).equals(headNode)) {
+					throw new Exception("Clause doesn't match head node");
+				}
+			}
 		}
-		if (bodyList.isEmpty() || headNode.toString().length() == 0) {
-			return "";
-		} else if (headNode.getAtom().equals(GdlNode.GDL_SEES)) {
-			sees = true;
+		
+		boolean seesClause = false;
+		boolean nextClause = false;
+		boolean containsDoes = false;
+		
+		// Recognize clause type
+		if (headNode.getAtom().equals(GdlNode.GDL_SEES)) {
+			seesClause = true;
+		}else if (headNode.getAtom().equals(GdlNode.GDL_NEXT)){
+			// TODO: oldify using next
+			nextClause = true;
 		}
 
 		StringBuilder disjunctBody = new StringBuilder();
@@ -144,7 +158,7 @@ public class MckTranslator {
 			for (int i = 1; i < clause.getChildren().size(); i++) {
 				boolean isNegated = false;
 				String mckFormatted;
-				if (clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_NOT)) {
+				if (clause.getChild(i).getAtom().equals(GdlNode.GDL_NOT)) {
 					isNegated = true;
 					mckFormatted = formatMckNode(clause.getChildren().get(i).getChildren().get(0));
 				} else {
@@ -153,22 +167,23 @@ public class MckTranslator {
 
 				if (isNegated) {
 					if (DEBUG) {
-						if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
-								&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
-							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						if (nextClause 
+								&& graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
+								&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
+							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						} else {	
-							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_AND);
+							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.AND);
 						}
 					}
 					
 					if (ATc.contains(mckFormatted)) {
 						// Negation of contradiction is always true
 						if (DEBUG) {
-							conjuntBody.append(MCK_TRUE + MCK_AND);
+							conjuntBody.append(MckFormat.TRUE + MckFormat.AND);
 						}
 					} else if (ATt.contains(mckFormatted)) {
 						// Negation of tautology is always false
-						conjuntBody.append(MCK_FALSE + MCK_AND);
+						conjuntBody.append(MckFormat.FALSE + MckFormat.AND);
 						conjunctBodyHasFalse = true;
 						conjunctBodyHasOtherThanTrue = true;
 					} else if (!ATh.contains(mckFormatted) && !ATi.contains(mckFormatted)
@@ -176,63 +191,65 @@ public class MckTranslator {
 						// TODO: double check logic in this section
 						// Negation of contradiction is always true
 						if (DEBUG) {
-							conjuntBody.append(MCK_TRUE + MCK_AND);
+							conjuntBody.append(MckFormat.TRUE + MckFormat.AND);
 						}
-					} else if (sees && ATf.contains(mckFormatted)) {
+					} else if (seesClause && ATf.contains(mckFormatted)) {
 						// Append sees clause with old ("not" invariant)
-						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
-					} else if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
-							&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
+					} else if (nextClause 
+							&& graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
+							&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
 						// Append next clause with old ("not" invariant)
-						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
 					} else {
 						// Everything else
-						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MCK_AND);
+						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
 					}
 				} else {
 					if (DEBUG) {
-						if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
-							&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
-							conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						if (nextClause 
+								&& graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode)) 
+								&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
+							conjuntBody.append(mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						} else {	
-							conjuntBody.append(mckFormatted + MCK_AND);
+							conjuntBody.append(mckFormatted + MckFormat.AND);
 						}
 					}
 					
 					if (ATt.contains(mckFormatted)) {
 						// Always true
 						if (DEBUG) {
-							conjuntBody.append(MCK_TRUE + MCK_AND);
+							conjuntBody.append(MckFormat.TRUE + MckFormat.AND);
 						}
 					} else if (ATc.contains(mckFormatted)) {
 						// Always false
-						conjuntBody.append(MCK_FALSE + MCK_AND);
+						conjuntBody.append(MckFormat.FALSE + MckFormat.AND);
 						conjunctBodyHasFalse = true;
 						conjunctBodyHasOtherThanTrue = true;
 					} else if (!ATh.contains(mckFormatted) && !ATi.contains(mckFormatted)
-							&& !clause.getChildren().get(i).getAtom().equals(GdlNode.GDL_DOES)) {
+							&& !clause.getChild(i).getAtom().equals(GdlNode.GDL_DOES)) {
 						// Not in head, init or does is always false
-						conjuntBody.append(MCK_FALSE + MCK_AND);
+						conjuntBody.append(MckFormat.FALSE + MckFormat.AND);
 						conjunctBodyHasFalse = true;
 						conjunctBodyHasOtherThanTrue = true;
 						if (!ATc.contains(mckFormatted)) {
 							ATc.add(mckFormatted);
 						}
-					} else if (sees && ATf.contains(mckFormatted)) {
+					} else if (seesClause && ATf.contains(mckFormatted)) {
 						// Make clause with sees head old
-						conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjuntBody.append(mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
-					} else if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(headNode))
-							&& graph.hasTerm(MCK_TRUE_PREFIX + mckFormatted + MCK_OLD_SUFFIX)) {
+					} else if (graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
+							&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
 						// Make clause with next head old
-						conjuntBody.append(mckFormatted + MCK_OLD_SUFFIX + MCK_AND);
+						conjuntBody.append(mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
 					} else {
 						// Default
-						conjuntBody.append(mckFormatted + MCK_AND);
+						conjuntBody.append(mckFormatted + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
 					}
 				}
@@ -247,21 +264,21 @@ public class MckTranslator {
 				// to compute other clauses
 				return "";
 			}
-			if (conjuntBody.length() >= MCK_AND.length()) {
+			if (conjuntBody.length() >= MckFormat.AND.length()) {
 				// Prune last AND
-				conjuntBody.delete(conjuntBody.length() - MCK_AND.length(), conjuntBody.length());
+				conjuntBody.delete(conjuntBody.length() - MckFormat.AND.length(), conjuntBody.length());
 				conjuntBody.append(" " + GdlParser.CLOSE_P_Str); // ")"
 				// If conjunctive body has a false then it's a contradiction and
 				// can be pruned
 				if (DEBUG || !conjunctBodyHasFalse) {
-					disjunctBody.append(conjuntBody.toString() + MCK_OR);
+					disjunctBody.append(conjuntBody.toString() + MckFormat.OR);
 					disjunctBodyHasOtherThanFalse = true;
 				} 
 			}
 		}
-		if (disjunctBody.length() >= MCK_OR.length()) {
+		if (disjunctBody.length() >= MckFormat.OR.length()) {
 			// Prune last OR
-			disjunctBody.delete(disjunctBody.length() - MCK_OR.length(), disjunctBody.length());
+			disjunctBody.delete(disjunctBody.length() - MckFormat.OR.length(), disjunctBody.length());
 		}
 
 		StringBuilder mckNode = new StringBuilder();
@@ -278,8 +295,8 @@ public class MckTranslator {
 			mckNode.append(System.lineSeparator() + formatMckNode(headNode) + " := " + disjunctBody.toString() + ";");
 		} else {
 			mckNode.append(System.lineSeparator() + "if " + disjunctBody.toString());
-			mckNode.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := " + MCK_TRUE);
-			mckNode.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := " + MCK_FALSE);
+			mckNode.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := " + MckFormat.TRUE);
+			mckNode.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := " + MckFormat.FALSE);
 			mckNode.append(System.lineSeparator() + "fi;");
 		}
 		return mckNode.toString();
