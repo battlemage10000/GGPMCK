@@ -19,6 +19,7 @@ public class MckFormat {
 	public static String UNDERSCORE = "_";
 	public static String TRUE = "True".intern();
 	public static String FALSE = "False".intern();
+	public static String DEFINE = "define".intern();
 
 	public boolean ONE_LINE_TRANSITIONS = true;
 	public boolean DEBUG = true;
