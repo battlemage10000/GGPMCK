@@ -80,9 +80,17 @@ public class Gdl implements GdlNode, LparseNode {
 		}
 		return sb.toString();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof GdlNode && this.children.equals(((GdlNode)obj).getChildren())){
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public GdlNode getChild(int index) {
-		return children.get(index);
+		return getChildren().get(0);
 	}
 }

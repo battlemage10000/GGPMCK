@@ -161,4 +161,12 @@ public class GdlTerm implements GdlNode, LparseNode {
 	public GdlNode getChild(int index) {
 		return children.get(index);
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this.toString().equals(obj.toString())) {
+			return true;
+		}
+		return false;
+	}
 }
