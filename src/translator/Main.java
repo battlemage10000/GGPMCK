@@ -29,6 +29,7 @@ public class Main {
 		boolean groundSwitch = true; // default currently no way to turn off
 		boolean orderedSwitch = false;
 		boolean debugSwitch = false;
+		boolean useDefineSwitch = false;
 		boolean outputMckSwitch = false;
 		boolean outputLparseSwitch = false;
 		boolean outputDotSwitch = false;
@@ -62,6 +63,9 @@ public class Main {
 				break;
 			case "--ordered":
 				orderedSwitch = true;
+				break;
+			case "--use-define":
+				useDefineSwitch = true;
 				break;
 			case "-d":
 			case "--debug":
@@ -114,6 +118,7 @@ public class Main {
 			System.out.println("  --pretty      formatted gdl. Use with --ground");
 			System.out.println("  -g --ground   use internal grounder");
 			System.out.println("  -d --debug    manually select outputs in debug mode");
+			System.out.println("  --use-define  construct mck output using define statements");
 			System.out.println("  --ordered     order the gdl rules (default true for --to-mck)");
 			System.out.println("  --parse-tree  print parse tree for debug");
 			System.out.println("  --parse-types print parse tree type for debug");
@@ -217,7 +222,7 @@ public class Main {
 					System.out.println(
 							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 				}
-				MckTranslator translator = new MckTranslator(root, debugSwitch);
+				MckTranslator translator = new MckTranslator(root, useDefineSwitch, debugSwitch);
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
 					GdlParser.saveFile(translator.toMck(), outputFilePath);

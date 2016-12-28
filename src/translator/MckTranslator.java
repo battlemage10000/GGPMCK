@@ -35,7 +35,6 @@ public class MckTranslator {
 	public static String MCK_OLD_SUFFIX = "_old".intern();
 	public static String MCK_AND = " /\\ ".intern();
 	public static String MCK_OR = " \\/ ".intern();
-	public static boolean ONE_LINE_TRANSITIONS = true;
 	// Variables
 	private Set<String> AT;
 	// Variables found in true and/or next
@@ -60,14 +59,16 @@ public class MckTranslator {
 	private DependencyGraph graph;
 
 	private boolean DEBUG;
+	private boolean ONE_LINE_TRANSITIONS = true;
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
 	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol instead of as a state transition
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
 	
-	public MckTranslator(GdlNode root, boolean DEBUG) {
+	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG) {
 		this.root = root;
+		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
 		this.DEBUG = DEBUG;
 		if (SYNCHRONIZED_COLLECTIONS) {
 			this.AT = Collections.synchronizedSet(new HashSet<String>());
@@ -92,6 +93,10 @@ public class MckTranslator {
 		}
 		initialize();
 		this.defineBasedDeclarations = new StringBuilder();
+	}
+	
+	public MckTranslator(GdlNode root, boolean DEBUG){
+		this(root, false, DEBUG);
 	}
 
 	/**
