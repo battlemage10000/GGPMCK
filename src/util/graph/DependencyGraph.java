@@ -1,11 +1,13 @@
 package util.graph;
 
 import java.util.Map;
+import java.util.Set;
 
 import util.GdlParser;
 import util.grammar.GdlNode;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +19,7 @@ import java.util.Collections;
 public class DependencyGraph {
 	private final Map<String, ArrayList<String>> adjacencyMap;
 	private final Map<String, Integer> stratumMap;
+	private final Set<String> staticSet;
 
 	private final boolean SYNCHRONIZED_COLLECTIONS = false;
 
@@ -27,9 +30,11 @@ public class DependencyGraph {
 		if (SYNCHRONIZED_COLLECTIONS) {
 			adjacencyMap = Collections.synchronizedMap(new HashMap<String, ArrayList<String>>());
 			stratumMap = Collections.synchronizedMap(new HashMap<String, Integer>());
+			staticSet = Collections.synchronizedSet(new HashSet<String>());
 		} else {
 			adjacencyMap = new HashMap<String, ArrayList<String>>();
 			stratumMap = new HashMap<String, Integer>();
+			staticSet = new HashSet<String>();
 		}
 	}
 
@@ -71,6 +76,15 @@ public class DependencyGraph {
 		} else {
 			return -2;
 		}
+	}
+	
+	/**
+	 * True if variable is static. Initialized in the computeStratum() method.
+	 * @param term
+	 * @return
+	 */
+	public boolean isStatic(String term){
+		return staticSet.contains(term);
 	}
 
 	/**
@@ -124,7 +138,11 @@ public class DependencyGraph {
 		// Declare nodes and assign attributes
 		for (String from : adjacencyMap.keySet()) {
 			dot.append(System.lineSeparator() + dotEncoded(from) + " [label=\"" + dotEncoded(from) + " "
-					+ stratumMap.get(from) + "\"]");
+					+ stratumMap.get(from));
+			if (staticSet.contains(from)) {
+				dot.append(" static ");
+			}
+			dot.append("\"]");
 		}
 		dot.append(System.lineSeparator());
 
@@ -169,6 +187,11 @@ public class DependencyGraph {
 		for (String key : adjacencyMap.keySet()) {
 			if (adjacencyMap.get(key).isEmpty()) {
 				stratumMap.put(key, 0);
+				if ((key.length() > GdlParser.TRUE_PREFIX.length() 
+						&& !key.substring(0, GdlParser.TRUE_PREFIX.length()).equals(GdlParser.TRUE_PREFIX))
+						|| !key.contentEquals(GdlNode.GDL_DOES)) {
+					staticSet.add(key);
+				}
 			} else {
 				stratumMap.put(key, -1);
 				unstratified.add(key);
@@ -182,8 +205,12 @@ public class DependencyGraph {
 			for (String from : unstratified) {
 				// Head of clause
 				boolean unstratDep = false;
+				boolean hasNonStaticDep = false;
 				int newStratum = 0;
 				for (String to : adjacencyMap.get(from)) {
+					if (!staticSet.contains(to)) {
+						hasNonStaticDep = true;
+					}
 					// Body of clause
 					if (from.equals(to)) {
 						continue;
@@ -213,6 +240,9 @@ public class DependencyGraph {
 						} else {
 							addEdge(from, to);
 						}
+					}
+					if (!hasNonStaticDep && !staticSet.contains(from)) {
+						staticSet.add(from);
 					}
 					if (oldifyList.contains(from)) {
 						oldifyList.remove(from);
