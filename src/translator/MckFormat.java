@@ -1,6 +1,10 @@
 package translator;
 
+import java.util.Set;
+
+import prover.Prover;
 import util.GdlParser;
+import util.grammar.GdlFormula;
 import util.grammar.GdlNode;
 
 public class MckFormat {
@@ -82,5 +86,33 @@ public class MckFormat {
 			string = string.replace("+", "plus");
 		}
 		return string;
+	}
+	
+	public static String formatClause(Prover prover, GdlFormula headNode, boolean useDefine, boolean oneLineTransition) {
+		StringBuilder DNF = new StringBuilder();
+		for (Set<String> disjunct : prover.getDnfRuleOfHead(headNode)) {
+			if (disjunct.isEmpty()) {
+				continue;
+			}
+			StringBuilder disjunctString = new StringBuilder();
+			for (String literal : disjunct) {
+				disjunctString.append(literal + AND);
+			}
+			DNF.append(disjunctString.toString() + OR);
+		}
+		
+		StringBuilder clause = new StringBuilder();
+		if (useDefine) {
+			clause.append(System.lineSeparator() + DEFINE + " " + formatMckNode(headNode) + " = " + DNF.toString());
+		} else if (oneLineTransition) {
+			clause.append(System.lineSeparator() + formatMckNode(headNode) + " := " + DNF.toString() + ";");
+		} else {
+			clause.append(System.lineSeparator() + "if " + DNF.toString());
+			clause.append(System.lineSeparator() + "  -> " + formatMckNode(headNode) + " := " + TRUE);
+			clause.append(System.lineSeparator() + "  [] otherwise -> " + formatMckNode(headNode) + " := " + FALSE);
+			clause.append(System.lineSeparator() + "fi;");
+		}
+		
+		return clause.toString();
 	}
 }
