@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import util.GdlParser;
-import util.grammar.GdlFormula;
+import util.grammar.GdlLiteral;
 import util.grammar.GdlNode;
 import util.grammar.GdlNode.GdlType;
 import util.grammar.GdlRule;

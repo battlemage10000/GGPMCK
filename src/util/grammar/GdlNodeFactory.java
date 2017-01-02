@@ -10,8 +10,8 @@ public class GdlNodeFactory {
 		return new GdlRule(parent);
 	}
 
-	public static GdlFormula createGdlFormula(String atom, GdlNode parent) {
-		return new GdlFormula(atom, parent);
+	public static GdlLiteral createGdlFormula(String atom, GdlNode parent) {
+		return new GdlLiteral(atom, parent);
 	}
 
 	public static GdlTerm createGdlTerm(String atom, GdlNode parent) {

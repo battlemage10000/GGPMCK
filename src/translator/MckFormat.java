@@ -4,7 +4,7 @@ import java.util.Set;
 
 import prover.Prover;
 import util.GdlParser;
-import util.grammar.GdlFormula;
+import util.grammar.GdlLiteral;
 import util.grammar.GdlNode;
 
 public class MckFormat {
@@ -88,7 +88,7 @@ public class MckFormat {
 		return string;
 	}
 	
-	public static String formatClause(Prover prover, GdlFormula headNode, boolean useDefine, boolean oneLineTransition) {
+	public static String formatClause(Prover prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
 		StringBuilder DNF = new StringBuilder();
 		for (Set<String> disjunct : prover.getDnfRuleOfHead(headNode)) {
 			if (disjunct.isEmpty()) {

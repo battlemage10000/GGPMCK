@@ -7,13 +7,13 @@ import java.util.Queue;
 
 import util.grammar.GdlNode;
 
-public class GdlFormula implements GdlNode, LparseNode {
+public class GdlLiteral implements GdlNode, LparseNode {
 
 	private final String atom;
 	private final GdlNode parent;
 	private final ArrayList<GdlNode> children;
 
-	public GdlFormula(String atom, GdlNode parent) {
+	public GdlLiteral(String atom, GdlNode parent) {
 		this.atom = atom.intern();
 		this.parent = parent;
 		this.children = new ArrayList<GdlNode>();
