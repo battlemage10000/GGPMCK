@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+import util.grammar.Gdl;
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
 import util.grammar.GdlRule;
@@ -151,8 +152,8 @@ public class GdlParser {
 	 * @param tokens
 	 * @return
 	 */
-	public static GdlNode expandParseTree(List<String> tokens) {
-		GdlNode root = GdlNodeFactory.createGdl();
+	public static Gdl expandParseTree(List<String> tokens) {
+		Gdl root = GdlNodeFactory.createGdl();
 
 		GdlNode parent = root;
 		boolean openBracket = false;
@@ -207,7 +208,7 @@ public class GdlParser {
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	public static GdlNode parseFile(String filePath) throws IOException, URISyntaxException {
+	public static Gdl parseFile(String filePath) throws IOException, URISyntaxException {
 		return expandParseTree(tokenizeFile(filePath));
 	}
 
@@ -218,7 +219,7 @@ public class GdlParser {
 	 * @return
 	 * @throws IOException
 	 */
-	public static GdlNode parseString(String gdl) {
+	public static Gdl parseString(String gdl) {
 		return expandParseTree(tokenizeString(gdl));
 	}
 
