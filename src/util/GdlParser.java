@@ -358,8 +358,8 @@ public class GdlParser {
 	 * @param domainGraph
 	 * @return
 	 */
-	public static GdlNode groundGdl(GdlNode root, DomainGraph domainGraph) {
-		GdlNode groundedRoot = GdlNodeFactory.createGdl();
+	public static Gdl groundGdl(GdlNode root, DomainGraph domainGraph) {
+		Gdl groundedRoot = GdlNodeFactory.createGdl();
 
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // No variables is already ground
