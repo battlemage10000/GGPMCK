@@ -17,7 +17,8 @@ public class Prover {
 	public static String NEXT_PREFIX = "(next ";
 	public static String TRUE_PREFIX = "(true ";
 	public static String DOES_PREFIX = "(does ";
-	public static String FALSE = "FALSE";
+	public static String FALSE = "?FALSE";
+	public static String TRUE = "?TRUE";
 
 	private Set<String> literalSet; // L
 	private Set<String> initialSet; // I
@@ -179,10 +180,13 @@ public class Prover {
 		boolean changed = true;
 		while (changed) {
 			changed = false;
+			Set<String> removeRuleSet = new HashSet<String>();
 			for (String headNode : dnfRuleSet.keySet()) {
 				Set<Set<String>> dnfRule = dnfRuleSet.get(headNode);
 				Set<Set<String>> newDnfRule = new HashSet<Set<String>>();
 				boolean ruleContainsNonFalse = false;
+				boolean isTautology = false;
+				boolean isContradiction = false;
 
 				if (dnfRuleSet.get(headNode) == null) {
 					continue;
@@ -191,6 +195,12 @@ public class Prover {
 				for (Set<String> disjunct : dnfRule) {
 					Set<String> newDisjunct = new HashSet<String>();
 
+					if (disjunct.isEmpty()) {
+						// Clause is tautology so rule is tautology
+						dnfRule.clear();
+						break;
+					}
+					
 					for (String literal : disjunct) {
 						// Filter negative prefix
 						boolean isNegative = false;
@@ -201,19 +211,24 @@ public class Prover {
 							isNegative = !isNegative;
 						}
 
-						if (tautologySet.contains(posLiteral)) {
+						
+						//if (contradictionSet.contains(posLiteral)) {
+						if (dnfRuleSet.get(posLiteral) == null) {
+							if (isNegative) {
+								// Tautology
+								//newDisjunct.add(TRUE);
+								continue;
+							} else {
+								newDisjunct.add(FALSE);
+							} 
+						//} else if (tautologySet.contains(posLiteral)) {
+						} else if (dnfRuleSet.get(posLiteral).isEmpty()) {
 							if (isNegative) {
 								// Contradiction
 								newDisjunct.add(FALSE);
 							} else {
+								//newDisjunct.add(TRUE);
 								continue;
-							}
-						} else if (contradictionSet.contains(posLiteral)) {
-							if (isNegative) {
-								// Tautology
-								continue;
-							} else {
-								newDisjunct.add(FALSE);
 							}
 						} else if (posLiteral.length() >= DOES_PREFIX.length()
 								&& posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
@@ -225,38 +240,53 @@ public class Prover {
 							// No change for true
 							newDisjunct.add(literal);
 							continue;
+						} else {
+							newDisjunct.add(literal);
 						}
-
-						newDisjunct.add(literal);
-					}
+					} // End literal-for-loop
 					
-					if (newDisjunct.isEmpty()) {
-						newDnfRule.clear();
-						break;
-					}
-					if (!newDisjunct.contains(FALSE)) {
+					//if (newDisjunct.isEmpty()) {
+					//	newDnfRule.clear();
+						//newDnfRule.add(newDisjunct);
+					//	break;
+					//}
+					if (newDisjunct.contains(FALSE)) {
+						//newDnfRule.add(newDisjunct);
+					} else {
 						newDnfRule.add(newDisjunct);
 						ruleContainsNonFalse = true;
 					}
-				}
+				} // End disjunct-for-loop
 				
+				if (newDnfRule.isEmpty()) {
+					//if (!tautologySet.contains(headNode)) {
+					//	tautologySet.add(headNode);
+					//	changed = true;
+					//}
+				}
 				if (!ruleContainsNonFalse) {
 					// Clauses are all false, contradiction
-					if (!contradictionSet.contains(headNode)) {
-						contradictionSet.add(headNode);
-						changed = true;
-					}
+					//if (!contradictionSet.contains(headNode)) {
+					//	contradictionSet.add(headNode);
+					//	changed = true;
+					//}
+					removeRuleSet.add(headNode);
 					newDnfRule = null;
-				} else if (newDnfRule.isEmpty()) {
-					if (!tautologySet.contains(headNode)) {
-						tautologySet.add(headNode);
-						changed = true;
-					}
-				}
+				} 
 
-				dnfRuleSet.put(headNode, newDnfRule);
-			}
-		}
+				if (isTautology) {
+					dnfRuleSet.put(headNode, new HashSet<Set<String>>());
+				} else if (isContradiction) {
+					dnfRuleSet.put(headNode, null);
+				} else {
+					dnfRuleSet.put(headNode, newDnfRule);
+				}
+			} // End head-for-loop
+			for (String removeHead : removeRuleSet) {
+				dnfRuleSet.remove(removeHead);
+			} 
+			removeRuleSet.clear();
+		} // End change-while-loop
 		return numIterations;
 	}
 
