@@ -27,7 +27,6 @@ public class ProverTest {
 	String BETTER_VALUE_GDL_STRING = "(<= (better_value ?x ?y) (succ_value ?x ?y))"
 			+ "(<= (better_value ?x ?z) (better_value ?y ?z) (succ_value ?x ?y))" + "(succ_value 1 0)"
 			+ "(succ_value 2 1)" + "(succ_value 3 2)" + "(succ_value 4 3)";
-	//+ "(succ_value 5 4)" + "(succ_value 6 5)"	+ "(succ_value 7 6)";
 
 	@Test
 	public void betterValueGameRulesetTest() throws IOException, URISyntaxException, GDLSyntaxException {
