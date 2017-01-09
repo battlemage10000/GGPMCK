@@ -95,10 +95,28 @@ public class MckFormat {
 				continue;
 			}
 			StringBuilder disjunctString = new StringBuilder();
+			disjunctString.append("(");
 			for (String literal : disjunct) {
-				disjunctString.append(literal + AND);
+				GdlNode negFreeLiteral = GdlParser.parseString(literal).getChild(0);
+				String negList = "";
+				while(negFreeLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
+					negFreeLiteral = negFreeLiteral.getChild(0);
+					negList += NOT + " ";
+				}
+				disjunctString.append(negList + formatMckNode(negFreeLiteral) + AND);
 			}
+			if (disjunctString.length() >= AND.length()) {
+				disjunctString.delete(disjunctString.length() - AND.length(), disjunctString.length());
+			}
+			disjunctString.append(")");
+			
 			DNF.append(disjunctString.toString() + OR);
+		}
+		if (DNF.length() >= OR.length()) {
+			DNF.delete(DNF.length() - OR.length(), DNF.length());
+		}
+		if (DNF.length() == 0) {
+			return "";
 		}
 		
 		StringBuilder clause = new StringBuilder();

@@ -17,6 +17,7 @@ public class Prover {
 	public static String NEXT_PREFIX = "(next ";
 	public static String TRUE_PREFIX = "(true ";
 	public static String DOES_PREFIX = "(does ";
+	public static String FALSE = "FALSE";
 
 	private Set<String> literalSet; // L
 	private Set<String> initialSet; // I
@@ -106,108 +107,154 @@ public class Prover {
 					if (!tautologySet.contains(headNode)) {
 						tautologySet.add(headNode.toString());
 					}
-				}// else {
-					dnfRuleSet.get(headNode.toString()).add(clauseLiteralSet);
-				//}
+				} // else {
+				dnfRuleSet.get(headNode.toString()).add(clauseLiteralSet);
+				// }
 			} else {
 				throw new GDLSyntaxException();
 			}
 		}
 	}
 
+	/*
+	 * public int cullVariables() { int numIterations = 0;
+	 * 
+	 * boolean changed = true;
+	 * 
+	 * while (changed) { numIterations++; changed = false; Set<String>
+	 * tautologyResetSet = new HashSet<String>(); Set<String>
+	 * contradictionResetSet = new HashSet<String>(); Iterator<String>
+	 * headIterator = dnfRuleSet.keySet().iterator(); while
+	 * (headIterator.hasNext()) { String headNode = headIterator.next(); if
+	 * (dnfRuleSet.get(headNode).isEmpty()) { continue; }
+	 * 
+	 * //boolean dnfContainsTrue = false; Iterator<Set<String>> dnfIterator =
+	 * dnfRuleSet.get(headNode).iterator(); while (dnfIterator.hasNext()) {
+	 * 
+	 * boolean disjunctContainsFalse = false; Set<String> disjunct =
+	 * dnfIterator.next(); Iterator<String> disjunctIterator =
+	 * disjunct.iterator(); while (disjunctIterator.hasNext()) {
+	 * 
+	 * String literal = disjunctIterator.next();
+	 * 
+	 * // Exclude not prefix while (literal.length() >= NOT_PREFIX.length() &&
+	 * literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) { literal =
+	 * literal.substring(NOT_PREFIX.length(), literal.length()-1); }
+	 * 
+	 * // Exclude true and does from tautology/contradiction evaluation if
+	 * ((literal.length() >= TRUE_PREFIX.length() && literal.substring(0,
+	 * TRUE_PREFIX.length()).equals(TRUE_PREFIX)) || (literal.length() >=
+	 * DOES_PREFIX.length() && literal.substring(0,
+	 * DOES_PREFIX.length()).equals(DOES_PREFIX))) { continue; }
+	 * 
+	 * // Known tautology therefore literal culled if
+	 * (tautologySet.contains(literal)) { disjunctIterator.remove(); //changed =
+	 * true; }
+	 * 
+	 * // Known contradiction therefore clause flagged for culling if
+	 * (contradictionSet.contains(literal)) { disjunctContainsFalse = true; }
+	 * 
+	 * // Unknown contradiction added to contradictionSet and clause flagged for
+	 * culling if (!dnfRuleSet.containsKey(literal)) { if
+	 * (!contradictionSet.contains(literal)) { contradictionSet.add(literal);
+	 * changed = true; } } } if (disjunctContainsFalse) { // Cull clauses with
+	 * contradictions dnfIterator.remove(); //changed = true; if
+	 * (dnfRuleSet.get(headNode).isEmpty() &&
+	 * !contradictionSet.contains(headNode)) { contradictionSet.add(headNode);
+	 * changed = true; } } else if (disjunct.isEmpty()) { // Empty clause in dnf
+	 * therefore head is tautology if (!tautologySet.contains(headNode)) {
+	 * tautologySet.add(headNode); changed = true; }
+	 * tautologyResetSet.add(headNode); } } } for (String resetHead :
+	 * tautologyResetSet) { dnfRuleSet.put(resetHead, new
+	 * HashSet<Set<String>>()); //changed = true; } for (String contradiction :
+	 * contradictionResetSet) { if (dnfRuleSet.containsKey(contradiction)) {
+	 * dnfRuleSet.remove(contradiction); } } tautologyResetSet.clear();
+	 * contradictionResetSet.clear(); System.out.println("Iteration: " +
+	 * numIterations); if (numIterations % 100 == 1) {
+	 * System.out.println("breakpoint"); } } return numIterations; }
+	 */
+
 	public int cullVariables() {
 		int numIterations = 0;
-		
 		boolean changed = true;
-		
 		while (changed) {
-			numIterations++;
 			changed = false;
-			Set<String> tautologyResetSet = new HashSet<String>();
-			Set<String> contradictionResetSet = new HashSet<String>();
-			Iterator<String> headIterator = dnfRuleSet.keySet().iterator();
-			while (headIterator.hasNext()) {
-				String headNode = headIterator.next();
-				if (dnfRuleSet.get(headNode).isEmpty()) {
+			for (String headNode : dnfRuleSet.keySet()) {
+				Set<Set<String>> dnfRule = dnfRuleSet.get(headNode);
+				Set<Set<String>> newDnfRule = new HashSet<Set<String>>();
+				boolean ruleContainsNonFalse = false;
+
+				if (dnfRuleSet.get(headNode) == null) {
 					continue;
 				}
 				
-				//boolean dnfContainsTrue = false;
-				Iterator<Set<String>> dnfIterator = dnfRuleSet.get(headNode).iterator();
-				while (dnfIterator.hasNext()) {
-					
-					boolean disjunctContainsFalse = false;
-					Set<String> disjunct = dnfIterator.next();
-					Iterator<String> disjunctIterator = disjunct.iterator();
-					while (disjunctIterator.hasNext()) {
-						
-						String literal = disjunctIterator.next();
-						
-						// Exclude not prefix
-						while (literal.length() >= NOT_PREFIX.length()
-									&& literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
-							literal = literal.substring(NOT_PREFIX.length(), literal.length()-1);
+				for (Set<String> disjunct : dnfRule) {
+					Set<String> newDisjunct = new HashSet<String>();
+
+					for (String literal : disjunct) {
+						// Filter negative prefix
+						boolean isNegative = false;
+						String posLiteral = literal;
+						while (posLiteral.length() >= NOT_PREFIX.length()
+								&& posLiteral.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
+							posLiteral = posLiteral.substring(NOT_PREFIX.length(), posLiteral.length());
+							isNegative = !isNegative;
 						}
 
-						// Exclude true and does from tautology/contradiction evaluation
-						if ((literal.length() >= TRUE_PREFIX.length()
-								&& literal.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX))
-								|| (literal.length() >= DOES_PREFIX.length()
-										&& literal.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX))) {
+						if (tautologySet.contains(posLiteral)) {
+							if (isNegative) {
+								// Contradiction
+								newDisjunct.add(FALSE);
+							} else {
+								continue;
+							}
+						} else if (contradictionSet.contains(posLiteral)) {
+							if (isNegative) {
+								// Tautology
+								continue;
+							} else {
+								newDisjunct.add(FALSE);
+							}
+						} else if (posLiteral.length() >= DOES_PREFIX.length()
+								&& posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
+							// No change for does
+							newDisjunct.add(literal);
+							continue;
+						} else if (posLiteral.length() >= TRUE_PREFIX.length()
+								&& posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
+							// No change for true
+							newDisjunct.add(literal);
 							continue;
 						}
 
-						// Known tautology therefore literal culled
-						if (tautologySet.contains(literal)) {
-							disjunctIterator.remove();
-							changed = true;
-						}
-
-						// Known contradiction therefore clause flagged for culling
-						if (contradictionSet.contains(literal)) {
-							disjunctContainsFalse = true;
-						}
-
-						// Unknown contradiction added to contradictionSet and clause flagged for culling
-						if (!dnfRuleSet.containsKey(literal)) {
-							if (!contradictionSet.contains(literal)) {
-								contradictionSet.add(literal);
-								//changed = true;
-							}
-						}
+						newDisjunct.add(literal);
 					}
-					if (disjunctContainsFalse) {
-						// Cull clauses with contradictions
-						dnfIterator.remove();
+					
+					if (newDisjunct.isEmpty()) {
+						newDnfRule.clear();
+						break;
+					}
+					if (!newDisjunct.contains(FALSE)) {
+						newDnfRule.add(newDisjunct);
+						ruleContainsNonFalse = true;
+					}
+				}
+				
+				if (!ruleContainsNonFalse) {
+					// Clauses are all false, contradiction
+					if (!contradictionSet.contains(headNode)) {
+						contradictionSet.add(headNode);
 						changed = true;
-						if (dnfRuleSet.get(headNode).isEmpty() && !contradictionSet.contains(headNode)) {
-							contradictionSet.add(headNode);
-							//changed = true;
-						}
-					} else if (disjunct.isEmpty()) {
-						// Empty clause in dnf therefore head is tautology
-						if (!tautologySet.contains(headNode)) {
-							tautologySet.add(headNode);
-							//changed = true;
-						}
-						tautologyResetSet.add(headNode);
+					}
+					newDnfRule = null;
+				} else if (newDnfRule.isEmpty()) {
+					if (!tautologySet.contains(headNode)) {
+						tautologySet.add(headNode);
+						changed = true;
 					}
 				}
-			}
-			for (String resetHead : tautologyResetSet) {
-				dnfRuleSet.put(resetHead, new HashSet<Set<String>>());
-				changed = true;
-			}
-			for (String contradiction : contradictionResetSet) {
-				if (dnfRuleSet.containsKey(contradiction)) {
-					dnfRuleSet.remove(contradiction);
-				}
-			}
-			tautologyResetSet.clear();
-			contradictionResetSet.clear();
-			System.out.println("Iteration: " + numIterations);
-			if (numIterations % 100 == 1) {
-				System.out.println("breakpoint");
+
+				dnfRuleSet.put(headNode, newDnfRule);
 			}
 		}
 		return numIterations;
@@ -292,7 +339,7 @@ public class Prover {
 				// Get rid of prefixing negations
 				boolean isNegative = false;
 				while (literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
-					literal = literal.substring(NOT_PREFIX.length(), literal.length()-1);
+					literal = literal.substring(NOT_PREFIX.length(), literal.length() - 1);
 					isNegative = !isNegative;
 				}
 
@@ -341,23 +388,25 @@ public class Prover {
 	public Map<String, Set<Set<String>>> getRuleSet() {
 		return dnfRuleSet;
 	}
-	
+
 	public Set<String> getTautologySet() {
 		return tautologySet;
 	}
-	
+
 	public Set<String> getContradictionSet() {
 		return contradictionSet;
 	}
-	
+
 	public String debug() {
 		StringBuilder debug = new StringBuilder();
 		debug.append(System.lineSeparator() + "Literals: " + literalSet.toString());
 		debug.append(System.lineSeparator() + "Initial: " + initialSet.toString());
 		debug.append(System.lineSeparator() + "Tautology: " + tautologySet.toString());
 		debug.append(System.lineSeparator() + "Contradiction: " + contradictionSet.toString());
-		// debug.append(System.lineSeparator() + "TrueVars: " + trueLiterals.toString());
-		// debug.append(System.lineSeparator() + "FalseVars: " + falseLiterals.toString());
+		// debug.append(System.lineSeparator() + "TrueVars: " +
+		// trueLiterals.toString());
+		// debug.append(System.lineSeparator() + "FalseVars: " +
+		// falseLiterals.toString());
 		return debug.toString();
 	}
 }

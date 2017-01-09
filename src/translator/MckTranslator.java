@@ -8,7 +8,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import prover.Prover;
 import util.GdlParser;
+import util.grammar.GDLSyntaxException;
+import util.grammar.Gdl;
 import util.grammar.GdlLiteral;
 import util.grammar.GdlNode;
 import util.grammar.GdlNode.GdlType;
@@ -57,15 +60,19 @@ public class MckTranslator {
 	private Map<String, String> ATdef;
 
 	private DependencyGraph graph;
+	private Prover prover;
 
 	private boolean DEBUG;
 	private boolean ONE_LINE_TRANSITIONS = true;
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
-	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol instead of as a state transition
+	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol
+													// instead of as a state
+													// transition
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
-	
+	private boolean USE_PROVER = false;
+
 	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG) {
 		this.root = root;
 		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
@@ -91,30 +98,38 @@ public class MckTranslator {
 			this.ATd = new HashMap<String, List<String>>();
 			this.ATs = new HashMap<String, List<String>>();
 		}
-		initialize();
 		this.defineBasedDeclarations = new StringBuilder();
+		try {
+			this.prover = new Prover((Gdl) root);
+			System.out.println(this.prover.cullVariables() + " iterations");
+		} catch (GDLSyntaxException e) {
+			this.USE_PROVER = false;
+			e.printStackTrace();
+		}
+		initialize();
 	}
-	
-	public MckTranslator(GdlNode root, boolean DEBUG){
+
+	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this(root, false, DEBUG);
 	}
 
 	/**
 	 * Link to the format node method in MckFormat utility class
+	 * 
 	 * @param node
 	 * @return
 	 */
-	public static String formatMckNode(GdlNode node){
+	public static String formatMckNode(GdlNode node) {
 		return MckFormat.formatMckNode(node);
 	}
-	
+
 	/**
 	 * Absolute version of format node which doesn't do any manipulation
 	 * 
 	 * @param node
 	 * @return
 	 */
-	public static String formatMckNodeAbs(GdlNode node){
+	public static String formatMckNodeAbs(GdlNode node) {
 		return MckFormat.formatMckNodeAbs(node);
 	}
 
@@ -134,9 +149,9 @@ public class MckTranslator {
 	 * @param bodyList
 	 * @return
 	 */
-	public String formatClause(DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) throws Exception{
+	public String formatClause(DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) throws Exception {
 		// Invalid inputs
-		if (bodyList.isEmpty() || headNode.toString().length() == 0){
+		if (bodyList.isEmpty() || headNode.toString().length() == 0) {
 			throw new Exception("Body list or head is empty");
 		} else if (graph == null) {
 			throw new Exception("Trying to format clause without dependency graph");
@@ -147,15 +162,15 @@ public class MckTranslator {
 				}
 			}
 		}
-		
+
 		boolean seesClause = false;
 		boolean nextClause = false;
 		boolean containsDoes = false;
-		
+
 		// Recognize clause type
 		if (headNode.getAtom().equals(GdlNode.GDL_SEES)) {
 			seesClause = true;
-		}else if (headNode.getAtom().equals(GdlNode.GDL_NEXT)){
+		} else if (headNode.getAtom().equals(GdlNode.GDL_NEXT)) {
 			// TODO: oldify using next
 			nextClause = true;
 		}
@@ -185,15 +200,15 @@ public class MckTranslator {
 
 				if (isNegated) {
 					if (DEBUG) {
-						if (nextClause 
-								&& graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
+						if (nextClause && graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
 								&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
-							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
-						} else {	
+							conjuntBody
+									.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
+						} else {
 							conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.AND);
 						}
 					}
-					
+
 					if (ATc.contains(mckFormatted)) {
 						// Negation of contradiction is always true
 						if (DEBUG) {
@@ -215,8 +230,7 @@ public class MckTranslator {
 						// Append sees clause with old ("not" invariant)
 						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
 						conjunctBodyHasOtherThanTrue = true;
-					} else if (nextClause 
-							&& graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
+					} else if (nextClause && graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
 							&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
 						// Append next clause with old ("not" invariant)
 						conjuntBody.append(MckFormat.NOT + " " + mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
@@ -228,15 +242,14 @@ public class MckTranslator {
 					}
 				} else {
 					if (DEBUG) {
-						if (nextClause 
-								&& graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode)) 
+						if (nextClause && graph.hasTerm(MckFormat.TRUE_PREFIX + formatMckNode(headNode))
 								&& graph.hasTerm(MckFormat.TRUE_PREFIX + mckFormatted + MckFormat.OLD_SUFFIX)) {
 							conjuntBody.append(mckFormatted + MckFormat.OLD_SUFFIX + MckFormat.AND);
-						} else {	
+						} else {
 							conjuntBody.append(mckFormatted + MckFormat.AND);
 						}
 					}
-					
+
 					if (ATt.contains(mckFormatted)) {
 						// Always true
 						if (DEBUG) {
@@ -272,7 +285,7 @@ public class MckTranslator {
 					}
 				}
 			}
-			
+
 			if (!conjunctBodyHasOtherThanTrue) {
 				// Clause is always true so tautology
 				if (!ATt.contains(formatMckNode(headNode))) {
@@ -291,7 +304,7 @@ public class MckTranslator {
 				if (DEBUG || !conjunctBodyHasFalse) {
 					disjunctBody.append(conjuntBody.toString() + MckFormat.OR);
 					disjunctBodyHasOtherThanFalse = true;
-				} 
+				}
 			}
 		}
 		if (disjunctBody.length() >= MckFormat.OR.length()) {
@@ -319,7 +332,8 @@ public class MckTranslator {
 		} else {
 			mckNode.append(System.lineSeparator() + "if " + disjunctBody.toString());
 			mckNode.append(System.lineSeparator() + " -> " + formatMckNode(headNode) + " := " + MckFormat.TRUE);
-			mckNode.append(System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := " + MckFormat.FALSE);
+			mckNode.append(
+					System.lineSeparator() + " [] otherwise -> " + formatMckNode(headNode) + " := " + MckFormat.FALSE);
 			mckNode.append(System.lineSeparator() + "fi;");
 		}
 		return mckNode.toString();
@@ -439,18 +453,19 @@ public class MckTranslator {
 
 	/**
 	 * Compile all sections of mck to output
+	 * 
 	 * @return
 	 */
 	public String toMck() {
 		// Pre-process state transitions, agents and protocols
-		
+
 		String stateTrans = "";
 		try {
 			stateTrans = generateStateTransitions();
-		}catch (Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		// Join all of the sections together
 		StringBuilder mck = new StringBuilder();
 		mck.append("-- MCK file generated using MckTranslator from a GGP game description");
@@ -469,6 +484,16 @@ public class MckTranslator {
 			mck.append(System.lineSeparator() + "-- Removed Contradictions(ATc) = " + ATc.size());
 			mck.append(System.lineSeparator() + "-- Total Removed = " + (ATt.size() + ATc.size()));
 		}
+
+		mck.append(System.lineSeparator() + "-- DEBUG: " + DEBUG);
+		mck.append(System.lineSeparator() + "-- ONE_LINE_TRANSITIONS: " + ONE_LINE_TRANSITIONS);
+		mck.append(System.lineSeparator() + "-- SHOW_PRUNED_VARS: " + SHOW_PRUNED_VARS);
+		mck.append(System.lineSeparator() + "-- SYNCHRONIZED_COLLECTIONS: " + SYNCHRONIZED_COLLECTIONS);
+		mck.append(System.lineSeparator() + "-- ASSIGNMENTS_IN_ACTION: " + ASSIGNMENT_IN_ACTION);
+		mck.append(System.lineSeparator() + "-- DERIVE_INITIAL_CONDITIONS: " + DERIVE_INITIAL_CONDITIONS);
+		mck.append(System.lineSeparator() + "-- TRANSITIONS_WITH_DEFINE: " + TRANSITIONS_WITH_DEFINE);
+		mck.append(System.lineSeparator() + "-- USE_PROVER: " + USE_PROVER);
+
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- Environment Variables");
 		mck.append(System.lineSeparator() + generateEnvironmentVariables());
@@ -505,32 +530,36 @@ public class MckTranslator {
 		return mck.toString();
 	}
 
-	private String generateProtocols(){
+	private String generateProtocols() {
 		StringBuilder protocols = new StringBuilder();
 		for (String role : ATd.keySet()) {
-			//protocols.append(System.lineSeparator() + "protocol \"" + role + "\" (");
-			//for (String move : ATd.get(role)) {
-			//	protocols.append("legal_" + role + "_" + move + " : Bool, ");
-			//}
-			//for (String sees : ATs.get(role)) {
-			//	protocols.append("sees_" + role + "_" + sees + " : observable Bool, ");
-			//}
-			//protocols.append(MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role + ", ");
-			//protocols.append("terminal : observable Bool");
-			//protocols.append(")");
+			// protocols.append(System.lineSeparator() + "protocol \"" + role +
+			// "\" (");
+			// for (String move : ATd.get(role)) {
+			// protocols.append("legal_" + role + "_" + move + " : Bool, ");
+			// }
+			// for (String sees : ATs.get(role)) {
+			// protocols.append("sees_" + role + "_" + sees + " : observable
+			// Bool, ");
+			// }
+			// protocols.append(MCK_DOES_PREFIX + role + " : " +
+			// MCK_ACTION_PREFIX + role + ", ");
+			// protocols.append("terminal : observable Bool");
+			// protocols.append(")");
 			if (TRANSITIONS_WITH_DEFINE) {
 				protocols.append(System.lineSeparator() + "protocol \"" + role + "\" (");
 				for (String var : AT) {
-					if (!ATdef.containsKey(var)){
+					if (!ATdef.containsKey(var)) {
 						protocols.append(var + " : Bool, ");
 					}
-				}for (String var : ATf) {
-					if (!ATdef.containsKey(var)){
+				}
+				for (String var : ATf) {
+					if (!ATdef.containsKey(var)) {
 						protocols.append(var + " : Bool, ");
 					}
 				}
 				for (String move : ATd.get(role)) {
-					if (!ATdef.containsKey("legal_" + role + "_" + move)){
+					if (!ATdef.containsKey("legal_" + role + "_" + move)) {
 						protocols.append("legal_" + role + "_" + move + " : Bool, ");
 					}
 				}
@@ -539,7 +568,7 @@ public class MckTranslator {
 						protocols.append("sees_" + role + "_" + sees + " : observable Bool, ");
 					}
 				}
-				//protocols.append("terminal : observable Bool");
+				// protocols.append("terminal : observable Bool");
 				protocols.append(MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
 				protocols.append(")");
 				protocols.append(System.lineSeparator());
@@ -560,17 +589,21 @@ public class MckTranslator {
 			}
 			protocols.append(System.lineSeparator() + MCK_BEGIN);
 			if (ASSIGNMENT_IN_ACTION) {
-				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_DOES_PREFIX + role + ".write(" + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + ") >>");
+				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_DOES_PREFIX + role + ".write("
+						+ MCK_MOVE_PREFIX + MCK_STOP + "_" + role + ") >>");
 			} else {
-				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + " >>");
+				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_MOVE_PREFIX + MCK_STOP + "_"
+						+ role + " >>");
 			}
 			protocols.append(System.lineSeparator() + "  [] otherwise ->");
 			protocols.append(System.lineSeparator() + "    if  ");
 			for (String move : ATd.get(role)) {
 				if (ASSIGNMENT_IN_ACTION) {
-					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_DOES_PREFIX + role + ".write(" + MCK_MOVE_PREFIX + move +  "_" + role + ") >>");
+					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_DOES_PREFIX + role + ".write("
+							+ MCK_MOVE_PREFIX + move + "_" + role + ") >>");
 				} else {
-					protocols.append("legal_" + role + "_" + move + " -> << " + MCK_MOVE_PREFIX + move + "_" + role + " >>");
+					protocols.append(
+							"legal_" + role + "_" + move + " -> << " + MCK_MOVE_PREFIX + move + "_" + role + " >>");
 				}
 				protocols.append(System.lineSeparator() + "    []  ");
 			}
@@ -582,8 +615,8 @@ public class MckTranslator {
 		protocols.append(System.lineSeparator());
 		return protocols.toString();
 	}
-	
-	private String generateStateTransitions() throws Exception{
+
+	private String generateStateTransitions() throws Exception {
 		StringBuilder state_trans = new StringBuilder();
 
 		// State Transitions
@@ -592,24 +625,41 @@ public class MckTranslator {
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator());
 
+		if (USE_PROVER) {
+			for (String tautology : prover.getTautologySet()) {
+				tautology = MckFormat.formatMckNode(GdlParser.parseString(tautology).getChild(0));
+				if (!ATt.contains(tautology)) {
+					ATt.add(tautology);
+				}
+			}
+			for (String contradiction : prover.getContradictionSet()) {
+				contradiction = MckFormat.formatMckNode(GdlParser.parseString(contradiction).getChild(0));
+				if (!ATc.contains(contradiction)) {
+					ATc.add(contradiction);
+				}
+			}
+		}
+
 		// Update the did_Agent to current move
-		if (!ASSIGNMENT_IN_ACTION) {	
+		if (!ASSIGNMENT_IN_ACTION) {
 			for (String role : ATd.keySet()) {
 				state_trans.append(System.lineSeparator() + "if ");
 				for (String move : ATd.get(role)) {
-					state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move +  "_" + role + " -> ");
-					state_trans.append(
-						MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + move +  "_" + role + System.lineSeparator() + "[] ");
+					state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + move + "_" + role + " -> ");
+					state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + move + "_" + role
+							+ System.lineSeparator() + "[] ");
 				}
-				//state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_INIT +  "_" + role + " -> ");
-				//state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_INIT +  "_" + role);
-				//state_trans.append(System.lineSeparator() + "[] ");
-				state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + MCK_STOP + "_"  + role + " -> ");
-				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_STOP + "_"  + role);
+				// state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_INIT +
+				// "_" + role + " -> ");
+				// state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_INIT
+				// + "_" + role);
+				// state_trans.append(System.lineSeparator() + "[] ");
+				state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + " -> ");
+				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role);
 				state_trans.append(System.lineSeparator() + "fi;");
 			}
 		}
-		
+
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator());
 
@@ -630,15 +680,63 @@ public class MckTranslator {
 			// Type of clause that isn't BASE or INPUT
 			if (clause.getType() == GdlType.CLAUSE && !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_BASE)
 					&& !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INPUT)) {
+				continue;
+			}
+			if (USE_PROVER) {
+				if (clause instanceof GdlLiteral) {
+					// Not literal therefore assume gdlRule TODO: should I check
+					// for GdlRule explicitly?
+					continue;
+				}
 
+				if (repeatHead != null && repeatHead.equals(clause.getChild(0).toString())) {
+					// Skip multiple clauses for same head
+					continue;
+				}
+
+				if (prover.getTautologySet().contains(repeatHead)) {
+					// Short-circuit tautologies
+					continue;
+				}
+
+				// if (repeatHead != null ||
+				// clause.getChild(0).toString().equals(repeatHead.toString()))
+				// {
+				// if (!(clause instanceof GdlRule) ||
+				// ||
+				// prover.getTautologySet().contains(clause.getChild(0).toString()))
+				// {
+				// continue;
+				// }
+				// } else {
+				// repeatHead = clause.getChildren().get(0);
+				// }
+
+				repeatHead = clause.getChild(0);
+
+				String formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead,
+						TRANSITIONS_WITH_DEFINE, ONE_LINE_TRANSITIONS);
+
+				if (TRANSITIONS_WITH_DEFINE
+						&& formattedClause.length() > (System.lineSeparator() + MckFormat.DEFINE + " ").length()
+						&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
+								.equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
+					// Check for 'define ' prefix
+					defineBasedDeclarations.append(formattedClause);
+				} else {
+					state_trans.append(formattedClause);
+				}
+			} else {
 				if (repeatHead != null && clause.getChildren().get(0).toString().equals(repeatHead.toString())) {
 					repeatHeadList.add(clause);
 				} else {
 					if (repeatHead != null) {
 						String formattedClause = formatClause(graph, repeatHead, repeatHeadList);
-						if (TRANSITIONS_WITH_DEFINE 
+						if (TRANSITIONS_WITH_DEFINE
 								&& formattedClause.length() > (System.lineSeparator() + MckFormat.DEFINE + " ").length()
-								&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length()).equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
+								&& formattedClause
+										.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
+										.equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
 							// Check for 'define ' prefix
 							defineBasedDeclarations.append(formattedClause);
 						} else {
@@ -653,24 +751,47 @@ public class MckTranslator {
 		}
 		// Fix to skipping last clause in game
 		if (repeatHead != null) {
-			String formattedClause = formatClause(graph, repeatHead, repeatHeadList);
-			if (TRANSITIONS_WITH_DEFINE 
+			String formattedClause = "";
+			if (USE_PROVER) {
+				System.out.println(prover.debug());
+				formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead, TRANSITIONS_WITH_DEFINE,
+						ONE_LINE_TRANSITIONS);
+			} else {
+				formattedClause = formatClause(graph, repeatHead, repeatHeadList);
+			}
+			if (TRANSITIONS_WITH_DEFINE
 					&& formattedClause.length() >= (System.lineSeparator() + MckFormat.DEFINE + " ").length()
-					&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length()).equals(System.lineSeparator() + MckFormat.DEFINE + " ")) {
+					&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
+							.equals(System.lineSeparator() + MckFormat.DEFINE + " ")) {
 				// Check for 'define ' prefix
 				defineBasedDeclarations.append(formattedClause);
 			} else {
 				state_trans.append(formattedClause);
 			}
 		}
-		
+
 		// Make initially true vars false after first turn
-		for(String initial : ATi){
+		for (String initial : ATi) {
 			if (graph.getStratum(initial) == 0 || graph.getStratum(MCK_TRUE_PREFIX + initial) == 0) {
 				state_trans.append(System.lineSeparator() + initial + " := " + MCK_FALSE + ";");
 			}
 		}
-		
+		//
+		// for (String tautology : prover.getTautologySet()) {
+		// tautology =
+		// MckFormat.formatMckNode(GdlParser.parseString(tautology).getChild(0));
+		// if (!ATt.contains(tautology)) {
+		// ATt.add(tautology);
+		// }
+		// }
+		// for (String contradiction : prover.getContradictionSet()) {
+		// contradiction =
+		// MckFormat.formatMckNode(GdlParser.parseString(contradiction).getChild(0));
+		// if (!ATc.contains(contradiction)) {
+		// ATc.add(contradiction);
+		// }
+		// }
+		//
 		// Conclusion
 		state_trans.deleteCharAt(state_trans.length() - 1); // Remove last ';'
 		state_trans.append(System.lineSeparator());
@@ -678,7 +799,7 @@ public class MckTranslator {
 		state_trans.append(System.lineSeparator());
 		return state_trans.toString();
 	}
-	
+
 	private String generateSpecification() {
 		StringBuilder spec = new StringBuilder();
 
@@ -695,7 +816,8 @@ public class MckTranslator {
 		spec.append(")");
 		spec.append(System.lineSeparator() + "--spec_spr = AG(");
 		for (String role : ATd.keySet()) {
-			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX +MCK_STOP +  "_" + role + "))");
+			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + MCK_STOP + "_"
+					+ role + "))");
 			spec.append(MCK_AND);
 		}
 		spec.delete(spec.length() - 4, spec.length());
@@ -712,7 +834,8 @@ public class MckTranslator {
 		spec.append(")");
 		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 		for (String role : ATd.keySet()) {
-			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + role + "_" + MCK_STOP + "))");
+			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + role + "_"
+					+ MCK_STOP + "))");
 			spec.append(MCK_AND);
 		}
 		spec.delete(spec.length() - 4, spec.length());
@@ -733,8 +856,8 @@ public class MckTranslator {
 				ATi.add(tautology);
 			}
 		}
-		
-		//System.out.println("gen init start " + ATi.toString());
+
+		// System.out.println("gen init start " + ATi.toString());
 		// Add all initial true legal clauses to ATi
 		// TODO: fix initial condition bugs
 		if (DERIVE_INITIAL_CONDITIONS) {
@@ -744,10 +867,11 @@ public class MckTranslator {
 					for (int i = 1; i < clause.getChildren().size(); i++) {
 						GdlNode bodyLiteral = clause.getChild(i);
 						if (bodyLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
-							bodyLiteral = bodyLiteral.getChild(0); // Child of NOT
+							bodyLiteral = bodyLiteral.getChild(0); // Child of
+																	// NOT
 							String formattedNode;
-							if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(clause.getChild(0))) && 
-									graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX)) {
+							if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(clause.getChild(0)))
+									&& graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX)) {
 								formattedNode = formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX;
 							} else {
 								formattedNode = formatMckNode(bodyLiteral);
@@ -757,8 +881,8 @@ public class MckTranslator {
 							}
 						} else {
 							String formattedNode;
-							if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(clause.getChild(0))) && 
-									graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX)) {
+							if (graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(clause.getChild(0)))
+									&& graph.hasTerm(MCK_TRUE_PREFIX + formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX)) {
 								formattedNode = formatMckNode(bodyLiteral) + MCK_OLD_SUFFIX;
 							} else {
 								formattedNode = formatMckNode(bodyLiteral);
@@ -774,7 +898,7 @@ public class MckTranslator {
 				}
 			}
 		}
-		//System.out.println("gen init end " + ATi.toString());
+		// System.out.println("gen init end " + ATi.toString());
 
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");
@@ -812,17 +936,18 @@ public class MckTranslator {
 		return init_cond.toString();
 	}
 
-	private String generateAgents(){
+	private String generateAgents() {
 		StringBuilder agents = new StringBuilder();
 		for (String role : ATd.keySet()) {
 			agents.append(System.lineSeparator() + "agent " + MCK_ROLE_PREFIX + role + " \"" + role + "\" (");
 			if (TRANSITIONS_WITH_DEFINE) {
 				for (String var : AT) {
-					if (!ATdef.containsKey(var)){
+					if (!ATdef.containsKey(var)) {
 						agents.append(var + ", ");
 					}
-				}for (String var : ATf) {
-					if (!ATdef.containsKey(var)){
+				}
+				for (String var : ATf) {
+					if (!ATdef.containsKey(var)) {
 						agents.append(var + ", ");
 					}
 				}
@@ -846,7 +971,7 @@ public class MckTranslator {
 		agents.append(System.lineSeparator());
 		return agents.toString();
 	}
-	
+
 	private String generateEnvironmentVariables() {
 
 		StringBuilder env_vars = new StringBuilder();
@@ -883,9 +1008,9 @@ public class MckTranslator {
 		for (String role : ATd.keySet()) {
 			env_vars.append(System.lineSeparator() + "type " + MCK_ACTION_PREFIX + role + " = {");
 			for (String move : ATd.get(role)) {
-				env_vars.append(MCK_MOVE_PREFIX + move +  "_" + role + ", ");
+				env_vars.append(MCK_MOVE_PREFIX + move + "_" + role + ", ");
 			}
-			env_vars.append(MCK_INIT + "_" + role + ", " + MCK_MOVE_PREFIX+ MCK_STOP +  "_" + role + "}");
+			env_vars.append(MCK_INIT + "_" + role + ", " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + "}");
 		}
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator() + "-- AT:");
@@ -917,7 +1042,7 @@ public class MckTranslator {
 		}
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator());
-		
+
 		if (TRANSITIONS_WITH_DEFINE) {
 			env_vars.append(System.lineSeparator() + "-- Define based Transitions:");
 			env_vars.append(defineBasedDeclarations);
