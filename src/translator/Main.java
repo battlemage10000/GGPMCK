@@ -6,7 +6,10 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import prover.Prover;
 import util.GdlParser;
+import util.grammar.GDLSyntaxException;
+import util.grammar.Gdl;
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
 import util.graph.DependencyGraph;
@@ -30,6 +33,7 @@ public class Main {
 		boolean orderedSwitch = false;
 		boolean debugSwitch = false;
 		boolean useDefineSwitch = false;
+		boolean useProverSwitch = false;
 		boolean outputMckSwitch = false;
 		boolean outputLparseSwitch = false;
 		boolean outputDotSwitch = false;
@@ -66,6 +70,9 @@ public class Main {
 				break;
 			case "--use-define":
 				useDefineSwitch = true;
+				break;
+			case "--use-prover":
+				useProverSwitch = true;
 				break;
 			case "-d":
 			case "--debug":
@@ -163,6 +170,24 @@ public class Main {
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 			}
 
+			Prover prover = null;
+			if (useProverSwitch) {
+				System.out.print("Minimizing game ... ");
+				try {
+					prover = new Prover((Gdl)root, debugSwitch);
+					prover.cullVariables(true);
+					//System.out.println(prover.toGdl());
+					//root = GdlParser.parseString(prover.toGdl());
+				} catch (GDLSyntaxException e) {
+					useProverSwitch = false;
+					e.printStackTrace();
+				}
+				System.out.println("finished");
+				totalTime = (int) (System.currentTimeMillis() - startTime);
+				System.out.println(
+						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+			}
+			
 			// Output dependency graph as a dot formatted file
 			DependencyGraph graph = null;
 			if (outputDepDotSwitch) {
@@ -176,7 +201,7 @@ public class Main {
 				System.out.println(
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 			}
-
+			
 			// Order rules by stratum
 			if (orderedSwitch) {
 				System.out.print("Ordering rules ... ");
@@ -223,6 +248,9 @@ public class Main {
 							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 				}
 				MckTranslator translator = new MckTranslator(root, useDefineSwitch, debugSwitch);
+				if (useProverSwitch) {
+					translator.setProver(prover);
+				}
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
 					GdlParser.saveFile(translator.toMck(), outputFilePath);

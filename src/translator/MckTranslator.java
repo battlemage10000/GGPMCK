@@ -71,7 +71,7 @@ public class MckTranslator {
 													// transition
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
-	private boolean USE_PROVER = true;
+	private boolean USE_PROVER = false;
 
 	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG) {
 		this.root = root;
@@ -101,7 +101,6 @@ public class MckTranslator {
 		this.defineBasedDeclarations = new StringBuilder();
 		if (USE_PROVER) {
 			try {
-
 				this.prover = new Prover((Gdl) root);
 				System.out.println(this.prover.cullVariables(true) + " iterations");
 			} catch (GDLSyntaxException e) {
@@ -114,6 +113,13 @@ public class MckTranslator {
 
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this(root, false, DEBUG);
+	}
+	
+	public void setProver(Prover prover) {
+		if (prover != null) {
+			this.prover = prover;
+			USE_PROVER = true;
+		}
 	}
 
 	/**

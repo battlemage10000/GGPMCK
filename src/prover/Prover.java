@@ -119,9 +119,8 @@ public class Prover {
 			}
 		}
 	}
-	
+
 	public int cullVariables(boolean CULL_NULL_RULES) {
-		CULL_NULL_RULES = true;
 		int numIterations = 0;
 		boolean changed = true;
 		while (changed) {
