@@ -71,7 +71,7 @@ public class MckTranslator {
 													// transition
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
-	private boolean USE_PROVER = false;
+	private boolean USE_PROVER = true;
 
 	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG) {
 		this.root = root;
@@ -99,12 +99,15 @@ public class MckTranslator {
 			this.ATs = new HashMap<String, List<String>>();
 		}
 		this.defineBasedDeclarations = new StringBuilder();
-		try {
-			this.prover = new Prover((Gdl) root);
-			System.out.println(this.prover.cullVariables() + " iterations");
-		} catch (GDLSyntaxException e) {
-			this.USE_PROVER = false;
-			e.printStackTrace();
+		if (USE_PROVER) {
+			try {
+
+				this.prover = new Prover((Gdl) root);
+				System.out.println(this.prover.cullVariables(true) + " iterations");
+			} catch (GDLSyntaxException e) {
+				this.USE_PROVER = false;
+				e.printStackTrace();
+			}
 		}
 		initialize();
 	}
@@ -347,6 +350,33 @@ public class MckTranslator {
 		for (String old : graph.getDependencyMap().keySet()) {
 			if (old.length() >= 5 && old.substring(old.length() - 4).equals(MCK_OLD_SUFFIX)) {
 				ATf.add(old.substring(5));
+			}
+		}
+
+		if (USE_PROVER) {
+			String mckFormatted = null;
+			for (String literal : prover.getLiteralSet()) {
+				if (prover.getRuleSet().get(literal) == null) {
+					GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
+					if (!literalNode.getAtom().equals(GdlNode.GDL_TRUE)
+							&& !literalNode.getAtom().equals(GdlNode.GDL_DOES)) {
+						mckFormatted = MckFormat.formatMckNode(literalNode);
+
+						if (!ATc.contains(mckFormatted)) {
+							ATc.add(mckFormatted);
+						}
+					}
+				} else if (prover.getRuleSet().get(literal).isEmpty()) {
+					GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
+					if (!literalNode.getAtom().equals(GdlNode.GDL_TRUE)
+							&& !literalNode.getAtom().equals(GdlNode.GDL_DOES)) {
+						mckFormatted = MckFormat.formatMckNode(literalNode);
+
+						if (!ATt.contains(mckFormatted)) {
+							ATt.add(mckFormatted);
+						}
+					}
+				}
 			}
 		}
 
@@ -625,20 +655,24 @@ public class MckTranslator {
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator());
 
-		if (USE_PROVER) {
-			for (String tautology : prover.getTautologySet()) {
-				tautology = MckFormat.formatMckNode(GdlParser.parseString(tautology).getChild(0));
-				if (!ATt.contains(tautology)) {
-					ATt.add(tautology);
-				}
-			}
-			for (String contradiction : prover.getContradictionSet()) {
-				contradiction = MckFormat.formatMckNode(GdlParser.parseString(contradiction).getChild(0));
-				if (!ATc.contains(contradiction)) {
-					ATc.add(contradiction);
-				}
-			}
-		}
+		/*
+		 * if (USE_PROVER) { String mckFormatted = null; for (String literal :
+		 * prover.getLiteralSet()) { if (prover.getRuleSet().get(literal) ==
+		 * null) { GdlNode literalNode =
+		 * GdlParser.parseString(literal).getChild(0); if
+		 * (!literalNode.getAtom().equals(GdlNode.GDL_TRUE) &&
+		 * !literalNode.getAtom().equals(GdlNode.GDL_DOES)) { mckFormatted =
+		 * MckFormat.formatMckNode(literalNode);
+		 * 
+		 * if (!ATc.contains(mckFormatted)) { ATc.add(mckFormatted); } } } else
+		 * if (prover.getRuleSet().get(literal).isEmpty()) { GdlNode literalNode
+		 * = GdlParser.parseString(literal).getChild(0); if
+		 * (!literalNode.getAtom().equals(GdlNode.GDL_TRUE) &&
+		 * !literalNode.getAtom().equals(GdlNode.GDL_DOES)) { mckFormatted =
+		 * MckFormat.formatMckNode(literalNode);
+		 * 
+		 * if (!ATt.contains(mckFormatted)) { ATt.add(mckFormatted); } } } } }
+		 */
 
 		// Update the did_Agent to current move
 		if (!ASSIGNMENT_IN_ACTION) {
@@ -678,38 +712,22 @@ public class MckTranslator {
 		GdlNode repeatHead = null;
 		for (GdlNode clause : root.getChildren()) {
 			// Type of clause that isn't BASE or INPUT
-			if (clause.getType() == GdlType.CLAUSE && !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_BASE)
-					&& !clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INPUT)) {
+			if (clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_BASE)
+					|| clause.getChildren().get(0).getAtom().equals(GdlNode.GDL_INPUT)) {
 				continue;
 			}
 			if (USE_PROVER) {
-				if (clause instanceof GdlLiteral) {
-					// Not literal therefore assume gdlRule TODO: should I check
-					// for GdlRule explicitly?
+				if (!(clause instanceof GdlRule)) {
+					// Skip if not Rule
 					continue;
 				}
-
 				if (repeatHead != null && repeatHead.equals(clause.getChild(0).toString())) {
 					// Skip multiple clauses for same head
 					continue;
 				}
 
-				if (prover.getTautologySet().contains(repeatHead)) {
-					// Short-circuit tautologies
-					continue;
-				}
-
-				// if (repeatHead != null ||
-				// clause.getChild(0).toString().equals(repeatHead.toString()))
-				// {
-				// if (!(clause instanceof GdlRule) ||
-				// ||
-				// prover.getTautologySet().contains(clause.getChild(0).toString()))
-				// {
+				// if (prover.getRuleSet().get(repeatHead) == null) {
 				// continue;
-				// }
-				// } else {
-				// repeatHead = clause.getChildren().get(0);
 				// }
 
 				repeatHead = clause.getChild(0);
@@ -753,7 +771,7 @@ public class MckTranslator {
 		if (repeatHead != null) {
 			String formattedClause = "";
 			if (USE_PROVER) {
-				System.out.println(prover.debug());
+				// System.out.println(prover.debug());
 				formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead, TRANSITIONS_WITH_DEFINE,
 						ONE_LINE_TRANSITIONS);
 			} else {

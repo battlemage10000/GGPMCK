@@ -90,20 +90,35 @@ public class MckFormat {
 	
 	public static String formatClause(Prover prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
 		StringBuilder DNF = new StringBuilder();
+		if (prover.getDnfRuleOfHead(headNode) == null) {
+			return "";
+		}
 		for (Set<String> disjunct : prover.getDnfRuleOfHead(headNode)) {
 			if (disjunct.isEmpty()) {
-				continue;
+				continue; // Shouldn't reach here after cull variables
 			}
 			StringBuilder disjunctString = new StringBuilder();
 			disjunctString.append("(");
 			for (String literal : disjunct) {
 				GdlNode negFreeLiteral = GdlParser.parseString(literal).getChild(0);
-				String negList = "";
+				//String negList = "";
+				boolean isNegative = false;
 				while(negFreeLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
 					negFreeLiteral = negFreeLiteral.getChild(0);
-					negList += NOT + " ";
+					//negList += NOT + " ";
+					isNegative = !isNegative;
 				}
-				disjunctString.append(negList + formatMckNode(negFreeLiteral) + AND);
+				if (isNegative) {
+					disjunctString.append(NOT + " " + formatMckNode(negFreeLiteral) + AND);
+				} else {
+					disjunctString.append(formatMckNode(negFreeLiteral) + AND);
+				}
+				if (useDefine 
+						&& negFreeLiteral.getAtom().equals(GdlNode.GDL_DOES)
+						|| negFreeLiteral.getAtom().equals(GdlNode.GDL_TRUE)) {
+					// DEFINE only on non does and non true rules
+					useDefine = false;
+				}
 			}
 			if (disjunctString.length() >= AND.length()) {
 				disjunctString.delete(disjunctString.length() - AND.length(), disjunctString.length());

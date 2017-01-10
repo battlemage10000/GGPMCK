@@ -61,9 +61,9 @@ public class TranslatorTest {
 		GdlNode root = GdlParser.parseString(GDL_STRING);
 		DomainGraph graph = GdlParser.constructDomainGraph(root);
 		//System.out.println(graph.dotEncodedGraph());
-		System.out.println(root.toString());
+		//System.out.println(root.toString());
 		root = GdlParser.groundGdl(root, graph);
-		System.out.println(root.toString());
+		//System.out.println(root.toString());
 		MckTranslator translator = new MckTranslator(root, false);
 		
 		GdlNode headNode = root.getChildren().get(7).getChildren().get(0);
@@ -94,6 +94,7 @@ public class TranslatorTest {
 			MckTranslator mhTrans = new MckTranslator(mhRoot, false);
 			String translation = mhTrans.toMck();
 			System.out.println("Number of contradictions: " + mhTrans.ATc.size());
+			System.out.println(translation);
 			
 		}catch (URISyntaxException e){
 			e.printStackTrace();
