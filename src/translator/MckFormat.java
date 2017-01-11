@@ -101,11 +101,9 @@ public class MckFormat {
 			disjunctString.append("(");
 			for (String literal : disjunct) {
 				GdlNode negFreeLiteral = GdlParser.parseString(literal).getChild(0);
-				//String negList = "";
 				boolean isNegative = false;
 				while(negFreeLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
 					negFreeLiteral = negFreeLiteral.getChild(0);
-					//negList += NOT + " ";
 					isNegative = !isNegative;
 				}
 				if (isNegative) {
@@ -114,9 +112,8 @@ public class MckFormat {
 					disjunctString.append(formatMckNode(negFreeLiteral) + AND);
 				}
 				if (useDefine 
-						&& negFreeLiteral.getAtom().equals(GdlNode.GDL_DOES)
-						|| negFreeLiteral.getAtom().equals(GdlNode.GDL_TRUE)) {
-					// DEFINE only on non does and non true rules
+						&& negFreeLiteral.getAtom().equals(GdlNode.GDL_DOES)) {
+					// DEFINE only on non does rules
 					useDefine = false;
 				}
 			}

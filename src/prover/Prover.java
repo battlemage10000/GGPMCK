@@ -366,6 +366,33 @@ public class Prover {
 		return literalSet;
 	}
 
+	public String toGdl() {
+		StringBuilder gdl = new StringBuilder();
+
+		for (String headNode : dnfRuleSet.keySet()) {
+			Set<Set<String>> rule = dnfRuleSet.get(headNode);
+			if (rule == null) {
+				continue;
+			} else if (rule.isEmpty()) {
+				gdl.append(System.lineSeparator() + headNode);
+			} else {
+				for (Set<String> disjunct : rule) {
+					StringBuilder clause = new StringBuilder();
+					for (String literal : disjunct) {
+						clause.append(literal + " ");
+					}
+					gdl.append(System.lineSeparator());
+					if (clause.length() > 0) {
+						gdl.append("(<= " + headNode + " " + clause.substring(0, clause.length() - 1) + ")");
+					} else {
+						gdl.append(headNode);
+					}
+				}
+			}
+		}
+		return gdl.toString();
+	}
+
 	public String debug() {
 		StringBuilder debug = new StringBuilder();
 		debug.append(System.lineSeparator() + "Literals: " + literalSet.toString());

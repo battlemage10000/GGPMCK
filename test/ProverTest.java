@@ -2,10 +2,12 @@ import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 
+import org.hamcrest.core.IsNull;
 import org.junit.Test;
 
 import prover.Prover;
@@ -89,11 +91,8 @@ public class ProverTest {
 		Prover prover = new Prover(root);
 		prover.cullVariables(true);
 
-		for (String head : prover.getRuleSet().keySet()) {
-			System.out.println(head + " -> " + prover.getRuleSet().get(head));
-		}
-
 		assertThat(prover.getRuleSet().keySet().contains("terminal"), is(true));
+		assertThat(prover.getRuleSet().get("terminal").isEmpty(), not(true));
 	}
 
 	@Test
@@ -101,31 +100,25 @@ public class ProverTest {
 		Gdl root = GdlParser.parseFile(meierGdlPath);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
 		Prover prover = new Prover(root, true);
-		prover.cullVariables(true);
-		// System.out.println();
-
-		String better_values = "(better_values ";
-		String succ_values = "(succ_values ";
-		String distinct = "(distinct ";
+		prover.cullVariables(false);
+		Map<String, Set<Set<String>>> ruleSet = prover.getRuleSet();
+		String minimalGdl = prover.toGdl();
+		//System.out.println(minimalGdl);
+		prover = new Prover(GdlParser.parseString(minimalGdl), true);
+		prover.cullVariables(false);
 		for (String head : prover.getRuleSet().keySet()) {
-			if (!prover.getRuleSet().get(head).isEmpty()) {
-				// System.out.println(head + " -> " +
-				// prover.getRuleSet().get(head));
-			}
-			if (head.length() >= better_values.length()
-					&& head.substring(0, better_values.length()).equals(better_values)) {
-				// assertThat(prover.getRuleSet().get(head).isEmpty(),
-				// is(true));
-			}
-			for (Set<String> disjunct : prover.getRuleSet().get(head)) {
-				for (String literal : disjunct) {
-					if (literal.length() >= distinct.length()
-							&& literal.substring(0, distinct.length()).equals(distinct)) {
-						// System.out.println(literal);
-					}
-				}
+			assertThat(ruleSet.keySet().contains(head), is(true));
+			if (prover.getRuleSet().get(head) != null) {
+				assertThat(prover.getRuleSet().get(head).size() <= ruleSet.get(head).size(), is(true));
 			}
 		}
-		// System.out.println(prover.debug());
+		assertThat(prover.getRuleSet().keySet(), hasItem("(better_values 5 5 6 6)"));
+		assertThat(prover.getRuleSet().keySet(), hasItem("(better_values 6 6 5 5)"));
+		System.out.println("(better_values 5 5 6 6) -> " + prover.getRuleSet().get("(better_values 5 5 6 6)"));
+		System.out.println("(better_values 6 6 5 5) -> " + prover.getRuleSet().get("(better_values 6 6 5 5)"));
+		assertThat(ruleSet.get("(better_values 5 5 6 6)") == null, is(true));
+		assertThat(ruleSet.get("(better_values 6 6 5 5)").isEmpty(), is(true));
+		assertThat(prover.getRuleSet().get("(better_values 5 5 6 6)") == null, is(true));
+		assertThat(prover.getRuleSet().get("(better_values 6 6 5 5)").isEmpty(), is(true));
 	}
 }

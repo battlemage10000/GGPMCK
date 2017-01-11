@@ -111,6 +111,12 @@ public class GdlParser {
 		}
 
 		reader.close();
+		
+		// Case for input with only one variable(partial gdl parsing)
+		if (tokens.isEmpty() && sb.length() > 0 && !comment && sb.charAt(0) != OPEN_P_Char && sb.charAt(sb.length() - 1) != CLOSE_P_Char) {
+			tokens.add(sb.toString());
+		}
+		
 		return tokens;
 	}
 

@@ -169,24 +169,6 @@ public class Main {
 				System.out.println(
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 			}
-
-			Prover prover = null;
-			if (useProverSwitch) {
-				System.out.print("Minimizing game ... ");
-				try {
-					prover = new Prover((Gdl)root, debugSwitch);
-					prover.cullVariables(true);
-					//System.out.println(prover.toGdl());
-					//root = GdlParser.parseString(prover.toGdl());
-				} catch (GDLSyntaxException e) {
-					useProverSwitch = false;
-					e.printStackTrace();
-				}
-				System.out.println("finished");
-				totalTime = (int) (System.currentTimeMillis() - startTime);
-				System.out.println(
-						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
-			}
 			
 			// Output dependency graph as a dot formatted file
 			DependencyGraph graph = null;
@@ -217,6 +199,23 @@ public class Main {
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 			}
 
+			// Initialize prover
+			Prover prover = null;
+			if (useProverSwitch) {
+				System.out.print("Minimizing game ... ");
+				try {
+					prover = new Prover((Gdl)root, debugSwitch);
+					prover.cullVariables(true);
+				} catch (GDLSyntaxException e) {
+					useProverSwitch = false;
+					e.printStackTrace();
+				}
+				System.out.println("finished");
+				totalTime = (int) (System.currentTimeMillis() - startTime);
+				System.out.println(
+						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+			}
+			
 			// Print parse tree for debugging
 			if (parseTreeSwitch) {
 				GdlParser.saveFile(GdlParser.printParseTree(root), outputDir.getName() + "/parsetree");
