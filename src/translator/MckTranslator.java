@@ -747,6 +747,8 @@ public class MckTranslator {
 								.equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
 					// Check for 'define ' prefix
 					defineBasedDeclarations.append(formattedClause);
+					String formattedHead = MckFormat.formatMckNode(repeatHead);
+					ATdef.put(formattedHead, formattedClause);
 				} else {
 					state_trans.append(formattedClause);
 				}
@@ -927,7 +929,7 @@ public class MckTranslator {
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");
 		for (String node : AT) {
-			if (!ATdef.containsKey(node)) {
+			if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey(node)) {
 				init_cond.append(System.lineSeparator() + node + " == ");
 				if (ATi.contains(node)) {
 					init_cond.append(MCK_TRUE);
@@ -942,7 +944,7 @@ public class MckTranslator {
 			init_cond.append(MCK_AND);
 		}
 		for (String trueVar : ATf) {
-			if (!ATdef.containsKey(trueVar)) {
+			if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey(trueVar)) {
 				init_cond.append(System.lineSeparator() + trueVar + " == ");
 				if (ATi.contains(trueVar)) {
 					init_cond.append(MCK_TRUE);
@@ -1039,14 +1041,14 @@ public class MckTranslator {
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator() + "-- AT:");
 		for (String node : AT) {
-			if (!ATdef.containsKey(node)) {
+			if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey(node)) {
 				env_vars.append(System.lineSeparator() + node + " : Bool");
 			}
 		}
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator() + "-- ATf:");
 		for (String node : ATf) {
-			if (!ATdef.containsKey(node)) {
+			if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey(node)) {
 				env_vars.append(System.lineSeparator() + node + " : Bool");
 			}
 		}
@@ -1059,7 +1061,7 @@ public class MckTranslator {
 		env_vars.append(System.lineSeparator() + "-- ATs:");
 		for (String role : ATs.keySet()) {
 			for (String move : ATs.get(role)) {
-				if (!ATdef.containsKey("sees_" + role + "_" + move)) {
+				if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey("sees_" + role + "_" + move)) {
 					env_vars.append(System.lineSeparator() + "sees_" + role + "_" + move + " : Bool");
 				}
 			}
