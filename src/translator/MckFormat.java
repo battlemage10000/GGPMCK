@@ -88,7 +88,7 @@ public class MckFormat {
 		return string;
 	}
 	
-	public static String formatClause(Prover prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
+	public static String formatClause(Set<String> oldSet, Prover prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
 		StringBuilder DNF = new StringBuilder();
 		if (prover.getDnfRuleOfHead(headNode) == null) {
 			return "";
@@ -107,10 +107,17 @@ public class MckFormat {
 					isNegative = !isNegative;
 				}
 				if (isNegative) {
-					disjunctString.append(NOT + " " + formatMckNode(negFreeLiteral) + AND);
-				} else {
-					disjunctString.append(formatMckNode(negFreeLiteral) + AND);
+					disjunctString.append(NOT + " ");// + formatMckNode(negFreeLiteral) + AND);
 				}
+				disjunctString.append(formatMckNode(negFreeLiteral)); // + AND);
+				
+				//if (oldSet.contains(formatMckNode(negFreeLiteral) + OLD_SUFFIX)) {
+				if (headNode.getAtom().equals(GdlNode.GDL_NEXT) && oldSet.contains(formatMckNode(negFreeLiteral) + OLD_SUFFIX)) {
+					disjunctString.append(OLD_SUFFIX);
+					//System.out.println(formatMckNode(negFreeLiteral) + OLD_SUFFIX + " -> " + oldSet);
+				}
+				disjunctString.append(AND);
+				
 				if (useDefine 
 						&& negFreeLiteral.getAtom().equals(GdlNode.GDL_DOES)) {
 					// DEFINE only on non does rules

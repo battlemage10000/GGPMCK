@@ -713,6 +713,13 @@ public class MckTranslator {
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator());
 
+		Set<String> oldSet = new HashSet<String>();
+		for (String term : ATf) {
+			if (term.length() > MckFormat.OLD_SUFFIX.length() && term.substring(term.length() - MckFormat.OLD_SUFFIX.length()).equals(MckFormat.OLD_SUFFIX)) {
+				oldSet.add(term);
+			}
+		}
+		
 		// Add transition rules
 		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
 		GdlNode repeatHead = null;
@@ -738,7 +745,7 @@ public class MckTranslator {
 
 				repeatHead = clause.getChild(0);
 
-				String formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead,
+				String formattedClause = MckFormat.formatClause(oldSet, prover, (GdlLiteral) repeatHead,
 						TRANSITIONS_WITH_DEFINE, ONE_LINE_TRANSITIONS);
 
 				if (TRANSITIONS_WITH_DEFINE
@@ -780,8 +787,8 @@ public class MckTranslator {
 			String formattedClause = "";
 			if (USE_PROVER) {
 				// System.out.println(prover.debug());
-				formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead, TRANSITIONS_WITH_DEFINE,
-						ONE_LINE_TRANSITIONS);
+				//formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead, TRANSITIONS_WITH_DEFINE,
+				//		ONE_LINE_TRANSITIONS);
 			} else {
 				formattedClause = formatClause(graph, repeatHead, repeatHeadList);
 			}
