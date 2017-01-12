@@ -100,12 +100,12 @@ public class ProverTest {
 		Gdl root = GdlParser.parseFile(meierGdlPath);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
 		Prover prover = new Prover(root, true);
-		prover.cullVariables(false);
+		prover.cullVariables(true);
 		Map<String, Set<Set<String>>> ruleSet = prover.getRuleSet();
 		String minimalGdl = prover.toGdl();
 		//System.out.println(minimalGdl);
 		prover = new Prover(GdlParser.parseString(minimalGdl), true);
-		prover.cullVariables(false);
+		prover.cullVariables(true);
 		for (String head : prover.getRuleSet().keySet()) {
 			assertThat(ruleSet.keySet().contains(head), is(true));
 			if (prover.getRuleSet().get(head) != null) {
@@ -113,12 +113,13 @@ public class ProverTest {
 			}
 		}
 		assertThat(prover.getRuleSet().keySet(), hasItem("(better_values 5 5 6 6)"));
-		assertThat(prover.getRuleSet().keySet(), hasItem("(better_values 6 6 5 5)"));
-		System.out.println("(better_values 5 5 6 6) -> " + prover.getRuleSet().get("(better_values 5 5 6 6)"));
-		System.out.println("(better_values 6 6 5 5) -> " + prover.getRuleSet().get("(better_values 6 6 5 5)"));
-		assertThat(ruleSet.get("(better_values 5 5 6 6)") == null, is(true));
-		assertThat(ruleSet.get("(better_values 6 6 5 5)").isEmpty(), is(true));
-		assertThat(prover.getRuleSet().get("(better_values 5 5 6 6)") == null, is(true));
-		assertThat(prover.getRuleSet().get("(better_values 6 6 5 5)").isEmpty(), is(true));
+		//assertThat(prover.getRuleSet().keySet(), hasItem("(better_values 6 6 5 5)"));
+		//System.out.println("(better_values 5 5 6 6) -> " + prover.getRuleSet().get("(better_values 5 5 6 6)"));
+		//System.out.println("(better_values 6 6 5 5) -> " + prover.getRuleSet().get("(better_values 6 6 5 5)"));
+		assertThat(ruleSet.get("(better_values 6 6 5 5)") == null, is(true));
+		assertThat(ruleSet.get("(better_values 5 5 6 6)").isEmpty(), is(true));
+		assertThat(prover.getRuleSet().get("(better_values 6 6 5 5)") == null, is(true));
+		assertThat(prover.getRuleSet().get("(better_values 5 5 6 6)").isEmpty(), is(true));
+		assertThat(prover.getRuleSet().get("(better_values 0 0 2 1)").isEmpty(), is(true));
 	}
 }
