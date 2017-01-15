@@ -18,10 +18,10 @@ echo
 echo Transit mck with define
 java -jar deploy/MckTranslator.jar -i res/gdlii/transit.gdl -o trans-prover-define.mck --use-prover --use-define
 echo
-echo "Meier(Mia) mck"
+echo Meier mck
 java -jar deploy/MckTranslator.jar -i res/gdlii/meier.gdl -o meier-prover.mck --use-prover
 echo
-echo "Meier(Mia) mck with define"
+echo Meier mck with define
 java -jar deploy/MckTranslator.jar -i res/gdlii/meier.gdl -o meier-prover-define.mck --use-prover --use-define
 
 echo
@@ -43,8 +43,8 @@ echo
 echo Transit mck with define
 mck trans-prover-define.mck
 echo
-echo Meier(Mia) mck
+echo Meier mck
 mck meier-prover.mck
 echo
-echo Meier(Mia) mck with define
+echo Meier mck with define
 mck meier-prover-define.mck
