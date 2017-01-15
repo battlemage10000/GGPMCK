@@ -72,8 +72,8 @@ public class MckTranslator {
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
 	private boolean USE_PROVER = false;
-
-	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG) {
+	
+	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG, Prover prover) {
 		this.root = root;
 		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
 		this.DEBUG = DEBUG;
@@ -99,7 +99,10 @@ public class MckTranslator {
 			this.ATs = new HashMap<String, List<String>>();
 		}
 		this.defineBasedDeclarations = new StringBuilder();
-		if (USE_PROVER) {
+		if (prover != null) {
+			this.prover = prover;
+			USE_PROVER = true;
+		} else if (USE_PROVER) {
 			try {
 				this.prover = new Prover((Gdl) root);
 				System.out.println(this.prover.cullVariables(true) + " iterations");
@@ -110,9 +113,13 @@ public class MckTranslator {
 		}
 		initialize();
 	}
+	
+	public MckTranslator(GdlNode root, boolean USE_DEFINE, boolean DEBUG){
+		this(root, USE_DEFINE, DEBUG, null);
+	}
 
 	public MckTranslator(GdlNode root, boolean DEBUG) {
-		this(root, false, DEBUG);
+		this(root, false, DEBUG, null);
 	}
 	
 	public void setProver(Prover prover) {
@@ -142,6 +149,7 @@ public class MckTranslator {
 		return MckFormat.formatMckNodeAbs(node);
 	}
 
+	@Deprecated
 	public String formatClause(GdlNode headNode, List<GdlNode> bodyList) throws Exception {
 		return formatClause(graph, headNode, bodyList);
 	}
@@ -158,6 +166,7 @@ public class MckTranslator {
 	 * @param bodyList
 	 * @return
 	 */
+	@Deprecated
 	public String formatClause(DependencyGraph graph, GdlNode headNode, List<GdlNode> bodyList) throws Exception {
 		// Invalid inputs
 		if (bodyList.isEmpty() || headNode.toString().length() == 0) {
@@ -359,6 +368,8 @@ public class MckTranslator {
 			}
 		}
 
+		// TODO: find another home for this section. 
+		// It's called in constructor but prover is set after construction
 		if (USE_PROVER) {
 			String mckFormatted = null;
 			for (String literal : prover.getLiteralSet()) {
@@ -785,11 +796,7 @@ public class MckTranslator {
 		// Fix to skipping last clause in game
 		if (repeatHead != null) {
 			String formattedClause = "";
-			if (USE_PROVER) {
-				// System.out.println(prover.debug());
-				//formattedClause = MckFormat.formatClause(prover, (GdlLiteral) repeatHead, TRANSITIONS_WITH_DEFINE,
-				//		ONE_LINE_TRANSITIONS);
-			} else {
+			if (!USE_PROVER) {
 				formattedClause = formatClause(graph, repeatHead, repeatHeadList);
 			}
 			if (TRANSITIONS_WITH_DEFINE

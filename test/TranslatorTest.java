@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
+import prover.Prover;
 import translator.MckTranslator;
 import util.GdlParser;
+import util.grammar.GDLSyntaxException;
+import util.grammar.Gdl;
 import util.grammar.GdlNode;
 import util.graph.DomainGraph;
 
@@ -64,7 +67,9 @@ public class TranslatorTest {
 		//System.out.println(root.toString());
 		root = GdlParser.groundGdl(root, graph);
 		//System.out.println(root.toString());
-		MckTranslator translator = new MckTranslator(root, false);
+		Prover prover = new Prover((Gdl)root);
+		prover.cullVariables(true);
+		MckTranslator translator = new MckTranslator(root, false, false, prover);
 		
 		GdlNode headNode = root.getChildren().get(7).getChildren().get(0);
 		ArrayList<GdlNode> bodyList = new ArrayList<GdlNode>();
@@ -83,7 +88,7 @@ public class TranslatorTest {
 	}
 
 	@Test
-	public void testMontyHallTranslation(){
+	public void testMontyHallTranslation() throws GDLSyntaxException{
 		try {
 			GdlNode mhRoot = GdlParser.parseFile(montyHallGame);
 			DomainGraph graph = GdlParser.constructDomainGraph(mhRoot);
@@ -91,7 +96,12 @@ public class TranslatorTest {
 			mhRoot = GdlParser.groundGdl(mhRoot, graph);
 			System.out.println(mhRoot.toString());
 			
-			MckTranslator mhTrans = new MckTranslator(mhRoot, false);
+			Prover mhProver = new Prover((Gdl)mhRoot);
+			mhProver.cullVariables(true);
+			
+			MckTranslator mhTrans = new MckTranslator(mhRoot, true, false, mhProver);
+			//mhTrans.setProver(mhProver);
+			
 			String translation = mhTrans.toMck();
 			System.out.println("Number of contradictions: " + mhTrans.ATc.size());
 			System.out.println(translation);
