@@ -755,11 +755,16 @@ public class MckTranslator {
 				// }
 
 				repeatHead = clause.getChild(0);
+				
+				boolean useDefine = TRANSITIONS_WITH_DEFINE;
+				if (useDefine && repeatHead.getAtom().equals(GdlNode.GDL_NEXT)) {
+					useDefine = false;
+				}
 
 				String formattedClause = MckFormat.formatClause(oldSet, prover, (GdlLiteral) repeatHead,
-						TRANSITIONS_WITH_DEFINE, ONE_LINE_TRANSITIONS);
+						useDefine, ONE_LINE_TRANSITIONS);
 
-				if (TRANSITIONS_WITH_DEFINE
+				if (useDefine
 						&& formattedClause.length() > (System.lineSeparator() + MckFormat.DEFINE + " ").length()
 						&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
 								.equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
