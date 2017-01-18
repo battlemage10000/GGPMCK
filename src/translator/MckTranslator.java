@@ -713,11 +713,14 @@ public class MckTranslator {
 
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator());
+		state_trans.append(System.lineSeparator() + "if neg terminal ->");
+		state_trans.append(System.lineSeparator() + "begin");
+		state_trans.append(System.lineSeparator());
 
 		// Update _old variables
 		for (String trueNode : ATf) {
 			if (trueNode.length() >= 4 && trueNode.substring(trueNode.length() - 4).equals(MCK_OLD_SUFFIX)) {
-				state_trans.append(System.lineSeparator() + trueNode + " := "
+				state_trans.append(System.lineSeparator() + "  " + trueNode + " := "
 						+ trueNode.substring(0, trueNode.length() - 4) + ";");
 			}
 		}
@@ -818,7 +821,7 @@ public class MckTranslator {
 		// Make initially true vars false after first turn
 		for (String initial : ATi) {
 			if (graph.getStratum(initial) == 0 || graph.getStratum(MCK_TRUE_PREFIX + initial) == 0) {
-				state_trans.append(System.lineSeparator() + initial + " := " + MCK_FALSE + ";");
+				state_trans.append(System.lineSeparator() + "  " + initial + " := " + MCK_FALSE + ";");
 			}
 		}
 		//
@@ -839,6 +842,8 @@ public class MckTranslator {
 		//
 		// Conclusion
 		state_trans.deleteCharAt(state_trans.length() - 1); // Remove last ';'
+		state_trans.append(System.lineSeparator() + MCK_END);
+		state_trans.append(System.lineSeparator() + "fi");
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator() + MCK_END);
 		state_trans.append(System.lineSeparator());
@@ -849,7 +854,8 @@ public class MckTranslator {
 		StringBuilder spec = new StringBuilder();
 
 		// Specification
-		spec.append(System.lineSeparator() + "--spec_spr = AG(");
+		/*
+		spec.append(System.lineSeparator() + "--spec_spr = AG((terminal" + MCK_OR);
 		for (String role : ATd.keySet()) {
 			for (String move : ATd.get(role)) {
 				spec.append("(legal_" + role + "_" + move + " => Knows " + MCK_ROLE_PREFIX + role + " legal_" + role
@@ -857,8 +863,8 @@ public class MckTranslator {
 				spec.append(MCK_AND);
 			}
 		}
-		spec.delete(spec.length() - 4, spec.length());
-		spec.append(")");
+		spec.delete(spec.length() - MCK_AND.length(), spec.length());
+		spec.append("))");
 		spec.append(System.lineSeparator() + "--spec_spr = AG(");
 		for (String role : ATd.keySet()) {
 			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + MCK_STOP + "_"
@@ -867,7 +873,8 @@ public class MckTranslator {
 		}
 		spec.delete(spec.length() - 4, spec.length());
 		spec.append(")");
-		spec.append(System.lineSeparator() + "--spec_obs = AG(");
+		*/
+		spec.append(System.lineSeparator() + "--spec_obs = AG((terminal" + MCK_OR);
 		for (String role : ATd.keySet()) {
 			for (String move : ATd.get(role)) {
 				spec.append("(legal_" + role + "_" + move + " => Knows " + MCK_ROLE_PREFIX + role + " legal_" + role
@@ -876,11 +883,11 @@ public class MckTranslator {
 			}
 		}
 		spec.delete(spec.length() - 4, spec.length());
-		spec.append(")");
+		spec.append("))");
 		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 		for (String role : ATd.keySet()) {
-			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + role + "_"
-					+ MCK_STOP + "))");
+			spec.append("(neg terminal => neg (" + MCK_DOES_PREFIX + role + " == " + MCK_MOVE_PREFIX + MCK_STOP + "_"
+					+ role + "))");
 			spec.append(MCK_AND);
 		}
 		spec.delete(spec.length() - 4, spec.length());

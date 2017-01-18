@@ -142,7 +142,7 @@ public class MckFormat {
 		if (useDefine) {
 			clause.append(System.lineSeparator() + DEFINE + " " + formatMckNode(headNode) + " = " + DNF.toString());
 		} else if (oneLineTransition) {
-			clause.append(System.lineSeparator() + formatMckNode(headNode) + " := " + DNF.toString() + ";");
+			clause.append(System.lineSeparator() + "  " + formatMckNode(headNode) + " := " + DNF.toString() + ";");
 		} else {
 			clause.append(System.lineSeparator() + "if " + DNF.toString());
 			clause.append(System.lineSeparator() + "  -> " + formatMckNode(headNode) + " := " + TRUE);
