@@ -694,6 +694,10 @@ public class MckTranslator {
 
 		// Update the did_Agent to current move
 		if (!ASSIGNMENT_IN_ACTION) {
+			if (!DERIVE_INITIAL_CONDITIONS) {
+				state_trans.append(System.lineSeparator() + "if neg initial_state ->");
+				state_trans.append(System.lineSeparator() + "begin");
+			}
 			for (String role : ATd.keySet()) {
 				state_trans.append(System.lineSeparator() + "if ");
 				for (String move : ATd.get(role)) {
@@ -713,6 +717,13 @@ public class MckTranslator {
 				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_NULL + "_" + role);
 				state_trans.append(System.lineSeparator() + "fi;");
 			}
+			if (!DERIVE_INITIAL_CONDITIONS) {
+				if (state_trans.length() > 0) {
+					state_trans.deleteCharAt(state_trans.length() - 1);
+				}
+				state_trans.append(System.lineSeparator() + "end");
+				state_trans.append(System.lineSeparator() + "fi;");
+			}
 		}
 
 		state_trans.append(System.lineSeparator());
@@ -721,19 +732,33 @@ public class MckTranslator {
 		state_trans.append(System.lineSeparator() + "begin");
 		state_trans.append(System.lineSeparator());
 
+		StringBuilder old_values = new StringBuilder();
+		if (!DERIVE_INITIAL_CONDITIONS) {
+			old_values.append(System.lineSeparator() + "  if neg initial_state ->");
+			old_values.append(System.lineSeparator() + "  begin");
+		}
 		// Update _old variables
 		for (String trueNode : ATf) {
 			if (trueNode.length() >= 4 && trueNode.substring(trueNode.length() - 4).equals(MCK_OLD_SUFFIX)) {
-				state_trans.append(System.lineSeparator() + "  " + trueNode + " := "
+				old_values.append(System.lineSeparator() + "    " + trueNode + " := "
 						+ trueNode.substring(0, trueNode.length() - 4) + ";");
 			}
+		}
+		if (old_values.charAt(old_values.length() - 1) == ';') {
+			if (!DERIVE_INITIAL_CONDITIONS) {			
+				old_values.deleteCharAt(old_values.length() - 1);
+				old_values.append(System.lineSeparator() + "  end");
+				old_values.append(System.lineSeparator() + "  fi;");
+			}
+			state_trans.append(old_values);
 		}
 		state_trans.append(System.lineSeparator());
 		state_trans.append(System.lineSeparator());
 
 		Set<String> oldSet = new HashSet<String>();
 		for (String term : ATf) {
-			if (term.length() > MckFormat.OLD_SUFFIX.length() && term.substring(term.length() - MckFormat.OLD_SUFFIX.length()).equals(MckFormat.OLD_SUFFIX)) {
+			if (term.length() > MckFormat.OLD_SUFFIX.length()
+					&& term.substring(term.length() - MckFormat.OLD_SUFFIX.length()).equals(MckFormat.OLD_SUFFIX)) {
 				oldSet.add(term);
 			}
 		}
@@ -822,12 +847,29 @@ public class MckTranslator {
 			}
 		}
 
+		StringBuilder reset_initial = new StringBuilder();
 		// Make initially true vars false after first turn
+		if (!DERIVE_INITIAL_CONDITIONS) {
+			state_trans.append(System.lineSeparator() + "  if initial_state -> initial_state := False");
+			reset_initial.append(System.lineSeparator() + "  [] otherwise ->");
+			reset_initial.append(System.lineSeparator() + "  begin");
+		}
 		for (String initial : ATi) {
 			if (graph.getStratum(initial) == 0 || graph.getStratum(MCK_TRUE_PREFIX + initial) == 0) {
-				state_trans.append(System.lineSeparator() + "  " + initial + " := " + MCK_FALSE + ";");
+				reset_initial.append(System.lineSeparator() + "  " + initial + " := " + MCK_FALSE + ";");
 			}
 		}
+		if (reset_initial.charAt(reset_initial.length() - 1) == ';') {
+			reset_initial.deleteCharAt(reset_initial.length() - 1);
+			if (!DERIVE_INITIAL_CONDITIONS) {
+					reset_initial.append(System.lineSeparator() + "  end");
+			}
+			state_trans.append(reset_initial);
+		}
+		if (!DERIVE_INITIAL_CONDITIONS) {
+			state_trans.append(System.lineSeparator() + "  fi;");
+		}
+		
 		//
 		// for (String tautology : prover.getTautologySet()) {
 		// tautology =
@@ -984,8 +1026,12 @@ public class MckTranslator {
 				init_cond.append(MCK_AND);
 			}
 		}
-		// Remove last conjunction
-		init_cond.delete(init_cond.length() - 4, init_cond.length());
+		if (DERIVE_INITIAL_CONDITIONS) {
+			// Remove last conjunction
+			init_cond.delete(init_cond.length() - 4, init_cond.length());
+		} else {
+			init_cond.append(System.lineSeparator() + "initial_state == " + MCK_TRUE);
+		}
 		init_cond.append(System.lineSeparator());
 		init_cond.append(System.lineSeparator());
 
@@ -1021,7 +1067,9 @@ public class MckTranslator {
 			if (!TRANSITIONS_WITH_DEFINE) {
 				agents.append("terminal, ");
 			}
-			agents.append(MCK_DOES_PREFIX + role);
+			if (!DERIVE_INITIAL_CONDITIONS) {
+				agents.append(", " + MCK_DOES_PREFIX + role);
+			}
 			agents.append(")");
 		}
 		agents.append(System.lineSeparator());
