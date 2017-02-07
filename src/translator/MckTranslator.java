@@ -744,7 +744,7 @@ public class MckTranslator {
 		// Update _old variables
 		for (String trueNode : ATf) {
 			if (trueNode.length() >= 4 && trueNode.substring(trueNode.length() - 4).equals(MCK_OLD_SUFFIX)) {
-				old_values.append(System.lineSeparator() + "    " + trueNode + " := "
+				old_values.append(System.lineSeparator() + "  " + trueNode + " := "
 						+ trueNode.substring(0, trueNode.length() - 4) + ";");
 			}
 		}
@@ -766,6 +766,30 @@ public class MckTranslator {
 				oldSet.add(term);
 			}
 		}
+		
+		StringBuilder reset_initial = new StringBuilder();
+		// Make initially true vars false after first turn
+		if (!DERIVE_INITIAL_CONDITIONS) {
+			state_trans.append(System.lineSeparator() + "  if initial_state -> initial_state := False");
+			reset_initial.append(System.lineSeparator() + "  [] otherwise ->");
+			reset_initial.append(System.lineSeparator() + "  begin");
+		}
+		for (String initial : ATi) {
+			if (graph.getStratum(initial) == 0 || graph.getStratum(MCK_TRUE_PREFIX + initial) == 0) {
+				reset_initial.append(System.lineSeparator() + "  " + initial + " := " + MCK_FALSE + ";");
+			}
+		}
+		if (reset_initial.charAt(reset_initial.length() - 1) == ';') {
+			if (!DERIVE_INITIAL_CONDITIONS) {
+				reset_initial.deleteCharAt(reset_initial.length() - 1);
+				reset_initial.append(System.lineSeparator() + "  end");
+			}
+			state_trans.append(reset_initial);
+		}
+		if (!DERIVE_INITIAL_CONDITIONS) {
+			state_trans.append(System.lineSeparator() + "  fi;");
+		}
+		
 		
 		// Add transition rules
 		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
@@ -851,29 +875,6 @@ public class MckTranslator {
 			}
 		}
 
-		StringBuilder reset_initial = new StringBuilder();
-		// Make initially true vars false after first turn
-		if (!DERIVE_INITIAL_CONDITIONS) {
-			state_trans.append(System.lineSeparator() + "  if initial_state -> initial_state := False");
-			reset_initial.append(System.lineSeparator() + "  [] otherwise ->");
-			reset_initial.append(System.lineSeparator() + "  begin");
-		}
-		for (String initial : ATi) {
-			if (graph.getStratum(initial) == 0 || graph.getStratum(MCK_TRUE_PREFIX + initial) == 0) {
-				reset_initial.append(System.lineSeparator() + "  " + initial + " := " + MCK_FALSE + ";");
-			}
-		}
-		if (reset_initial.charAt(reset_initial.length() - 1) == ';') {
-			reset_initial.deleteCharAt(reset_initial.length() - 1);
-			if (!DERIVE_INITIAL_CONDITIONS) {
-					reset_initial.append(System.lineSeparator() + "  end");
-			}
-			state_trans.append(reset_initial);
-		}
-		if (!DERIVE_INITIAL_CONDITIONS) {
-			state_trans.append(System.lineSeparator() + "  fi;");
-		}
-		
 		//
 		// for (String tautology : prover.getTautologySet()) {
 		// tautology =
