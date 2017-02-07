@@ -26,6 +26,7 @@ import util.graph.DependencyGraph;
 public class MckTranslator {
 	public static String MCK_INIT = "INIT".intern();
 	public static String MCK_STOP = "STOP".intern();
+	public static String MCK_NULL = "NULL".intern();
 	public static String MCK_TRUE = "True".intern();
 	public static String MCK_FALSE = "False".intern();
 	public static String MCK_BEGIN = "begin".intern();
@@ -707,6 +708,9 @@ public class MckTranslator {
 				// state_trans.append(System.lineSeparator() + "[] ");
 				state_trans.append(MCK_ROLE_PREFIX + role + "." + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + " -> ");
 				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role);
+				state_trans.append(System.lineSeparator());
+				state_trans.append("[] otherwise -> ");
+				state_trans.append(MCK_DOES_PREFIX + role + " := " + MCK_MOVE_PREFIX + MCK_NULL + "_" + role);
 				state_trans.append(System.lineSeparator() + "fi;");
 			}
 		}
@@ -1062,7 +1066,8 @@ public class MckTranslator {
 			for (String move : ATd.get(role)) {
 				env_vars.append(MCK_MOVE_PREFIX + move + "_" + role + ", ");
 			}
-			env_vars.append(MCK_INIT + "_" + role + ", " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + "}");
+			env_vars.append(MCK_INIT + "_" + role + ", " + MCK_MOVE_PREFIX + MCK_STOP + "_" + role + ", "
+					+ MCK_MOVE_PREFIX + MCK_NULL + "_" + role + "}");
 		}
 		env_vars.append(System.lineSeparator());
 		env_vars.append(System.lineSeparator() + "-- AT:");
