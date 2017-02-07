@@ -613,15 +613,17 @@ public class MckTranslator {
 				}
 				for (String sees : ATs.get(role)) {
 					if (!ATdef.containsKey("sees_" + role + "_" + sees)) {
-						protocols.append("sees_" + role + "_" + sees + " : observable Bool, ");
+						protocols.append("sees_" + role + "_" + sees + " : observable Bool");
 					}
 				}
 				// protocols.append("terminal : observable Bool");
-				protocols.append(MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
+				if (ASSIGNMENT_IN_ACTION) {
+					protocols.append(", " + MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
+				}
 				protocols.append(")");
 				protocols.append(System.lineSeparator());
 				for (String definition : ATdef.values()) {
-					protocols.append(System.lineSeparator() + definition);
+					protocols.append(definition);
 				}
 			} else {
 				protocols.append(System.lineSeparator() + "protocol \"" + role + "\" (");
@@ -631,16 +633,18 @@ public class MckTranslator {
 				for (String sees : ATs.get(role)) {
 					protocols.append("sees_" + role + "_" + sees + " : observable Bool, ");
 				}
-				protocols.append("terminal : observable Bool, ");
-				protocols.append(MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
+				protocols.append("terminal : observable Bool");
+				if (ASSIGNMENT_IN_ACTION) {
+					protocols.append(", " + MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
+				}
 				protocols.append(")");
 			}
 			protocols.append(System.lineSeparator() + MCK_BEGIN);
 			if (ASSIGNMENT_IN_ACTION) {
-				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_DOES_PREFIX + role + ".write("
+				protocols.append(System.lineSeparator() + "  do terminal -> << " + MCK_DOES_PREFIX + role + ".write("
 						+ MCK_MOVE_PREFIX + MCK_STOP + "_" + role + ") >>");
 			} else {
-				protocols.append(System.lineSeparator() + "  if terminal -> << " + MCK_MOVE_PREFIX + MCK_STOP + "_"
+				protocols.append(System.lineSeparator() + "  do terminal -> << " + MCK_MOVE_PREFIX + MCK_STOP + "_"
 						+ role + " >>");
 			}
 			protocols.append(System.lineSeparator() + "  [] otherwise ->");
@@ -657,7 +661,7 @@ public class MckTranslator {
 			}
 			protocols.delete(protocols.length() - 9, protocols.length());
 			protocols.append(System.lineSeparator() + "    fi");
-			protocols.append(System.lineSeparator() + "  fi");
+			protocols.append(System.lineSeparator() + "  od");
 			protocols.append(System.lineSeparator() + MCK_END);
 		}
 		protocols.append(System.lineSeparator());
@@ -1065,7 +1069,7 @@ public class MckTranslator {
 				}
 			}
 			if (!TRANSITIONS_WITH_DEFINE) {
-				agents.append("terminal, ");
+				agents.append("terminal");
 			}
 			if (!DERIVE_INITIAL_CONDITIONS) {
 				agents.append(", " + MCK_DOES_PREFIX + role);
@@ -1146,12 +1150,14 @@ public class MckTranslator {
 			}
 		}
 		env_vars.append(System.lineSeparator());
-		env_vars.append(System.lineSeparator());
+		if (!DERIVE_INITIAL_CONDITIONS) {
+			env_vars.append(System.lineSeparator() + "initial_state : Bool");
+			env_vars.append(System.lineSeparator());
+		}
 
 		if (TRANSITIONS_WITH_DEFINE) {
 			env_vars.append(System.lineSeparator() + "-- Define based Transitions:");
 			env_vars.append(defineBasedDeclarations);
-			env_vars.append(System.lineSeparator());
 			env_vars.append(System.lineSeparator());
 		}
 
