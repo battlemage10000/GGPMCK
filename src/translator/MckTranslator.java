@@ -613,12 +613,15 @@ public class MckTranslator {
 				}
 				for (String sees : ATs.get(role)) {
 					if (!ATdef.containsKey("sees_" + role + "_" + sees)) {
-						protocols.append("sees_" + role + "_" + sees + " : observable Bool");
+						protocols.append("sees_" + role + "_" + sees + " : observable Bool, ");
 					}
 				}
 				// protocols.append("terminal : observable Bool");
 				if (ASSIGNMENT_IN_ACTION) {
-					protocols.append(", " + MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role);
+					protocols.append(MCK_DOES_PREFIX + role + " : " + MCK_ACTION_PREFIX + role + ", ");
+				}
+				if (protocols.length() > 1 && protocols.charAt(protocols.length() - 2) == ',') {
+					protocols.deleteCharAt(protocols.length() - 2);
 				}
 				protocols.append(")");
 				protocols.append(System.lineSeparator());
@@ -748,16 +751,15 @@ public class MckTranslator {
 						+ trueNode.substring(0, trueNode.length() - 4) + ";");
 			}
 		}
-		if (old_values.charAt(old_values.length() - 1) == ';') {
+		if (old_values.length() > 0 && old_values.charAt(old_values.length() - 1) == ';') {
 			if (!DERIVE_INITIAL_CONDITIONS) {			
 				old_values.deleteCharAt(old_values.length() - 1);
 				old_values.append(System.lineSeparator() + "  end");
 				old_values.append(System.lineSeparator() + "  fi;");
 			}
 			state_trans.append(old_values);
+			state_trans.append(System.lineSeparator());
 		}
-		state_trans.append(System.lineSeparator());
-		state_trans.append(System.lineSeparator());
 
 		Set<String> oldSet = new HashSet<String>();
 		for (String term : ATf) {
@@ -779,7 +781,7 @@ public class MckTranslator {
 				reset_initial.append(System.lineSeparator() + "  " + initial + " := " + MCK_FALSE + ";");
 			}
 		}
-		if (reset_initial.charAt(reset_initial.length() - 1) == ';') {
+		if (reset_initial.length() > 0 && reset_initial.charAt(reset_initial.length() - 1) == ';') {
 			if (!DERIVE_INITIAL_CONDITIONS) {
 				reset_initial.deleteCharAt(reset_initial.length() - 1);
 				reset_initial.append(System.lineSeparator() + "  end");
@@ -789,6 +791,7 @@ public class MckTranslator {
 		if (!DERIVE_INITIAL_CONDITIONS) {
 			state_trans.append(System.lineSeparator() + "  fi;");
 		}
+		state_trans.append(System.lineSeparator());
 		
 		
 		// Add transition rules
@@ -1070,10 +1073,13 @@ public class MckTranslator {
 				}
 			}
 			if (!TRANSITIONS_WITH_DEFINE) {
-				agents.append("terminal");
+				agents.append("terminal, ");
 			}
 			if (!DERIVE_INITIAL_CONDITIONS) {
-				agents.append(", " + MCK_DOES_PREFIX + role);
+				agents.append(MCK_DOES_PREFIX + role + ", ");
+			}
+			if (agents.length() > 1 && agents.charAt(agents.length()- 2) == ','){ 
+				agents.deleteCharAt(agents.length() - 2);
 			}
 			agents.append(")");
 		}
