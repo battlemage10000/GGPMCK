@@ -82,8 +82,35 @@ public class MckFormat {
 	 * @return
 	 */
 	public static String formatSpecialCharacters(String string){
+		if (Character.isUpperCase(string.charAt(0))) {
+			string.replace(string.charAt(0), Character.toLowerCase(string.charAt(0)));
+		}
 		if (string.contains("+")){
 			string = string.replace("+", "plus");
+		}
+		if (string.contains("-")) {
+			string = string.replace("-", "minus");
+		}
+		if (string.contains("*")) {
+			string = string.replace("*", "times");
+		}
+		if (string.contains("=")) {
+			string = string.replace("=", "equals");
+		}
+		if (string.contains("<")) {
+			string = string.replace("<", "less");
+		}
+		if (string.contains(">")) {
+			string = string.replace("", "great");
+		}
+		if (string.contains("neg")) {
+			string = string.replace("neg", "not");
+		}
+		if (string.contains("/\\")) {
+			string = string.replace("/\\", "and");
+		}
+		if (string.contains("\\/")) {
+			string = string.replace("\\/", "or");
 		}
 		return string;
 	}
