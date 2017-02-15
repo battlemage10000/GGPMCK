@@ -557,6 +557,7 @@ public class MckTranslator {
 	 */
 	private String generateProtocols() {
 		StringBuilder protocols = new StringBuilder();
+		// Signature of protocol
 		for (String role : ATd.keySet()) {
 			if (TRANSITIONS_WITH_DEFINE) {
 				protocols.append(System.lineSeparator() + "protocol \"" + role + "\" (");
@@ -588,9 +589,7 @@ public class MckTranslator {
 				}
 				protocols.append(")");
 				protocols.append(System.lineSeparator());
-				for (String definition : ATdef.values()) {
-					protocols.append(definition);
-				}
+				
 			} else {
 				protocols.append(System.lineSeparator() + "protocol \"" + role + "\" (");
 				for (String move : ATd.get(role)) {
@@ -605,23 +604,34 @@ public class MckTranslator {
 				}
 				protocols.append(")");
 			}
+			
+			// Local declarations
+			protocols.append(System.lineSeparator() + "did : observable " + MckFormat.ACTION_PREFIX + role);
+			protocols.append(System.lineSeparator() + "init_cond = did == " + MckFormat.INIT + "_" + role);
+			if (TRANSITIONS_WITH_DEFINE) {
+				for (String definition : ATdef.values()) {
+					protocols.append(definition);
+				}
+			}
+			
+			// Transitions of protocol
 			protocols.append(System.lineSeparator() + MckFormat.BEGIN);
 			if (ASSIGNMENT_IN_ACTION) {
 				protocols.append(System.lineSeparator() + "  do terminal -> << " + MckFormat.DOES_PREFIX + role + ".write("
-						+ MckFormat.MOVE_PREFIX + MckFormat.STOP + "_" + role + ") >>");
+						+ MckFormat.MOVE_PREFIX + MckFormat.STOP + "_" + role + ") | did := "+ MckFormat.MOVE_PREFIX + MckFormat.STOP + "_" + role + " >>");
 			} else {
 				protocols.append(System.lineSeparator() + "  do terminal -> << " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
-						+ role + " >>");
+						+ role + " | did := "+ MckFormat.MOVE_PREFIX + MckFormat.STOP + "_" + role + " >>");
 			}
 			protocols.append(System.lineSeparator() + "  [] otherwise ->");
 			protocols.append(System.lineSeparator() + "    if  ");
 			for (String move : ATd.get(role)) {
 				if (ASSIGNMENT_IN_ACTION) {
 					protocols.append("legal_" + role + "_" + move + " -> << " + MckFormat.DOES_PREFIX + role + ".write("
-							+ MckFormat.MOVE_PREFIX + move + "_" + role + ") >>");
+							+ MckFormat.MOVE_PREFIX + move + "_" + role + ") | did := "+ MckFormat.MOVE_PREFIX + move + "_" + role + " >>");
 				} else {
 					protocols.append(
-							"legal_" + role + "_" + move + " -> << " + MckFormat.MOVE_PREFIX + move + "_" + role + " >>");
+							"legal_" + role + "_" + move + " -> << " + MckFormat.MOVE_PREFIX + move + "_" + role + " | did := "+ MckFormat.MOVE_PREFIX + move + "_" + role + " >>");
 				}
 				protocols.append(System.lineSeparator() + "    []  ");
 			}
