@@ -105,9 +105,9 @@ public class GdlTerm implements GdlNode, LparseNode {
 		switch (getType()) {
 		case FUNCTION:
 			// base and inputs
-			if (getAtom().equals(GDL_DOES) || getAtom().equals(GDL_LEGAL)) {
+			if (getAtom().equals(DOES) || getAtom().equals(LEGAL)) {
 				lparse.append("input(");
-			} else if (getAtom().equals(GDL_INIT) || getAtom().equals(GDL_TRUE) || getAtom().equals(GDL_NEXT)) {
+			} else if (getAtom().equals(INIT) || getAtom().equals(TRUE) || getAtom().equals(NEXT)) {
 				lparse.append("base(");
 			} else if (getAtom().equals("not")) {
 				lparse.append("t1(");

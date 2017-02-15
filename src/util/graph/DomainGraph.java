@@ -2,7 +2,7 @@ package util.graph;
 
 import java.util.Map;
 
-import util.grammar.GdlNode.GdlType;
+import util.grammar.GdlType;
 
 import java.util.HashMap;
 import java.util.ArrayList;

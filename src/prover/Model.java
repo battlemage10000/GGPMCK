@@ -50,13 +50,13 @@ public class Model {
 	}
 
 	public boolean contains(GdlLiteral literal) {
-		if (literal.getAtom().equals(GdlNode.GDL_NOT)) {
+		if (literal.getAtom().equals(GdlNode.NOT)) {
 			GdlNode nonNegative = literal;
 			boolean isNegative = false; // double negatives
 			do {
 				nonNegative = nonNegative.getChild(0);
 				isNegative = !isNegative;
-			} while (literal.getAtom().equals(GdlNode.GDL_NOT));
+			} while (literal.getAtom().equals(GdlNode.NOT));
 
 			if (isNegative) {
 				return !model.contains(literal.toString());

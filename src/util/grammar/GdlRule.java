@@ -37,7 +37,7 @@ public class GdlRule implements GdlNode, LparseNode {
 
 	@Override
 	public String getAtom() {
-		return GDL_CLAUSE;
+		return CLAUSE;
 	}
 
 	@Override

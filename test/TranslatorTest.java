@@ -8,6 +8,7 @@ import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
 import prover.Prover;
+import translator.MckFormat;
 import translator.MckTranslator;
 import util.GdlParser;
 import util.grammar.GDLSyntaxException;
@@ -23,23 +24,23 @@ public class TranslatorTest {
 	public void testFormatMckNodeMethod() {
 		// case 1
 		GdlNode node = GdlParser.parseString("(sees player1 (move 1))").getChildren().get(0);
-		assertThat(MckTranslator.formatMckNode(node), is("sees_player1_move_1"));
+		assertThat(MckFormat.formatMckNode(node), is("sees_player1_move_1"));
 		
 		// case 2
 		node = GdlParser.parseString("(sees player1 (does player2 (move_1)))").getChildren().get(0);
-		assertThat(MckTranslator.formatMckNode(node), is("sees_player1_does_player2_move_1"));
+		assertThat(MckFormat.formatMckNode(node), is("sees_player1_does_player2_move_1"));
 		
 		// case 3
 		node = GdlParser.parseString("(next (step 2))").getChildren().get(0);
-		assertThat(MckTranslator.formatMckNode(node), is("step_2"));
+		assertThat(MckFormat.formatMckNode(node), is("step_2"));
 		
 		// case 4
 		node = GdlParser.parseString("(not (true (step 1)))").getChildren().get(0);
-		assertThat(MckTranslator.formatMckNode(node), is("neg step_1"));
+		assertThat(MckFormat.formatMckNode(node), is("neg step_1"));
 
 		// case 5
 		node = GdlParser.parseString("(++ 1 2)").getChildren().get(0);
-		assertThat(MckTranslator.formatMckNode(node), is("plusplus_1_2"));
+		assertThat(MckFormat.formatMckNode(node), is("plusplus_1_2"));
 	}
 	
 	@Test

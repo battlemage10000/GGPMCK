@@ -20,8 +20,8 @@ import util.grammar.Gdl;
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
 import util.grammar.GdlRule;
+import util.grammar.GdlType;
 import util.grammar.LparseNode;
-import util.grammar.GdlNode.GdlType;
 import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
 
@@ -177,7 +177,7 @@ public class GdlParser {
 					scopeNumber++;
 				}
 				break;
-			case GdlNode.GDL_CLAUSE:
+			case GdlNode.CLAUSE:
 				GdlNode newNode = GdlNodeFactory.createGdlRule(parent);
 				parent.getChildren().add(newNode);
 				if (openBracket) {
@@ -245,20 +245,20 @@ public class GdlParser {
 			if (node instanceof GdlRule) {
 				String headNodeString = getRuleHead(((GdlRule) node)).getAtom();
 				switch (headNodeString) {
-				case GdlNode.GDL_BASE:
-				case GdlNode.GDL_INPUT:
+				case GdlNode.BASE:
+				case GdlNode.INPUT:
 					break;
 				// Skip base and input clauses
-				case GdlNode.GDL_NEXT:
+				case GdlNode.NEXT:
 					headNodeString = TRUE_PREFIX + formatGdlNode(getRuleHead((GdlRule) node).getChildren().get(0));
 				default:
 					for (int i = 1; i < node.getChildren().size(); i++) {
 						boolean isNextTrue = false;
 						GdlNode toNode = node.getChildren().get(i);
-						while (toNode.getAtom().equals(GdlNode.GDL_NOT) || toNode.getAtom().equals(GdlNode.GDL_TRUE)
-								|| toNode.getAtom().equals(GdlNode.GDL_NEXT)) {
-							if (toNode.getAtom().equals(GdlNode.GDL_TRUE)
-									|| toNode.getAtom().equals(GdlNode.GDL_NEXT)) {
+						while (toNode.getAtom().equals(GdlNode.NOT) || toNode.getAtom().equals(GdlNode.TRUE)
+								|| toNode.getAtom().equals(GdlNode.NEXT)) {
+							if (toNode.getAtom().equals(GdlNode.TRUE)
+									|| toNode.getAtom().equals(GdlNode.NEXT)) {
 								isNextTrue = true;
 							}
 							toNode = toNode.getChildren().get(0);
@@ -308,7 +308,7 @@ public class GdlParser {
 
 		for (GdlNode node : root) {
 			if ((node.getType() == GdlType.FUNCTION || node.getType() == GdlType.FORMULA)
-					&& !node.getAtom().equals(GdlNode.GDL_NOT)) {
+					&& !node.getAtom().equals(GdlNode.NOT)) {
 				if (node.getType() == GdlType.FUNCTION) {
 					graph.addFunction(node.getAtom(), node.getChildren().size());
 				} else if (node.getType() == GdlType.FORMULA) {
@@ -334,9 +334,9 @@ public class GdlParser {
 			}
 		}
 
-		graph.addEdge(GdlNode.GDL_BASE, 1, GdlNode.GDL_TRUE, 1);
-		graph.addEdge(GdlNode.GDL_INPUT, 1, GdlNode.GDL_DOES, 1);
-		graph.addEdge(GdlNode.GDL_INPUT, 2, GdlNode.GDL_DOES, 2);
+		graph.addEdge(GdlNode.BASE, 1, GdlNode.TRUE, 1);
+		graph.addEdge(GdlNode.INPUT, 1, GdlNode.DOES, 1);
+		graph.addEdge(GdlNode.INPUT, 2, GdlNode.DOES, 2);
 		return graph;
 	}
 
@@ -462,7 +462,7 @@ public class GdlParser {
 		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(100, new GdlHeadComparator());
 		for (GdlNode clause : root.getChildren()) {
 			if (clause instanceof GdlRule) {
-				if (((GdlRule) clause).getHead().getAtom().equals(GdlNode.GDL_NEXT)) {
+				if (((GdlRule) clause).getHead().getAtom().equals(GdlNode.NEXT)) {
 					((GdlRule) clause).setStratum(graph.getStratum(
 							TRUE_PREFIX + formatGdlNode(getRuleHead((GdlRule) clause).getChildren().get(0))));
 				} else {

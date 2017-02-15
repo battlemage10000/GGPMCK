@@ -189,7 +189,7 @@ public class DependencyGraph {
 				stratumMap.put(key, 0);
 				if ((key.length() > GdlParser.TRUE_PREFIX.length() 
 						&& !key.substring(0, GdlParser.TRUE_PREFIX.length()).equals(GdlParser.TRUE_PREFIX))
-						|| !key.contentEquals(GdlNode.GDL_DOES)) {
+						|| !key.contentEquals(GdlNode.DOES)) {
 					staticSet.add(key);
 				}
 			} else {
@@ -264,8 +264,8 @@ public class DependencyGraph {
 			}
 		}
 
-		if (adjacencyMap.containsKey(GdlNode.GDL_SEES)) {
-			addOldValueForSees("", GdlNode.GDL_SEES);
+		if (adjacencyMap.containsKey(GdlNode.SEES)) {
+			addOldValueForSees("", GdlNode.SEES);
 		}
 	}
 }

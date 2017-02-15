@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import util.GdlParser;
 import util.grammar.GdlNode;
+import util.grammar.GdlType;
 import util.graph.DomainGraph;
 
 import java.util.Map;
@@ -124,7 +125,7 @@ public class ParserTest {
 					assertThat(node.getChildren().isEmpty(), is(false));
 					break;
 				case CLAUSE:
-					assertThat(node.getParent().getType(), is(GdlNode.GdlType.ROOT));
+					assertThat(node.getParent().getType(), is(GdlType.ROOT));
 					break;
 				default:
 				}

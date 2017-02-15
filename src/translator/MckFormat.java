@@ -11,6 +11,7 @@ public class MckFormat {
 
 	public static String INIT = "INIT".intern();
 	public static String STOP = "STOP".intern();
+	public static String NULL = "NULL".intern();
 	public static String NOT = "neg".intern();
 	public static String ROLE_PREFIX = "R_";
 	public static String MOVE_PREFIX = "M_";
@@ -24,6 +25,8 @@ public class MckFormat {
 	public static String TRUE = "True".intern();
 	public static String FALSE = "False".intern();
 	public static String DEFINE = "define".intern();
+	public static String BEGIN = "begin".intern();
+	public static String END = "end".intern();
 
 	public boolean ONE_LINE_TRANSITIONS = true;
 	public boolean DEBUG = true;
@@ -36,16 +39,16 @@ public class MckFormat {
 	public static String formatMckNode(GdlNode node) {
 		StringBuilder nodeString = new StringBuilder();
 		
-		if (node.getAtom().equals(GdlNode.GDL_DOES)) {
+		if (node.getAtom().equals(GdlNode.DOES)) {
 			nodeString.append(DOES_PREFIX + formatMckNode(node.getChild(0)));
 			nodeString.append(" == " + MOVE_PREFIX + formatMckNode(node.getChild(1)) + UNDERSCORE + formatMckNode(node.getChild(0)));
 		} else {
-			while(node.getAtom().contentEquals(GdlNode.GDL_NOT) ||
-					node.getAtom().contentEquals(GdlNode.GDL_INIT) ||
-					node.getAtom().contentEquals(GdlNode.GDL_TRUE) ||
-					node.getAtom().contentEquals(GdlNode.GDL_NEXT)){
+			while(node.getAtom().contentEquals(GdlNode.NOT) ||
+					node.getAtom().contentEquals(GdlNode.INIT) ||
+					node.getAtom().contentEquals(GdlNode.TRUE) ||
+					node.getAtom().contentEquals(GdlNode.NEXT)){
 				
-				if (node.getAtom().equals(GdlNode.GDL_NOT)) {
+				if (node.getAtom().equals(GdlNode.NOT)) {
 					nodeString.append(NOT + " ");
 				}
 				// Special unary predicates that are filtered out
@@ -129,7 +132,7 @@ public class MckFormat {
 			for (String literal : disjunct) {
 				GdlNode negFreeLiteral = GdlParser.parseString(literal).getChild(0);
 				boolean isNegative = false;
-				while(negFreeLiteral.getAtom().equals(GdlNode.GDL_NOT)) {
+				while(negFreeLiteral.getAtom().equals(GdlNode.NOT)) {
 					negFreeLiteral = negFreeLiteral.getChild(0);
 					isNegative = !isNegative;
 				}
@@ -139,14 +142,14 @@ public class MckFormat {
 				disjunctString.append(formatMckNode(negFreeLiteral)); // + AND);
 				
 				//if (oldSet.contains(formatMckNode(negFreeLiteral) + OLD_SUFFIX)) {
-				if (headNode.getAtom().equals(GdlNode.GDL_NEXT) && oldSet.contains(formatMckNode(negFreeLiteral) + OLD_SUFFIX)) {
+				if (headNode.getAtom().equals(GdlNode.NEXT) && oldSet.contains(formatMckNode(negFreeLiteral) + OLD_SUFFIX)) {
 					disjunctString.append(OLD_SUFFIX);
 					//System.out.println(formatMckNode(negFreeLiteral) + OLD_SUFFIX + " -> " + oldSet);
 				}
 				disjunctString.append(AND);
 				
 				if (useDefine 
-						&& negFreeLiteral.getAtom().equals(GdlNode.GDL_DOES)) {
+						&& negFreeLiteral.getAtom().equals(GdlNode.DOES)) {
 					// DEFINE only on non does rules
 					useDefine = false;
 				}

@@ -31,9 +31,9 @@ public class Gdl implements GdlNode, LparseNode {
 		for (GdlNode clause : getChildren()) {
 			lparse.append(((LparseNode) clause).toLparse());
 			if (clause.getType() == GdlType.CLAUSE) {
-				if (clause.getChildren().get(0).getAtom().equals(GDL_INIT)
-						|| clause.getChildren().get(0).getAtom().equals(GDL_NEXT)
-						|| clause.getChildren().get(0).getAtom().equals(GDL_LEGAL)) {
+				if (clause.getChildren().get(0).getAtom().equals(INIT)
+						|| clause.getChildren().get(0).getAtom().equals(NEXT)
+						|| clause.getChildren().get(0).getAtom().equals(LEGAL)) {
 					lparse.append(((LparseNode) clause).toLparseWithBaseInput());
 				}
 			}
