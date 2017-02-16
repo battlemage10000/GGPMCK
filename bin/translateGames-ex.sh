@@ -1,5 +1,7 @@
+startTime=$SECONDS
+
 ant jar
-startTime=$(date)
+
 echo
 echo Monty Hall mck
 java -jar deploy/MckTranslator.jar -i res/gdlii/MontyHall.gdl -o mh-prover.mck --use-prover
@@ -50,7 +52,7 @@ echo Mastermind mck with define
 java -jar deploy/MckTranslator.jar -i res/gdlii/mastermind.gdl -o master-prover-define.mck --use-prover --use-define
 
 echo
-echo "Compile time: "$(startTime-$(date))
+echo "Compile time: "$((SECONDS - startTime))"s"
 echo
 
 echo
@@ -103,5 +105,5 @@ echo Mastermind mck with define
 mck master-prover-define.mck
 
 echo
-echo "Total time: "$(startTime-$(date))
+echo "Total time: "$((SECONDS - startTime))"s"
 echo
