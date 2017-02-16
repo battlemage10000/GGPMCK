@@ -1,0 +1,106 @@
+-- new mck file for testing mck capabilities
+
+type Actions = {STOP, NULL, INIT, MOVE_1, MOVE_2, NLM}
+
+did_player : Actions
+terminal : Bool
+move_1 : Bool
+step_1 : Bool
+step_2 : Bool
+
+init_cond =
+did_player == INIT /\
+terminal == False /\
+move_1 == True /\
+step_1 == True /\
+step_2 == False
+
+agent Player "role" (move_1, terminal)
+
+transitions
+begin
+
+did_player := NULL;
+if Player.STOP -> did_player := STOP fi;
+if Player.NLM -> did_player := NLM fi;
+if Player.MOVE_1 -> did_player := MOVE_1 fi;
+
+
+if neg terminal ->
+begin
+
+terminal := step_2;
+step_2 := step_1;
+step_1 := False
+
+end
+fi
+
+end
+
+spec_spr = "=======  INITIAL STEP  =======" 
+Knows Player (terminal == False)
+spec_spr = (Player.did == INIT)
+spec_spr = (did_player == INIT)
+spec_spr = Knows Player (move_1 == True)
+
+spec_spr = "=======  STEP 1  =======" 
+AX (did_player == MOVE_1)
+spec_spr = AX neg (did_player == STOP)
+spec_spr = AX neg (did_player == NLM)
+spec_spr = AX neg (did_player == NULL)
+
+spec_spr = AX (terminal == False)
+spec_spr = AX Knows Player (terminal == False)
+spec_spr = AX Knows Player (move_1 == True)
+spec_spr = AX (Player.did == MOVE_1)
+spec_spr = AX neg (Player.did == STOP)
+spec_spr = AX neg (Player.did == NLM)
+
+spec_spr = "=======  STEP 2  =======" 
+AX^2 (did_player == MOVE_1)
+spec_spr = AX^2 neg (did_player == STOP)
+spec_spr = AX^2 neg (did_player == NLM)
+spec_spr = AX^2 neg (did_player == NULL)
+
+spec_spr = AX^2 Knows Player (terminal == True)
+spec_spr = AX^2 (Player.did == MOVE_1)
+spec_spr = AX^2 neg (Player.did == STOP)
+spec_spr = AX^2 neg (Player.did == NLM)
+
+spec_spr = "=======  STEP 3  =======" 
+AX^3 (did_player == MOVE_1)
+spec_spr = AX^3 neg (did_player == STOP)
+spec_spr = AX^3 neg (did_player == NLM)
+spec_spr = AX^3 neg (did_player == NULL)
+
+spec_spr = AX^3 Knows Player (terminal == True)
+spec_spr = AX^3 neg (Player.did == MOVE_1)
+spec_spr = AX^3 (Player.did == STOP)
+
+spec_spr = "=======  STEP 4  =======" 
+AX^4 neg (did_player == MOVE_1)
+spec_spr = AX^4 (did_player == STOP)
+spec_spr = AX^4 neg (did_player == NLM)
+spec_spr = AX^4 neg (did_player == NULL)
+
+spec_spr = AX^4 Knows Player (terminal == True)
+spec_spr = AX^4 neg (Player.did == MOVE_1)
+spec_spr = AX^4 (Player.did == STOP)
+
+spec_spr = AG (move_1 => X Knows Player move_1)
+
+
+protocol "role" (legal_move_1 : observable Bool, terminal : observable Bool)
+did : observable Actions
+init_cond = did == INIT
+
+begin
+	do neg terminal -> 
+		--if True -> << MOVE_1 | did := MOVE_1 >>
+		if legal_move_1 -> << MOVE_1 | did := MOVE_1 >>
+		[] otherwise -> << NLM | did := NLM >>
+		fi
+	[] break -> << STOP | did := STOP >>
+	od
+end

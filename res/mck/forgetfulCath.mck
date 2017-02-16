@@ -1,0 +1,62 @@
+-- Forgetful Cath
+
+type Action = {M1, M2}
+
+did_1 : Bool
+did_2 : Bool
+did_1_old : Bool
+did_2_old : Bool
+win : Bool
+
+init_cond = 
+did_1 == False /\
+did_2 == False /\
+did_1_old == False /\
+did_2_old == False /\
+win == False
+
+agent Cath "cath" ()
+
+transitions
+begin
+
+did_1_old := did_1;
+did_2_old := did_2;
+
+if Cath.MOVE_1 -> did_1 := True
+[] otherwise -> did_1 := False
+fi;
+if Cath.MOVE_2 -> did_2 := True
+[] otherwise -> did_2 := False
+fi;
+
+if (did_1 /\ did_1_old) \/ (did_2 /\ did_2_old) -> win := True
+[] otherwise -> win := False
+fi
+
+end
+
+-- Observation
+spec_obs = X^1 (did_1) => Knows Cath (X^1 (did_1) => win == True)
+spec_obs = X^1 (did_1) => Knows Cath (X^1 (did_2) => win == False)
+spec_obs = X^1 (did_2) => Knows Cath (X^1 (did_2) => win == True)
+spec_obs = X^1 (did_2) => Knows Cath (X^1 (did_1) => win == False)
+
+-- Synchronous perfect recall
+spec_spr = X^1 (did_1) => Knows Cath (X^1 (did_1) => win == True)
+spec_spr = X^1 (did_1) => Knows Cath (X^1 (did_2) => win == False)
+spec_spr = X^1 (did_2) => Knows Cath (X^1 (did_2) => win == True)
+spec_spr = X^1 (did_2) => Knows Cath (X^1 (did_1) => win == False)
+
+protocol "cath" ()
+did : observable Action
+begin
+-- first action
+if True -> << MOVE_1 | did := M1 >>
+[] True -> << MOVE_2 | did := M2 >>
+fi;
+-- second action
+if True -> << MOVE_1 >>
+[] True -> << MOVE_2 >>
+fi
+end
