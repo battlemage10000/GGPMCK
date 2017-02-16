@@ -1,4 +1,5 @@
 ant jar
+startTime=$(date)
 echo
 echo Monty Hall mck
 java -jar deploy/MckTranslator.jar -i res/gdlii/MontyHall.gdl -o mh-prover.mck --use-prover
@@ -37,16 +38,20 @@ echo 3p Pacman mck with define
 java -jar deploy/MckTranslator.jar -i res/gdlii/vis_pacman3p.gdl -o pac-prover-define.mck --use-prover --use-define
 echo
 echo Backgammon mck
-#java -jar deploy/MckTranslator.jar -i res/gdlii/backgammon.gdl -o back-prover.mck --use-prover
+java -jar deploy/MckTranslator.jar -i res/gdlii/backgammon.gdl -o back-prover.mck --use-prover
 echo
 echo Backgammon mck with define
-#java -jar deploy/MckTranslator.jar -i res/gdlii/backgammon.gdl -o back-prover-define.mck --use-prover --use-define
+java -jar deploy/MckTranslator.jar -i res/gdlii/backgammon.gdl -o back-prover-define.mck --use-prover --use-define
 echo
 echo Mastermind mck
-#java -jar deploy/MckTranslator.jar -i res/gdlii/mastermind.gdl -o master-prover.mck --use-prover
+java -jar deploy/MckTranslator.jar -i res/gdlii/mastermind.gdl -o master-prover.mck --use-prover
 echo
 echo Mastermind mck with define
-#java -jar deploy/MckTranslator.jar -i res/gdlii/mastermind.gdl -o master-prover-define.mck --use-prover --use-define
+java -jar deploy/MckTranslator.jar -i res/gdlii/mastermind.gdl -o master-prover-define.mck --use-prover --use-define
+
+echo
+echo "Compile time: "$(startTime-$(date))
+echo
 
 echo
 echo Monty Hall mck
@@ -96,3 +101,7 @@ mck master-prover.mck
 echo
 echo Mastermind mck with define
 mck master-prover-define.mck
+
+echo
+echo "Total time: "$(startTime-$(date))
+echo
