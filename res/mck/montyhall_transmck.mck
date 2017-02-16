@@ -1,0 +1,327 @@
+-- This is a systematic translation from Montyhall GDL-II description to MCK. 
+-- Ji Ruan
+
+-- Set of boolean variables 
+step_1: Bool 
+step_2: Bool 
+step_3: Bool 
+step_4: Bool 
+closed_1: Bool 
+closed_2: Bool 
+closed_3: Bool 
+car_1: Bool 
+car_2: Bool 
+car_3: Bool 
+chosen_1: Bool 
+chosen_2: Bool 
+chosen_3: Bool 
+did_Random_Open_door_1: Bool
+did_Random_Open_door_2: Bool
+did_Random_Open_door_3: Bool
+did_Random_Hide_car_1: Bool
+did_Random_Hide_car_2: Bool
+did_Random_Hide_car_3: Bool
+did_Random_Noop: Bool
+did_Candidate_Choose_1: Bool
+did_Candidate_Choose_2: Bool
+did_Candidate_Choose_3: Bool
+did_Candidate_Switch: Bool
+did_Candidate_Noop: Bool
+sees_Candidate_1: Bool
+sees_Candidate_2: Bool
+sees_Candidate_3: Bool
+legal_Random_Open_door_1: Bool 	--15 variables are extra (vs 28 are necessary)
+legal_Random_Open_door_2: Bool
+legal_Random_Open_door_3: Bool
+legal_Random_Hide_car_1: Bool
+legal_Random_Hide_car_2: Bool
+legal_Random_Hide_car_3: Bool
+legal_Random_Noop: Bool
+legal_Candidate_Choose_1: Bool
+legal_Candidate_Choose_2: Bool
+legal_Candidate_Choose_3: Bool
+legal_Candidate_Switch: Bool
+legal_Candidate_Noop: Bool
+terminal: Bool
+goal_Candidate_100: Bool
+goal_Candidate_0: Bool
+
+
+-- Initial Condition
+init_cond = 
+step_1 == True /\  step_2 == False /\ step_3 == False /\ step_4 == False /\
+closed_1 == True /\ closed_2 == True /\ closed_3 == True /\  
+car_1 == False /\ car_2 == False /\ car_3 == False /\  
+chosen_1 == False /\ chosen_2 == False /\ chosen_3 == False /\  
+did_Random_Open_door_1==False /\
+did_Random_Open_door_2==False /\
+did_Random_Open_door_3==False /\
+did_Random_Hide_car_1==False /\
+did_Random_Hide_car_2==False /\
+did_Random_Hide_car_3==False /\
+did_Random_Noop==False /\
+did_Candidate_Choose_1==False /\
+did_Candidate_Choose_2==False /\
+did_Candidate_Choose_3==False /\
+did_Candidate_Switch==False /\
+did_Candidate_Noop==False /\
+legal_Random_Open_door_1==False /\
+legal_Random_Open_door_2==False /\
+legal_Random_Open_door_3==False /\
+legal_Random_Hide_car_1==True /\
+legal_Random_Hide_car_2==True /\
+legal_Random_Hide_car_3==True /\
+legal_Random_Noop==False /\
+legal_Candidate_Choose_1==True /\
+legal_Candidate_Choose_2==True /\
+legal_Candidate_Choose_3==True /\
+legal_Candidate_Switch==False /\
+legal_Candidate_Noop==False /\
+neg sees_Candidate_1 /\ neg sees_Candidate_2 /\ neg sees_Candidate_3
+/\ neg goal_Candidate_100 /\ neg goal_Candidate_0 /\ neg terminal
+
+
+-- Agent binding
+agent  Random "random" (
+legal_Random_Hide_car_1, 
+legal_Random_Hide_car_2, 
+legal_Random_Hide_car_3, 
+legal_Random_Open_door_1, 
+legal_Random_Open_door_2, 
+legal_Random_Open_door_3, 
+legal_Random_Noop)
+
+agent  Candidate "candidate" (
+legal_Candidate_Choose_1, 
+legal_Candidate_Choose_2, 
+legal_Candidate_Choose_3,
+legal_Candidate_Noop, 
+legal_Candidate_Switch, 
+sees_Candidate_1, 
+sees_Candidate_2, 
+sees_Candidate_3,
+did_Candidate_Choose_1,
+did_Candidate_Choose_2,
+did_Candidate_Choose_3,
+did_Candidate_Switch,
+did_Candidate_Noop)
+
+transitions
+begin
+-- auxiliary variables for sees rules
+if Random.Open_door_1 ->   did_Random_Open_door_1:= True 
+[] otherwise -> did_Random_Open_door_1:= False
+fi; 
+if Random.Open_door_2 ->   did_Random_Open_door_2:= True
+[]otherwise -> did_Random_Open_door_2:= False
+fi; 
+if Random.Open_door_3 ->   did_Random_Open_door_3:= True
+[] otherwise -> did_Random_Open_door_3:= False
+fi; 
+if Random.Hide_car_1 ->   did_Random_Hide_car_1:= True 
+[] otherwise -> did_Random_Hide_car_1:= False
+fi; 
+if Random.Hide_car_2 ->   did_Random_Hide_car_2:= True
+[]otherwise -> did_Random_Hide_car_2:= False
+fi; 
+if Random.Hide_car_3 ->   did_Random_Hide_car_3:= True
+[] otherwise -> did_Random_Hide_car_3:= False
+fi; 
+if Random.Noop ->   did_Random_Noop:= True
+[] otherwise -> did_Random_Noop:= False
+fi; 
+
+if Candidate.Choose_1 -> did_Candidate_Choose_1 := True
+[] otherwise -> did_Candidate_Choose_1 := False
+fi; 
+if Candidate.Choose_2 -> did_Candidate_Choose_2 := True
+[] otherwise -> did_Candidate_Choose_2 := False
+fi; 
+if Candidate.Choose_3 -> did_Candidate_Choose_3 := True
+[] otherwise -> did_Candidate_Choose_3 := False
+fi; 
+if Candidate.Switch -> did_Candidate_Switch := True
+[] otherwise -> did_Candidate_Switch := False
+fi; 
+if Candidate.Noop -> did_Candidate_Noop := True
+[] otherwise -> did_Candidate_Noop := False
+fi; 
+
+-- from next rules
+if did_Random_Hide_car_1 \/ car_1 -> car_1 := True 
+[]otherwise -> car_1 := False
+fi;
+if did_Random_Hide_car_2 \/ car_2 -> car_2 := True 
+[]otherwise -> car_2 := False
+fi;
+if did_Random_Hide_car_3 \/ car_3 -> car_3 := True 
+[]otherwise -> car_3 := False
+fi;
+
+
+if did_Candidate_Choose_1 \/ (chosen_1 /\ neg did_Candidate_Switch) 
+\/ (did_Candidate_Switch /\ closed_1 /\ neg chosen_1) 
+-> chosen_1 := True
+[] otherwise -> chosen_1 := False
+fi; 
+if did_Candidate_Choose_2 \/ (chosen_2 /\ neg did_Candidate_Switch) 
+\/ (did_Candidate_Switch /\ closed_2 /\ neg chosen_2) 
+-> chosen_2 := True
+[] otherwise -> chosen_2 := False
+fi; 
+if did_Candidate_Choose_3 \/ (chosen_3 /\ neg did_Candidate_Switch) 
+\/ (did_Candidate_Switch /\ closed_3 /\ neg chosen_3) 
+-> chosen_3 := True
+[] otherwise -> chosen_3 := False
+fi; 
+
+if neg did_Random_Open_door_1 /\ closed_1 -> closed_1 := True
+[]otherwise -> closed_1 := False
+fi; 
+if neg did_Random_Open_door_2 /\ closed_2 -> closed_2 := True
+[]otherwise -> closed_2 := False
+fi; 
+if neg did_Random_Open_door_3 /\ closed_3 -> closed_3 := True
+[]otherwise -> closed_3 := False
+fi; 
+-- We have to use the step_x value before it is updated. 
+sees_Candidate_1 := did_Random_Open_door_1 \/ (step_3 /\ car_1);
+sees_Candidate_2 := did_Random_Open_door_2 \/ (step_3 /\ car_2);
+sees_Candidate_3 := did_Random_Open_door_3 \/ (step_3 /\ car_3);
+
+if step_3 -> step_4 := True
+[] otherwise -> step_4 := False
+fi;
+if step_2 -> step_3 := True
+[]otherwise -> step_3 := False
+fi;
+if step_1 -> step_2 := True
+[]otherwise -> step_2 := False
+fi;
+step_1 := False;
+
+-- global rules (affecting same state)
+terminal := step_4;
+
+goal_Candidate_100 := (chosen_1 /\ car_1) \/ (chosen_2 /\ car_2) \/ (chosen_3 /\ car_3);
+goal_Candidate_0 := (chosen_1 /\ neg car_1) \/ (chosen_2 /\ neg car_2) \/ (chosen_3 /\ neg car_3);
+
+legal_Random_Hide_car_1 := step_1 /\ closed_1; 
+legal_Random_Hide_car_2 := step_1 /\ closed_2; 
+legal_Random_Hide_car_3 := step_1 /\ closed_3; 
+
+legal_Random_Open_door_1 := step_2 /\ closed_1 /\ neg car_1 /\ neg chosen_1; 
+legal_Random_Open_door_2 := step_2 /\ closed_2 /\ neg car_2 /\ neg chosen_2; 
+legal_Random_Open_door_3 := step_2 /\ closed_3 /\ neg car_3 /\ neg chosen_3;  
+legal_Random_Noop := step_3; 
+
+legal_Candidate_Choose_1 := step_1 /\ closed_1; 
+legal_Candidate_Choose_2 := step_1 /\ closed_2; 
+legal_Candidate_Choose_3 := step_1 /\ closed_3; 
+
+legal_Candidate_Noop := step_2 \/ step_3; 
+legal_Candidate_Switch := step_3
+end
+
+---- %Specifications that can be checked 
+---- this is not part of the translation
+
+--spec_spr = step_1 /\ AX step_2 /\ AX AX step_3 /\ X 3 step_4 --true ok
+--spec_clk = step_1 /\ AX step_2 /\ AX AX step_3 /\ X 3 step_4 --true ok
+--spec_obs = step_1 /\ AX step_2  /\ AX AX step_3 /\ X 3 step_4 --true ok
+
+--spec_spr = AX terminal --false ok
+---spec_spr = AX AX AX terminal --true ok
+--spec_spr = AF terminal -- Game eventually terminal. this checking is not supported. 
+--spec_clk = AF terminal -- not supported. 
+--spec_obs = AF terminal -- true ok
+
+--spec_spr = neg AX AX AX goal_Candidate_100 /\ neg AX AX AX goal_Candidate_0
+
+-- spec_obs = neg AX AX AX win /\ neg AX AX AX (neg win)
+
+--spec_spr = AX (Knows Candidate step_2) -- --true ok
+--spec_spr = AX (CK {Candidate,Random} step_2) -- --true ok - this is common knowledge. 
+
+--spec_spr = (<< {Candidate} >> X (Knows Candidate car_1)) --  false ok
+--spec_spr = (<< {Candidate} >> X (chosen_1)) -- true ok
+--spec_spr = (<< {Candidate} >> X (car_1)) -- false ok
+
+--spec_spr = EX car_1 -- true ok
+--spec_spr = AX (car_1 => AX car_1) -- true ok
+--spec_spr = AX (car_1 => AX AX car_1) -- true ok
+--spec_spr = AX (car_1 => AX AX AX car_1)--true ok
+
+-- Candidate knows its legal moves.
+--spec_spr = (( legal_Candidate_Choose_1 => Knows Candidate legal_Candidate_Choose_1) /\ (legal_Candidate_Choose_2 => Knows Candidate legal_Candidate_Choose_2) /\ (legal_Candidate_Choose_3 => Knows Candidate legal_Candidate_Choose_3) /\ (legal_Candidate_Noop => Knows Candidate legal_Candidate_Noop) /\ (legal_Candidate_Switch => Knows Candidate legal_Candidate_Switch)) -- true ok
+
+--spec_spr = AG (( legal_Candidate_Choose_1 => Knows Candidate legal_Candidate_Choose_1) /\ (legal_Candidate_Choose_2 => Knows Candidate legal_Candidate_Choose_2) /\ (legal_Candidate_Choose_3 => Knows Candidate legal_Candidate_Choose_3) /\ (legal_Candidate_Noop => Knows Candidate legal_Candidate_Noop) /\ (legal_Candidate_Switch => Knows Candidate legal_Candidate_Switch))
+-- true ok. only possible in BMC
+
+spec_spr_xn = X X X (( legal_Candidate_Choose_1 => Knows Candidate legal_Candidate_Choose_1) /\ (legal_Candidate_Choose_2 => Knows Candidate legal_Candidate_Choose_2) /\ (legal_Candidate_Choose_3 => Knows Candidate legal_Candidate_Choose_3) /\ (legal_Candidate_Noop => Knows Candidate legal_Candidate_Noop) /\ (legal_Candidate_Switch => Knows Candidate legal_Candidate_Switch))
+--true ok. 
+
+------------new block verification
+--spec_obs_ctl =AF terminal
+
+--spec_obs_ctl =(neg AF goal_Candidate_100) /\ (neg AF goal_Candidate_0)
+
+--spec_spr_xn =((((legal_Candidate_Choose_1 => (Knows Candidate (legal_Candidate_Choose_1))) /\ (legal_Candidate_Choose_2 => (Knows Candidate (legal_Candidate_Choose_2)))) /\ (legal_Candidate_Choose_3 => (Knows Candidate (legal_Candidate_Choose_3)))) /\ (legal_Candidate_Noop => (Knows Candidate (legal_Candidate_Noop)))) /\ (legal_Candidate_Switch => (Knows Candidate (legal_Candidate_Switch)))
+
+--spec_spr_nested =A (X (terminal /\ (Knows Candidate (terminal))))
+
+--spec_spr_nested =A (X (((((legal_Candidate_Choose_1 => (Knows Candidate (legal_Candidate_Choose_1))) /\ (legal_Candidate_Choose_2 => (Knows Candidate (legal_Candidate_Choose_2)))) /\ (legal_Candidate_Choose_3 => (Knows Candidate (legal_Candidate_Choose_3)))) /\ (legal_Candidate_Noop => (Knows Candidate (legal_Candidate_Noop)))) /\ (legal_Candidate_Switch => (Knows Candidate (legal_Candidate_Switch)))))
+
+--spec_spr_nested =A (X (A (X (((((legal_Candidate_Choose_1 => (Knows Candidate (legal_Candidate_Choose_1))) /\ (legal_Candidate_Choose_2 => (Knows Candidate (legal_Candidate_Choose_2)))) /\ (legal_Candidate_Choose_3 => (Knows Candidate (legal_Candidate_Choose_3)))) /\ (legal_Candidate_Noop => (Knows Candidate (legal_Candidate_Noop)))) /\ (legal_Candidate_Switch => (Knows Candidate (legal_Candidate_Switch)))))))
+
+
+--spec_spr_nested =A (X (A (X (A (X (terminal /\ (Knows Candidate (terminal))))))))
+
+--spec_spr_nested =A (X (A (X (A (X (((((legal_Candidate_Choose_1 => (Knows Candidate (legal_Candidate_Choose_1))) /\ (legal_Candidate_Choose_2 => (Knows Candidate (legal_Candidate_Choose_2)))) /\ (legal_Candidate_Choose_3 => (Knows Candidate (legal_Candidate_Choose_3)))) /\ (legal_Candidate_Noop => (Knows Candidate (legal_Candidate_Noop)))) /\ (legal_Candidate_Switch => (Knows Candidate (legal_Candidate_Switch)))))))))
+
+
+-- Agent Protocol
+protocol "random" (
+legal_Random_Hide_car_1: Bool, 
+legal_Random_Hide_car_2: Bool, 
+legal_Random_Hide_car_3: Bool, 
+legal_Random_Open_door_1: Bool, 
+legal_Random_Open_door_2: Bool, 
+legal_Random_Open_door_3: Bool, 
+legal_Random_Noop: Bool)
+begin
+	do 
+	legal_Random_Hide_car_1 -> <<Hide_car_1>>
+	[] legal_Random_Hide_car_2 -> <<Hide_car_2>>
+	[] legal_Random_Hide_car_3 -> <<Hide_car_3>>
+	[] legal_Random_Open_door_1 -> <<Open_door_1>>
+	[] legal_Random_Open_door_2 -> <<Open_door_2>>
+	[] legal_Random_Open_door_3 -> <<Open_door_3>>
+	[] legal_Random_Noop -> <<Noop>>
+ 	od
+end
+
+protocol "candidate" (
+legal_Candidate_Choose_1: Bool, 
+legal_Candidate_Choose_2: Bool, 
+legal_Candidate_Choose_3: Bool,
+legal_Candidate_Noop: Bool, 
+legal_Candidate_Switch: Bool, 
+sees_Candidate_1: observable Bool, 
+sees_Candidate_2: observable Bool, 
+sees_Candidate_3: observable Bool,
+did_Candidate_Choose_1: observable Bool,
+did_Candidate_Choose_2: observable Bool,
+did_Candidate_Choose_3: observable Bool,
+did_Candidate_Switch: observable Bool,
+did_Candidate_Noop: observable Bool
+)
+begin
+ 	do
+	legal_Candidate_Choose_1 -> <<Choose_1>>
+	[] legal_Candidate_Choose_2 -> <<Choose_2>>
+	[] legal_Candidate_Choose_3 -> <<Choose_3>>
+	[] legal_Candidate_Noop -> <<Noop>>
+	[] legal_Candidate_Switch -> <<Switch>>
+	od
+end

@@ -1,0 +1,59 @@
+-- Simulate a one-time-pad with a shared variable channel.
+-- Alice sends a message to Bob, encrypted using a one time pad 
+-- Eve the eavesdropper taps the wire 
+
+-- The 'secret' one-time-pad shared between Alice and Bob.
+one_time_pad : Bool
+-- The communications channel.
+channel : Bool
+
+agent Alice "sender"      (one_time_pad, channel)
+agent Bob   "receiver"   (one_time_pad, channel)
+agent Eve   "eavesdropper" (channel)
+
+-- After termination, Bob knows the message contents.
+spec_clk_xn =
+ X 3 
+      CK ((Knows Bob Alice.message) \/ (Knows Bob neg Alice.message))
+
+spec_spr_xn = 
+ X 3 
+    ((neg (Knows Eve Alice.message)) /\ (neg (Knows Eve (neg Alice.message))))
+
+-- Alice's protocol.
+protocol "sender" (env_otp : Bool, chan : Bool)
+otp : Bool
+message : Bool
+  where neg otp
+
+begin
+  << otp := env_otp.read() >>;
+  << chan.write(message xor otp) >>
+end
+
+-- Bob's protocol.
+protocol "receiver" (env_otp : Bool, chan : Bool)
+otp : observable Bool
+received_bit : observable Bool
+  where all_init
+
+begin
+  << otp := env_otp.read() >>;
+  skip; --  wait for Alice to write.
+  << received_bit := chan.read() >>
+end
+
+-- Eve's protocol.
+protocol "eavesdropper" (chan : Bool)
+received_bit : observable Bool
+
+begin
+  << received_bit := chan.read() >>;
+  << received_bit := chan.read() >>;
+  << received_bit := chan.read() >>
+end
+
+
+
+
+

@@ -1,0 +1,22 @@
+protocol "dc_agent_protocol.txt"
+(
+  paid : observable Bool,
+  chan_left : Bool,
+  chan_right : Bool,
+  said : observable Bool[] -- the broadcast variables.
+)
+
+coin_left : Bool
+coin_right : Bool
+  where all_init 
+
+begin
+  -- The enviroment tells us whether we paid or not.
+  -- This agent decides the coin toss to the right.
+  if True -> coin_right := True
+  [] True -> coin_right := False
+  fi;
+  << chan_right.write(coin_right) >>;
+  << coin_left := chan_left.read() >>;
+  << said[self].write(coin_left xor coin_right xor paid) >>
+end

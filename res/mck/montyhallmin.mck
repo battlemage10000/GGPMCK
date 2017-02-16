@@ -1,0 +1,222 @@
+-- This is a systematic translation from Montyhall GDL-II description to MCK. 
+-- Ji Ruan
+
+-- Set of boolean variables 
+type Steps ={1..4}
+type ActRandom = {Open_door_1, Open_door_2, Open_door_3, Hide_car_1, Hide_car_2, Hide_car_3, NoopR, INITR, STOPR}
+type ActCandidate ={Choose_1, Choose_2, Choose_3, Switch, NoopC, INITC, STOPC}
+
+step: Steps
+closed_1: Bool 
+closed_2: Bool 
+closed_3: Bool 
+car_1: Bool 
+car_2: Bool 
+car_3: Bool 
+chosen_1: Bool 
+chosen_2: Bool 
+chosen_3: Bool 
+did_Random: ActRandom
+did_Candidate: ActCandidate
+sees_Candidate_1: Bool
+sees_Candidate_2: Bool
+sees_Candidate_3: Bool
+
+-- 15 variables in total. 
+
+
+-- defined variables
+define legal_Random_Hide_car_1 = step == 1 /\ closed_1 
+define legal_Random_Hide_car_2 = step == 1 /\ closed_2 
+define legal_Random_Hide_car_3 = step == 1 /\ closed_3 
+define legal_Random_Open_door_1 = step == 2 /\ closed_1 /\ neg car_1 /\ neg chosen_1 
+define legal_Random_Open_door_2 = step == 2 /\ closed_2 /\ neg car_2 /\ neg chosen_2 
+define legal_Random_Open_door_3 = step == 2 /\ closed_3 /\ neg car_3 /\ neg chosen_3  
+define legal_Random_Noop = step == 3 
+
+define legal_Candidate_Choose_1 = step == 1 /\ closed_1 
+define legal_Candidate_Choose_2 = step == 1 /\ closed_2 
+define legal_Candidate_Choose_3 = step == 1 /\ closed_3 
+define legal_Candidate_Noop = step == 2 \/ step == 3 
+define legal_Candidate_Switch = step == 3
+
+define terminal = step == 4
+define goal_Candidate_100 = (chosen_1 /\ car_1) \/ (chosen_2 /\ car_2) \/ (chosen_3 /\ car_3)
+define goal_Candidate_0 = (chosen_1 /\ neg car_1) \/ (chosen_2 /\ neg car_2) \/ (chosen_3 /\ neg car_3)
+
+-- Initial Condition
+init_cond = step == 1 /\
+closed_1 == True /\ closed_2 == True /\ closed_3 == True /\  
+car_1 == False /\ car_2 == False /\ car_3 == False /\  
+chosen_1 == False /\ chosen_2 == False /\ chosen_3 == False /\  
+did_Random == INITR /\ did_Candidate == INITC /\
+neg sees_Candidate_1 /\ neg sees_Candidate_2 /\ neg sees_Candidate_3
+
+-- Agent binding
+agent  Random "random" (
+step,
+closed_1, 
+closed_2, 
+closed_3, 
+car_1, 
+car_2, 
+car_3,
+chosen_1, 
+chosen_2, 
+chosen_3)
+
+agent  Candidate "candidate" (
+step,
+closed_1, 
+closed_2, 
+closed_3, 
+sees_Candidate_1, 
+sees_Candidate_2, 
+sees_Candidate_3
+)
+
+transitions
+begin
+--remember actions
+
+if Random.Open_door_1 -> did_Random := Open_door_1
+[] Random.Open_door_2 -> did_Random := Open_door_2
+[] Random.Open_door_3 -> did_Random := Open_door_3
+[] Random.Hide_car_1 ->  did_Random := Hide_car_1
+[] Random.Hide_car_2 ->  did_Random := Hide_car_2
+[] Random.Hide_car_3 ->  did_Random := Hide_car_3
+[] Random.Noop ->   did_Random := NoopR
+[] otherwise -> did_Random := STOPR
+fi; 
+
+if Candidate.Choose_1 -> did_Candidate := Choose_1
+[] Candidate.Choose_2 -> did_Candidate := Choose_2
+[] Candidate.Choose_3 -> did_Candidate := Choose_3
+[] Candidate.Switch ->   did_Candidate := Switch
+[] Candidate.Noop -> 	 did_Candidate := NoopC
+[] otherwise -> did_Candidate := STOPC
+fi;
+
+if neg terminal -> 
+begin
+
+-- from next rules
+if did_Random == Hide_car_1 \/ (neg terminal /\ car_1) -> car_1 := True 
+[]otherwise -> car_1 := False
+fi;
+if did_Random == Hide_car_2 \/ (neg terminal /\ car_2) -> car_2 := True 
+[]otherwise -> car_2 := False
+fi;
+if did_Random == Hide_car_3 \/ (neg terminal /\ car_3) -> car_3 := True 
+[]otherwise -> car_3 := False
+fi;
+
+if neg did_Random == Open_door_1 /\ closed_1 /\ neg terminal -> closed_1 := True
+[]otherwise -> closed_1 := False
+fi; 
+if neg did_Random == Open_door_2 /\ closed_2 /\ neg terminal -> closed_2 := True
+[]otherwise -> closed_2 := False
+fi; 
+if neg did_Random == Open_door_3 /\ closed_3 /\ neg terminal -> closed_3 := True
+[]otherwise -> closed_3 := False
+fi;
+
+if did_Candidate == Choose_1 \/ (neg terminal /\ chosen_1 /\ neg did_Candidate == Switch) 
+\/ (did_Candidate == Switch /\ closed_1 /\ neg chosen_1) 
+-> chosen_1 := True
+[] otherwise -> chosen_1 := False
+fi; 
+if did_Candidate == Choose_2 \/ (neg terminal /\ chosen_2 /\ neg did_Candidate == Switch) 
+\/ (did_Candidate == Switch /\ closed_2 /\ neg chosen_2) 
+-> chosen_2 := True
+[] otherwise -> chosen_2 := False
+fi; 
+if did_Candidate == Choose_3 \/ (neg terminal /\ chosen_3 /\ neg did_Candidate == Switch) 
+\/ (did_Candidate == Switch /\ closed_3 /\ neg chosen_3) 
+-> chosen_3 := True
+[] otherwise -> chosen_3 := False
+fi; 
+
+-- We have to use the step_x value before it is updated. 
+sees_Candidate_1 := did_Random == Open_door_1 \/ (neg terminal /\ step == 3 /\ car_1);
+sees_Candidate_2 := did_Random == Open_door_2 \/ (neg terminal /\ step == 3 /\ car_2);
+sees_Candidate_3 := did_Random == Open_door_3 \/ (neg terminal /\ step == 3 /\ car_3);
+
+if (neg terminal) -> step := step +1 fi
+end
+fi
+
+end
+
+---- Specifications that can be checked 
+
+--spec_spr = X^3 (Knows Candidate (step ==4))
+--spec_spr = X^3 (car_1 => Knows Candidate car_1)
+
+spec_spr = step == 1 
+
+-- Agent Protocol
+
+protocol "random" (
+step: Steps, 
+closed_1: Bool, 
+closed_2: Bool, 
+closed_3: Bool, 
+car_1: Bool, 
+car_2: Bool, 
+car_3: Bool,
+chosen_1: Bool, 
+chosen_2: Bool, 
+chosen_3: Bool)
+
+define terminal = step == 4
+define legal_Random_Hide_car_1 = step == 1 /\ closed_1 
+define legal_Random_Hide_car_2 = step == 1 /\ closed_2 
+define legal_Random_Hide_car_3 = step == 1 /\ closed_3 
+define legal_Random_Open_door_1 = step == 2 /\ closed_1 /\ neg car_1 /\ neg chosen_1 
+define legal_Random_Open_door_2 = step == 2 /\ closed_2 /\ neg car_2 /\ neg chosen_2 
+define legal_Random_Open_door_3 = step == 2 /\ closed_3 /\ neg car_3 /\ neg chosen_3  
+define legal_Random_Noop = step == 3
+
+begin
+	do 
+	neg terminal ->
+	if  legal_Random_Hide_car_1 -> <<Hide_car_1>>
+	[] legal_Random_Hide_car_2 -> <<Hide_car_2>>
+	[] legal_Random_Hide_car_3 -> <<Hide_car_3>>
+	[] legal_Random_Open_door_1 -> <<Open_door_1>>
+	[] legal_Random_Open_door_2 -> <<Open_door_2>>
+	[] legal_Random_Open_door_3 -> <<Open_door_3>>
+	[] legal_Random_Noop -> <<Noop>>
+	fi
+ 	od
+end
+
+protocol "candidate" (
+step : Steps,
+closed_1: Bool, 
+closed_2: Bool, 
+closed_3: Bool, 
+sees_Candidate_1: observable Bool, 
+sees_Candidate_2: observable Bool, 
+sees_Candidate_3: observable Bool
+)
+
+define terminal = step == 4
+define legal_Candidate_Choose_1 = step == 1 /\ closed_1 
+define legal_Candidate_Choose_2 = step == 1 /\ closed_2 
+define legal_Candidate_Choose_3 = step == 1 /\ closed_3 
+define legal_Candidate_Noop = step == 2 \/ step == 3 
+define legal_Candidate_Switch = step == 3
+
+begin
+ 	do
+	neg terminal ->
+	if legal_Candidate_Choose_1 -> <<Choose_1>>
+	[] legal_Candidate_Choose_2 -> <<Choose_2>>
+	[] legal_Candidate_Choose_3 -> <<Choose_3>>
+	[] legal_Candidate_Noop -> <<Noop>>
+	[] legal_Candidate_Switch -> <<Switch>>
+	fi
+	od
+end

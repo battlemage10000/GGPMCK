@@ -1,0 +1,45 @@
+paid : Bool[3]
+chan : Bool[3]
+said : Bool[3]
+
+init_cond = ((neg paid[0]) /\ (neg paid[1]) /\ (neg paid[2]))
+         \/ ((paid[0])     /\ (neg paid[1]) /\ (neg paid[2]))
+         \/ ((neg paid[0]) /\ (paid[1])     /\ (neg paid[2]))
+         \/ ((neg paid[0]) /\ (neg paid[1]) /\ (paid[2]))
+
+-- Agents are numbered in the order they appear.
+agent C1 "dc_agent_protocol" (paid[0], chan[0], chan[1], said)
+agent C2 "dc_agent_protocol" (paid[1], chan[1], chan[2], said)
+agent C3 "dc_agent_protocol" (paid[2], chan[2], chan[0], said)
+
+-- This talks about the knowledge of the first agent.
+spec_spr = X 6
+	     ((neg paid[0]) => ((Knows C1 (neg paid[0])
+			              /\ (neg paid[1])
+			              /\ (neg paid[2]))
+			   \/ ((Knows C1 (paid[1] \/ paid[2]))
+				    /\ (neg (Knows C1 paid[1]))
+				    /\ (neg (Knows C1 paid[2])))))
+
+protocol "dc_agent_protocol"
+(
+  paid : observable Bool,
+  chan_left : Bool,
+  chan_right : Bool,
+  said : observable Bool[] -- the broadcast variables.
+)
+
+coin_left : Bool
+coin_right : Bool
+  where all_init 
+
+begin
+  -- The enviroment tells us whether we paid or not.
+  -- This agent decides the coin toss to the right.
+  if True -> coin_right := True
+  [] True -> coin_right := False
+  fi;
+  << chan_right.write(coin_right) >>;
+  << coin_left := chan_left.read() >>;
+  << said[self].write(coin_left xor coin_right xor paid) >>
+end

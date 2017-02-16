@@ -1,0 +1,67 @@
+-- A version of the robot example of Brafman et al. JACM 97
+-- There are 8 positions in the world.
+-- The environment pushes the robot from position 0..7, 
+-- either one or no steps each instant.  
+-- If the robot is really at position p, then the sensor will have a
+-- %$value \in \{p - 1, p, p + 1\}$%, for a truncating interpretation of arithmetic.
+
+type Pos = {0..7}
+
+position : Pos
+sensor : Pos
+
+-- incpos indicates whether or not the environment just 
+-- tried to change the position  
+incpos : Bool
+
+-- halted becomes true once the robot has applied the brake 
+halted : Bool
+
+init_cond = incpos /\ position == 0 /\ sensor == 0 /\ neg halted
+
+agent Robbie "robot" ( sensor )
+
+-- At each time step the environment might move the robot one step to the
+-- right, and always generates a new sensor reading.
+transitions
+begin
+  if True -> incpos := True
+  [] True -> incpos := False
+  fi; 
+  if neg halted /\ neg Robbie.Halt /\ neg incpos -> position := position
+  [] neg halted /\ neg Robbie.Halt /\ incpos -> position := position + 1
+  [] neg halted /\ Robbie.Halt -> halted := True
+  [] halted -> skip 
+  fi;
+  if True -> sensor := position - 1
+  [] True -> sensor := position
+  [] True -> sensor := position + 1
+  fi
+end
+
+-- Rule out the traces where the environment stops trying to advance.
+fairness = incpos \/ halted
+
+-- Knowledge-based program specification agrees with the implementation.
+spec_obs_ctl = AG (sensor >= 3 <=> Knows Robbie position in {2..4})
+
+-- Robbie always halts,  in the goal region 
+spec_obs_ctl = AG( halted => position in {2..4} ) 
+spec_obs_ctl = AF halted 
+
+-- Does he halt as soon as he is in the goal region?
+spec_obs_ctl = AG( position in {2..4} => halted ) 
+
+-- The spec is not vacuously satisfied.
+spec_obs_ctl = EG True 
+
+-- The "car handbrake" protocol.
+-- In order to stop moving, the robot only needs to yank it once.
+protocol "robot" (sensor : observable Pos)
+
+begin
+  do neg (sensor >= 3) -> skip
+  [] sensor >= 3       -> <<Halt>>
+  od
+end
+
