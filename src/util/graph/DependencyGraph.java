@@ -99,7 +99,7 @@ public class DependencyGraph {
 			addTerm(toTerm);
 		}
 		if (!getNeighbours(fromTerm).contains(toTerm)) {
-			getNeighbours(fromTerm).add(toTerm);
+			getNeighbours(fromTerm).add(toTerm.intern());
 		}
 	}
 
@@ -167,12 +167,12 @@ public class DependencyGraph {
 				&& !child.substring(child.length() - 4).equals(GdlParser.OLD_SUFFIX)) {
 			adjacencyMap.get(node).remove(child);
 			addEdge(node, child + GdlParser.OLD_SUFFIX);
-			stratumMap.put(child + GdlParser.OLD_SUFFIX, 0);
+			stratumMap.put((child + GdlParser.OLD_SUFFIX).intern(), 0);
 		}
 		ArrayList<String> grandChildList = adjacencyMap.get(child);
 		adjacencyMap.put(child, new ArrayList<String>());
 		for (String grandChild : grandChildList) {
-			adjacencyMap.get(child).add(grandChild);
+			adjacencyMap.get(child).add(grandChild.intern());
 			addOldValueForSees(child, grandChild);
 		}
 	}
@@ -236,7 +236,7 @@ public class DependencyGraph {
 					for (String to : bodyList) {
 						if (oldifyList.contains(to)) {
 							addEdge(from, to + GdlParser.OLD_SUFFIX);
-							stratumMap.put(to + GdlParser.OLD_SUFFIX, 0);
+							stratumMap.put((to + GdlParser.OLD_SUFFIX).intern(), 0);
 						} else {
 							addEdge(from, to);
 						}
