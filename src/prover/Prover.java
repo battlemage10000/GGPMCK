@@ -44,7 +44,7 @@ public class Prover {
 		for (GdlNode node : root.getChildren()) {
 			if (node instanceof GdlLiteral) {
 				// These are facts
-				if (node.getAtom().contentEquals(GdlNode.GDL_INIT)) {
+				if (node.getAtom().contentEquals(GdlNode.INIT)) {
 					// Change init clauses to true and add to initialSet which
 					// will be set true exactly once
 					if (!initialSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
@@ -82,7 +82,7 @@ public class Prover {
 
 					// Strip negatives and add to literalSet
 					boolean isNegative = false;
-					while (literal.getAtom().equals(GdlNode.GDL_NOT)) {
+					while (literal.getAtom().equals(GdlNode.NOT)) {
 						literal = literal.getChild(0);
 						isNegative = !isNegative;
 					}
@@ -93,7 +93,7 @@ public class Prover {
 					}
 
 					// Evaluate distinct but don't remove yet
-					if (literal.getAtom().equals(GdlNode.GDL_DISTINCT)) {
+					if (literal.getAtom().equals(GdlNode.DISTINCT)) {
 						if (literal.getChild(0).toString().equals(literal.getChild(1).toString())) {
 							// if
 							// (!contradictionSet.contains(literal.toString()))
