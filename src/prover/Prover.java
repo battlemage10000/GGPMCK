@@ -41,17 +41,21 @@ public class Prover {
 		contradictionSet = new HashSet<String>();
 		dnfRuleSet = new HashMap<String, Set<Set<String>>>();
 
-		for (GdlNode node : root.getChildren()) {
+		joinRuleSet(root);
+	}
+
+	public void joinRuleSet(Gdl ruleSet) throws GDLSyntaxException {
+		for (GdlNode node : ruleSet.getChildren()) {
 			if (node instanceof GdlLiteral) {
 				// These are facts
 				if (node.getAtom().contentEquals(GdlNode.INIT)) {
 					// Change init clauses to true and add to initialSet which
 					// will be set true exactly once
 					if (!initialSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
-						initialSet.add(TRUE_PREFIX + node.getChild(0).toString() + ")");
+						initialSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
 					}
 					if (!literalSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
-						literalSet.add(TRUE_PREFIX + node.getChild(0).toString() + ")");
+						literalSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
 					}
 				} else {
 					// Non-init facts added to tautology set and rule set as
@@ -59,11 +63,8 @@ public class Prover {
 					dnfRuleSet.put(node.toString(), new HashSet<Set<String>>());
 
 					if (!literalSet.contains(node.toString())) {
-						literalSet.add(node.toString());
+						literalSet.add(node.toString().intern());
 					}
-					// if (!tautologySet.contains(node.toString())) {
-					// tautologySet.add(node.toString());
-					// }
 				}
 
 			} else if (node instanceof GdlRule) {
@@ -78,7 +79,7 @@ public class Prover {
 					GdlNode literal = node.getChild(i);
 
 					// Add literal to ruleset before any processing
-					clauseLiteralSet.add(literal.toString());
+					clauseLiteralSet.add(literal.toString().intern());
 
 					// Strip negatives and add to literalSet
 					boolean isNegative = false;
@@ -89,37 +90,23 @@ public class Prover {
 
 					// Add striped literal to vocab set
 					if (!literalSet.contains(literal.toString())) {
-						literalSet.add(literal.toString());
+						literalSet.add(literal.toString().intern());
 					}
 
 					// Evaluate distinct but don't remove yet
 					if (literal.getAtom().equals(GdlNode.DISTINCT)) {
-						if (literal.getChild(0).toString().equals(literal.getChild(1).toString())) {
-							// if
-							// (!contradictionSet.contains(literal.toString()))
-							// {
-							// contradictionSet.add(literal.toString());
-							// }
-						} else {
-							// if (!tautologySet.contains(literal.toString())) {
-							// tautologySet.add(literal.toString());
-							// }
+						if (!literal.getChild(0).toString().equals(literal.getChild(1).toString())) {
 							dnfRuleSet.put(headNode.toString(), new HashSet<Set<String>>());
 						}
 					}
 				}
-				// if (clauseLiteralSet.isEmpty()) {
-				// if (!tautologySet.contains(headNode)) {
-				// tautologySet.add(headNode.toString());
-				// }
-				// }
 				dnfRuleSet.get(headNode.toString()).add(clauseLiteralSet);
 			} else {
 				throw new GDLSyntaxException();
 			}
 		}
 	}
-
+	
 	public int cullVariables(boolean CULL_NULL_RULES) {
 		int numIterations = 0;
 		boolean changed = true;
@@ -163,12 +150,12 @@ public class Prover {
 						if (posLiteral.length() >= DOES_PREFIX.length()
 								&& posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
 							// No change for does
-							newDisjunct.add(literal);
+							newDisjunct.add(literal.intern());
 							// continue;
 						} else if (posLiteral.length() >= TRUE_PREFIX.length()
 								&& posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
 							// No change for true
-							newDisjunct.add(literal);
+							newDisjunct.add(literal.intern());
 							// continue;
 						} else if (dnfRuleSet.get(posLiteral) == null) {
 							if (isNegative) {
@@ -187,7 +174,7 @@ public class Prover {
 								// continue;
 							}
 						} else {
-							newDisjunct.add(literal);
+							newDisjunct.add(literal.intern());
 						}
 					} // End literal-for-loop
 
@@ -209,7 +196,7 @@ public class Prover {
 					dnfRuleSet.put(headNode, null);
 					changed = true;
 					if (CULL_NULL_RULES) {
-						removeRuleSet.add(headNode);
+						removeRuleSet.add(headNode.intern());
 					}
 				} else {
 					dnfRuleSet.put(headNode, newDnfRule);
@@ -410,10 +397,6 @@ public class Prover {
 		debug.append(System.lineSeparator() + "Initial: " + initialSet.toString());
 		debug.append(System.lineSeparator() + "Tautology: " + tautologySet.toString());
 		debug.append(System.lineSeparator() + "Contradiction: " + contradictionSet.toString());
-		// debug.append(System.lineSeparator() + "TrueVars: " +
-		// trueLiterals.toString());
-		// debug.append(System.lineSeparator() + "FalseVars: " +
-		// falseLiterals.toString());
 		return debug.toString();
 	}
 }
