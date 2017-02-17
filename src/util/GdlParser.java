@@ -27,6 +27,7 @@ import util.graph.DomainGraph;
 
 /**
  * Essential utility methods for parsing gdl
+ * 
  * @author vedantds
  *
  */
@@ -66,20 +67,20 @@ public class GdlParser {
 			case OPEN_P_Char:
 				// parenthesis
 				if (sb.length() > 0 && !comment) {
-					tokens.add(sb.toString());
+					tokens.add(sb.toString().intern());
 				}
 				if (!comment) {
-					tokens.add(OPEN_P_Str);
+					tokens.add(OPEN_P_Str.intern());
 				}
 				sb = new StringBuilder();
 				break;
 			case CLOSE_P_Char:
 				// parenthesis
 				if (sb.length() > 0 && !comment) {
-					tokens.add(sb.toString());
+					tokens.add(sb.toString().intern());
 				}
 				if (!comment) {
-					tokens.add(CLOSE_P_Str);
+					tokens.add(CLOSE_P_Str.intern());
 				}
 				sb = new StringBuilder();
 				break;
@@ -87,7 +88,7 @@ public class GdlParser {
 			case TAB:
 				// whitespace
 				if (sb.length() > 0 && !comment) {
-					tokens.add(sb.toString());
+					tokens.add(sb.toString().intern());
 				}
 				sb = new StringBuilder();
 				break;
@@ -111,12 +112,13 @@ public class GdlParser {
 		}
 
 		reader.close();
-		
+
 		// Case for input with only one variable(partial gdl parsing)
-		if (tokens.isEmpty() && sb.length() > 0 && !comment && sb.charAt(0) != OPEN_P_Char && sb.charAt(sb.length() - 1) != CLOSE_P_Char) {
-			tokens.add(sb.toString());
+		if (tokens.isEmpty() && sb.length() > 0 && !comment && sb.charAt(0) != OPEN_P_Char
+				&& sb.charAt(sb.length() - 1) != CLOSE_P_Char) {
+			tokens.add(sb.toString().intern());
 		}
-		
+
 		return tokens;
 	}
 
@@ -153,7 +155,8 @@ public class GdlParser {
 	}
 
 	/**
-	 * Takes a list of tokens and produces a parse tree. Returns the root node of the tree.
+	 * Takes a list of tokens and produces a parse tree. Returns the root node
+	 * of the tree.
 	 *
 	 * @param tokens
 	 * @return
@@ -188,7 +191,7 @@ public class GdlParser {
 			default:
 				if (token.charAt(0) == Q_MARK_Char) {
 					scopedVariable = true;
-					token = Q_MARK_Str + scopeNumber + UNDERSCORE + token;
+					token = (Q_MARK_Str + scopeNumber + UNDERSCORE + token).intern();
 				}
 				if (parent.getType() == GdlType.CLAUSE || parent.getType() == GdlType.ROOT) {
 					newNode = GdlNodeFactory.createGdlFormula(token, parent);
@@ -207,7 +210,8 @@ public class GdlParser {
 	}
 
 	/**
-	 * Overloaded method which doesn't require casting to Reader for game descriptions in Files
+	 * Overloaded method which doesn't require casting to Reader for game
+	 * descriptions in Files
 	 * 
 	 * @param filePath
 	 * @return
@@ -219,7 +223,8 @@ public class GdlParser {
 	}
 
 	/**
-	 * Overloaded method which doesn't require casting to Reader for game descriptions in Strings
+	 * Overloaded method which doesn't require casting to Reader for game
+	 * descriptions in Strings
 	 * 
 	 * @param gdl
 	 * @return
@@ -243,22 +248,21 @@ public class GdlParser {
 		for (GdlNode node : root) {
 			// if (node.getType() == GdlType.CLAUSE) {
 			if (node instanceof GdlRule) {
-				String headNodeString = getRuleHead(((GdlRule) node)).getAtom();
+				String headNodeString = node.getChild(0).getAtom();
 				switch (headNodeString) {
 				case GdlNode.BASE:
 				case GdlNode.INPUT:
 					break;
 				// Skip base and input clauses
 				case GdlNode.NEXT:
-					headNodeString = TRUE_PREFIX + formatGdlNode(getRuleHead((GdlRule) node).getChildren().get(0));
+					headNodeString = TRUE_PREFIX + formatGdlNode(node.getChild(0).getChild(0));
 				default:
 					for (int i = 1; i < node.getChildren().size(); i++) {
 						boolean isNextTrue = false;
 						GdlNode toNode = node.getChildren().get(i);
 						while (toNode.getAtom().equals(GdlNode.NOT) || toNode.getAtom().equals(GdlNode.TRUE)
 								|| toNode.getAtom().equals(GdlNode.NEXT)) {
-							if (toNode.getAtom().equals(GdlNode.TRUE)
-									|| toNode.getAtom().equals(GdlNode.NEXT)) {
+							if (toNode.getAtom().equals(GdlNode.TRUE) || toNode.getAtom().equals(GdlNode.NEXT)) {
 								isNextTrue = true;
 							}
 							toNode = toNode.getChildren().get(0);
@@ -296,8 +300,8 @@ public class GdlParser {
 	}
 
 	/**
-	 * Construct a graph that is used to derive the domain of parameters in literals and terms.
-	 * Follows the domain graph definition in the ggp book
+	 * Construct a graph that is used to derive the domain of parameters in
+	 * literals and terms. Follows the domain graph definition in the ggp book
 	 * 
 	 * @param root
 	 * @return
@@ -342,6 +346,7 @@ public class GdlParser {
 
 	/**
 	 * Check if there is a variable in the sub-tree rooted at node
+	 * 
 	 * @param node
 	 * @return
 	 */
@@ -360,6 +365,7 @@ public class GdlParser {
 
 	/**
 	 * Ground a game description
+	 * 
 	 * @param root
 	 * @param domainGraph
 	 * @return
@@ -368,10 +374,30 @@ public class GdlParser {
 		Gdl groundedRoot = GdlNodeFactory.createGdl();
 
 		for (GdlNode clause : root.getChildren()) {
-			if (!isVariableInTree(clause)) { // No variables is already ground
+			if (!isVariableInTree(clause)) { // No variables so already ground
 				groundedRoot.getChildren().add(clause);
 			} else {
-				String groundedClauseString = groundClause(clause, domainGraph.getMap());
+				Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
+				for (GdlNode node : clause) {
+					if (node.getType() == GdlType.VARIABLE) {
+						if (!constantMap.containsKey(node.getAtom())) {
+							constantMap.put(node.getAtom(), new ArrayList<String>());
+						}
+
+						DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
+								node.getParent().getChildren().indexOf(node) + 1);
+
+						if (domainGraph.getMap().containsKey(varTerm)) {
+							for (DomainGraph.Term term : domainGraph.getMap().get(varTerm)) {
+								if (!constantMap.get(node.getAtom()).contains(term.getTerm())) {
+									constantMap.get(node.getAtom()).add(term.getTerm());
+								}
+							}
+						}
+					}
+				}
+
+				String groundedClauseString = groundClause(clause, constantMap, true);
 
 				// Default root node if parseString throws error
 				GdlNode clauseTree = GdlNodeFactory.createGdl();
@@ -382,6 +408,42 @@ public class GdlParser {
 			}
 		}
 		return groundedRoot;
+	}
+
+	/**
+	 * Ground a clause in a game description
+	 * 
+	 * @param clauseNode
+	 * @param domainMap
+	 * @return
+	 */
+	public static String groundClause(GdlNode clauseNode, Map<String, List<String>> constantMap, boolean thing) {
+		// Duplicate method signature error
+		StringBuilder groundedClauses = new StringBuilder();
+
+		Queue<String> subClauses = new LinkedList<String>();
+		Queue<String> subClausesAlt = new LinkedList<String>();
+		subClausesAlt.add(clauseNode.toString());
+		for (String variable : constantMap.keySet()) {
+			subClauses = subClausesAlt;
+			subClausesAlt = new LinkedList<String>();
+
+			List<String> domain = constantMap.get(variable);
+
+			while (!subClauses.isEmpty()) {
+				String subClause = subClauses.remove();
+				for (String term : domain) {
+					String nextTerm = subClause.replace(variable, term);
+					if (nextTerm.contains(Q_MARK_Str)) {
+						subClausesAlt.add(nextTerm);
+					} else {
+						groundedClauses.append(nextTerm);
+					}
+				}
+			}
+		}
+
+		return groundedClauses.toString();
 	}
 
 	/**
@@ -441,6 +503,7 @@ public class GdlParser {
 
 	/**
 	 * Use a priority list to order by stratum
+	 * 
 	 * @param root
 	 * @return
 	 */
@@ -557,7 +620,8 @@ public class GdlParser {
 	}
 
 	/**
-	 * Print the GdlType of the nodes of the tree. Type is based on the value of GdlNode.getType()
+	 * Print the GdlType of the nodes of the tree. Type is based on the value of
+	 * GdlNode.getType()
 	 * 
 	 * @param root
 	 * @param prefix
@@ -595,7 +659,8 @@ public class GdlParser {
 	}
 
 	/**
-	 * Print the GdlType of the nodes of the tree. Type is based on the value of GdlNode.getType()
+	 * Print the GdlType of the nodes of the tree. Type is based on the value of
+	 * GdlNode.getType()
 	 * 
 	 * @param root
 	 */
@@ -611,12 +676,12 @@ public class GdlParser {
 
 	/**
 	 * Output parse tree as a String in kif format
+	 * 
 	 * @param root
 	 */
 	public static String prettyPrint(GdlNode root) {
 		StringBuilder sb = new StringBuilder();
 		for (GdlNode clause : root.getChildren()) {
-			// if (clause.getType() == GdlType.CLAUSE) {
 			if (clause instanceof GdlRule) {
 				for (GdlNode literal : clause.getChildren()) {
 					if (literal == getRuleHead(((GdlRule) clause))) {
@@ -634,9 +699,11 @@ public class GdlParser {
 		}
 		return sb.toString();
 	}
-	
+
 	/**
-	 * Comparator used to order clauses in a game description, first by stratum and then by name to group clauses with the same name together
+	 * Comparator used to order clauses in a game description, first by stratum
+	 * and then by name to group clauses with the same name together
+	 * 
 	 * @author vedantds
 	 *
 	 */
