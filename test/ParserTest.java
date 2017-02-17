@@ -2,9 +2,14 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
+import prover.Prover;
 import util.GdlParser;
+import util.grammar.GDLSyntaxException;
+import util.grammar.Gdl;
 import util.grammar.GdlNode;
+import util.grammar.GdlNodeFactory;
 import util.grammar.GdlType;
+import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
 
 import java.util.Map;
@@ -20,6 +25,7 @@ public class ParserTest {
 
 	static final String testGdlPath = "test/gdlii/paperScissorsRock.kif";
 	static final String groundedTestGdlPath = "test/gdlii/paperScissorsRock.ground.kif";
+	static final String largeGdlPath = "res/gdlii/mastermind.gdl";
 
 	@Test
 	public void testSimpleDependencyGraph() {
@@ -169,10 +175,54 @@ public class ParserTest {
 			List<String> tokens = GdlParser.tokenizeFile(testGdlPath);
 			GdlNode root = GdlParser.expandParseTree(tokens);
 			String lparse = GdlParser.toLparse(root);
-			System.out.println(lparse);
+			// System.out.println(lparse);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	public void groundLargeGame() {
+		try {
+			GdlNode root = GdlParser.parseFile(largeGdlPath);
+			DomainGraph domGraph = GdlParser.constructDomainGraph(root);
+
+			Prover prover = new Prover(GdlParser.groundGdl(root, domGraph));
+
+			/*
+			Gdl factRoot = null;
+			String groundedClauseString = null;
+			
+			for (GdlNode clause : root.getChildren()) {
+				if (!GdlParser.isVariableInTree(clause)) { // No variables is
+					factRoot = null;										// already ground
+					factRoot = GdlNodeFactory.createGdl();
+					factRoot.getChildren().add(clause);
+					prover.joinRuleSet(factRoot);
+				} else {
+					groundedClauseString = null;
+					groundedClauseString = GdlParser.groundClause(clause, domGraph.getMap());
+					prover.joinRuleSet(GdlParser.parseString(groundedClauseString));
+				}
+			}
+			*/
+			prover.cullVariables(true);
+			System.out.println(prover.debug());
+			String gdlString = prover.toGdl();
+			System.out.println(gdlString);
+			System.out.println();
+
+			DependencyGraph depGraph = GdlParser.constructDependencyGraph(root);
+			gdlString = GdlParser.orderGdlRules(root, depGraph);
+			System.out.println(gdlString);
+			System.out.println();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (GDLSyntaxException e) {
 			e.printStackTrace();
 		}
 	}
