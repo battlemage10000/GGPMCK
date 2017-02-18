@@ -24,6 +24,7 @@ public class Prover {
 	private Set<String> tautologySet; // T
 	private Set<String> contradictionSet; // C
 	private Map<String, Set<Set<String>>> dnfRuleSet;
+	private Map<String, Integer> stratumMap;
 
 	public boolean DEBUG;
 	public boolean CULL_NULL_RULES; // Remove [headNode -> null] rules from
@@ -40,6 +41,7 @@ public class Prover {
 		tautologySet = new HashSet<String>();
 		contradictionSet = new HashSet<String>();
 		dnfRuleSet = new HashMap<String, Set<Set<String>>>();
+		stratumMap = new HashMap<String, Integer>();
 
 		joinRuleSet(root);
 	}
@@ -151,16 +153,13 @@ public class Prover {
 								&& posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
 							// No change for does
 							newDisjunct.add(literal.intern());
-							// continue;
 						} else if (posLiteral.length() >= TRUE_PREFIX.length()
 								&& posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
 							// No change for true
 							newDisjunct.add(literal.intern());
-							// continue;
 						} else if (dnfRuleSet.get(posLiteral) == null) {
 							if (isNegative) {
 								// True literal
-								// continue;
 							} else {
 								// False literal
 								newDisjunct.add(FALSE);
@@ -171,7 +170,6 @@ public class Prover {
 								newDisjunct.add(FALSE);
 							} else {
 								// True literal
-								// continue;
 							}
 						} else {
 							newDisjunct.add(literal.intern());
@@ -211,7 +209,66 @@ public class Prover {
 		} // End change-while-loop
 		return numIterations;
 	}
-
+	
+	public Map<String, Integer> generateStratumMap(){
+		for (String head : dnfRuleSet.keySet()) {
+			if (!stratumMap.containsKey(head)) {
+				stratumMap.put(head, computeStratum(head));
+			}
+		}
+		return stratumMap;
+	}
+	
+	public int computeStratum(String headNode) {
+		if (headNode == null) {
+			return -2; // Null parameter
+		}
+		Set<Set<String>> rule = dnfRuleSet.get(headNode);
+		if (rule == null) {
+			return -2; // Contradiction
+		} else if (rule.isEmpty()) {
+			return 0;
+		} else {
+			int max = -2;
+			
+			for (Set<String> disjunct : rule) {
+				for (String literal : disjunct) {
+					// Prune not from literal
+					while (literal.length() >= NOT_PREFIX.length()
+							&& literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
+						literal = literal.substring(NOT_PREFIX.length(), literal.length() - 1);
+					}
+					// If stratum known
+					if (stratumMap.containsKey(literal)) {
+						if (stratumMap.get(literal) > max) {
+							max = stratumMap.get(literal);
+						}
+					} else if (literal.length() >= DOES_PREFIX.length()
+							&& literal.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
+						stratumMap.put(literal, 0);
+						if (max < 0) {
+							max = 0;
+						}
+					} else if (literal.length() >= TRUE_PREFIX.length()
+							&& literal.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
+						stratumMap.put(literal, 0);
+						if (max < 0) {
+							max = 0;
+						}
+					} else {
+						int literalStratum = computeStratum(literal);
+						stratumMap.put(literal, literalStratum);
+						if (literalStratum > max) {
+							max = literalStratum;
+						}
+					}
+				}
+			}
+			
+			return max + 1;
+		}
+	}
+	
 	public Model generateInitialModel() {
 		Set<String> trueLiterals = new HashSet<String>();
 		trueLiterals.addAll(initialSet);
