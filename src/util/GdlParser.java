@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
+//import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -421,12 +422,12 @@ public class GdlParser {
 		// Duplicate method signature error
 		StringBuilder groundedClauses = new StringBuilder();
 
-		Queue<String> subClauses = new LinkedList<String>();
-		Queue<String> subClausesAlt = new LinkedList<String>();
+		Queue<String> subClauses = new ArrayDeque<String>();
+		Queue<String> subClausesAlt = new ArrayDeque<String>();
 		subClausesAlt.add(clauseNode.toString());
 		for (String variable : constantMap.keySet()) {
 			subClauses = subClausesAlt;
-			subClausesAlt = new LinkedList<String>();
+			subClausesAlt = new ArrayDeque<String>();
 
 			List<String> domain = constantMap.get(variable);
 
@@ -476,12 +477,12 @@ public class GdlParser {
 
 		StringBuilder groundedClauses = new StringBuilder();
 
-		Queue<String> subClauses = new LinkedList<String>();
-		Queue<String> subClausesAlt = new LinkedList<String>();
+		Queue<String> subClauses = new ArrayDeque<String>();
+		Queue<String> subClausesAlt = new ArrayDeque<String>();
 		subClausesAlt.add(clauseNode.toString());
 		for (String variable : constantMap.keySet()) {
 			subClauses = subClausesAlt;
-			subClausesAlt = new LinkedList<String>();
+			subClausesAlt = new ArrayDeque<String>();
 
 			List<String> domain = constantMap.get(variable);
 
