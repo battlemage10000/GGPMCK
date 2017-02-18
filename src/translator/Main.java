@@ -158,7 +158,9 @@ public class Main {
 			// Use internal grounder
 			if (groundSwitch) {
 				System.out.print("Grounding ... ");
+				System.out.print("construct domain graph ... ");
 				DomainGraph domain = GdlParser.constructDomainGraph(root);
+				System.out.print("finish domain graph ... ");
 				if (outputDotSwitch) {
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
