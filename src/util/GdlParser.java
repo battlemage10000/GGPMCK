@@ -582,10 +582,14 @@ public class GdlParser {
 	public static String toLparse(GdlNode root) {
 		StringBuilder lparse = new StringBuilder();
 
-		lparse.append("{true(V1):base(V1)}.\n");
-		lparse.append("1={does(V2, V3):input(V2, V3)} :- role(V2).\n");
-
-		lparse.append(((LparseNode) root).toLparse());
+		lparse.append(System.lineSeparator() + "% Generate");
+		lparse.append(System.lineSeparator() + "{true(V1):base(V1)}.");
+		lparse.append(System.lineSeparator() + "1={does(V2, V3):input(V2, V3)} :- role(V2).");
+		lparse.append(System.lineSeparator());
+		lparse.append(System.lineSeparator() + "% Define");
+		lparse.append(System.lineSeparator() + ((LparseNode) root).toLparse());
+		lparse.append(System.lineSeparator());
+		lparse.append(System.lineSeparator() + "% Display");
 
 		return lparse.toString();
 	}
