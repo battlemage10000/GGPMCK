@@ -164,7 +164,12 @@ public class Main {
 				if (outputDotSwitch) {
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
-				root = GdlParser.groundGdl(root, domain);
+				try {
+					root = GdlParser.groundGdl(root, domain);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
 				System.out.println("finished");
 				totalTime = (int) (System.currentTimeMillis() - startTime);
