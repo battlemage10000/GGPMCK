@@ -856,7 +856,7 @@ public class MckTranslator {
 		}
 		spec.delete(spec.length() - 4, spec.length());
 		spec.append("))");
-		spec.append(System.lineSeparator() + "--spec_obs = AG(");
+		spec.append(System.lineSeparator() + "spec_obs = AG(");
 		for (String role : ATd.keySet()) {
 			spec.append("(neg terminal => neg (" + MckFormat.DOES_PREFIX + role + " == " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
 					+ role + "))");
@@ -864,7 +864,7 @@ public class MckTranslator {
 		}
 		spec.delete(spec.length() - 4, spec.length());
 		spec.append(")");
-		spec.append(System.lineSeparator() + "--spec_obs = AF terminal");
+		spec.append(System.lineSeparator() + "spec_obs = AF terminal");
 		spec.append(System.lineSeparator());
 		spec.append(System.lineSeparator());
 
