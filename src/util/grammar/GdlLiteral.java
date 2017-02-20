@@ -92,7 +92,7 @@ public class GdlLiteral implements GdlNode, LparseNode {
 			break;
 		}
 
-		return lparse.toString();
+		return filterSpecialLparseCharacters(lparse.toString());
 	}
 
 	/**
@@ -133,7 +133,23 @@ public class GdlLiteral implements GdlNode, LparseNode {
 		default:
 			lparse.append(toLparse());
 		}
-		return lparse.toString();
+		return filterSpecialLparseCharacters(lparse.toString());
+	}
+	
+	private static String filterSpecialLparseCharacters(String lparseStr){
+		if (lparseStr.contains("+") || 
+				lparseStr.contains("-") || 
+				lparseStr.contains("=") || 
+				lparseStr.contains("<") || 
+				lparseStr.contains(">") || 
+				lparseStr.contains("*")) {
+			lparseStr = lparseStr.replace("+", "plus");
+			lparseStr = lparseStr.replace("-", "minus");
+			lparseStr = lparseStr.replace("=", "equal");
+			lparseStr = lparseStr.replace("<", "less");
+			lparseStr = lparseStr.replace(">", "great");
+		}
+		return lparseStr;
 	}
 
 	@Override
