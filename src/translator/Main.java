@@ -29,7 +29,7 @@ public class Main {
 		boolean inputFileToken = false;
 		boolean outputFileSwitch = false;
 		boolean outputFileToken = false;
-		boolean groundSwitch = true; // default currently no way to turn off
+		boolean noGroundSwitch = false; // switch from ground to no-ground
 		boolean orderedSwitch = false;
 		boolean debugSwitch = false;
 		boolean useDefineSwitch = false;
@@ -62,8 +62,8 @@ public class Main {
 				inputFileToken = true;
 				break;
 			case "-g":
-			case "--ground":
-				groundSwitch = true;
+			case "--no-ground":
+				noGroundSwitch = true;
 				break;
 			case "--ordered":
 				orderedSwitch = true;
@@ -115,20 +115,20 @@ public class Main {
 		if (helpSwitch) {
 			System.out.println("usage: java -jar MckTranslator.jar [options] [gdlFileInput]");
 			System.out.println("Options:");
-			System.out.println("  -h --help     print this help file");
-			System.out.println("  -i --input    path to input file");
-			System.out.println("  -o --output   path to output file");
-			System.out.println("  --to-mck      output file is in mck format (default)");
-			System.out.println("  --to-lparse   output file is in lparse format");
-			System.out.println("  --to-dot      output domain graph in dot format. Use with --ground");
-			System.out.println("  --to-dep-dot  output dependency graph in dot format");
-			System.out.println("  --pretty      formatted gdl. Use with --ground");
-			System.out.println("  -g --ground   use internal grounder");
-			System.out.println("  -d --debug    manually select outputs in debug mode");
-			System.out.println("  --use-define  construct mck output using define statements");
-			System.out.println("  --ordered     order the gdl rules (default true for --to-mck)");
-			System.out.println("  --parse-tree  print parse tree for debug");
-			System.out.println("  --parse-types print parse tree type for debug");
+			System.out.println("  -h --help      print this help file.");
+			System.out.println("  -i --input     path to input file.");
+			System.out.println("  -o --output    path to output file.");
+			System.out.println("  --to-mck       output file is in mck format. (default)");
+			System.out.println("  --to-lparse    output file is in lparse format.");
+			System.out.println("  --to-dot       output domain graph in dot format.");
+			System.out.println("  --to-dep-dot   output dependency graph in dot format.");
+			System.out.println("  --pretty       formatted gdl.");
+			System.out.println("  -g --no-ground don't use internal grounder.");
+			System.out.println("  -d --debug     manually select outputs in debug mode.");
+			System.out.println("  --use-define   construct mck output using define statements.");
+			System.out.println("  --ordered      order the gdl rules (default true for --to-mck)");
+			System.out.println("  --parse-tree   print parse tree for debug.");
+			System.out.println("  --parse-types  print parse tree type for debug.");
 		} else {
 			// Scan and parse gdl
 			List<String> tokens;
@@ -156,7 +156,7 @@ public class Main {
 			outputDir.mkdir();
 
 			// Use internal grounder
-			if (groundSwitch) {
+			if (!noGroundSwitch) {
 				System.out.print("Grounding ... ");
 				System.out.print("construct domain graph ... ");
 				DomainGraph domain = GdlParser.constructDomainGraph(root);
