@@ -370,13 +370,31 @@ public class GdlParser {
 	 * @param root
 	 * @param domainGraph
 	 * @return
+	 * @throws IOException
 	 */
-	public static Gdl groundGdl(GdlNode root, DomainGraph domainGraph) {
+	public static Gdl groundGdl(GdlNode root, DomainGraph domainGraph) throws IOException {
 		Gdl groundedRoot = GdlNodeFactory.createGdl();
+
+		boolean useTempFile = false;
+		File tempGroundedGdlFile = null;
+		FileWriter groundWrite = null;
+
+		tempGroundedGdlFile = File.createTempFile("ground", ".gdl.tmp");
+
+		if (tempGroundedGdlFile != null) {
+			// tempGroundedGdlFile.deleteOnExit();
+			groundWrite = new FileWriter(tempGroundedGdlFile);
+			useTempFile = true;
+			System.out.println("Using temp file for grounding");
+		}
 
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // No variables so already ground
-				groundedRoot.getChildren().add(clause);
+				if (useTempFile) {
+					groundWrite.write(clause.toString());
+				} else {
+					groundedRoot.getChildren().add(clause);
+				}
 			} else {
 				Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
 				for (GdlNode node : clause) {
@@ -398,16 +416,33 @@ public class GdlParser {
 					}
 				}
 
-				String groundedClauseString = groundClause(clause, constantMap, true);
+				if (useTempFile) {
+					groundWrite.write(groundClause(clause, constantMap, true));
+				} else {
+					String groundedClauseString = groundClause(clause, constantMap, true);
 
-				// Default root node if parseString throws error
-				GdlNode clauseTree = GdlNodeFactory.createGdl();
-				clauseTree = GdlParser.parseString(groundedClauseString);
-				if (!clauseTree.getChildren().isEmpty()) {
-					groundedRoot.getChildren().addAll(clauseTree.getChildren());
+					// Default root node if parseString throws error
+					GdlNode clauseTree = GdlNodeFactory.createGdl();
+					clauseTree = GdlParser.parseString(groundedClauseString);
+					if (!clauseTree.getChildren().isEmpty()) {
+						groundedRoot.getChildren().addAll(clauseTree.getChildren());
+					}
 				}
 			}
 		}
+
+		if (useTempFile) {
+			try {
+				groundWrite.flush();
+				groundedRoot = parseFile(tempGroundedGdlFile.getAbsolutePath());
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			} finally {
+				groundWrite.close();
+				tempGroundedGdlFile.delete();
+			}
+		}
+
 		return groundedRoot;
 	}
 
@@ -417,10 +452,20 @@ public class GdlParser {
 	 * @param clauseNode
 	 * @param domainMap
 	 * @return
+	 * @throws IOException
 	 */
-	public static String groundClause(GdlNode clauseNode, Map<String, List<String>> constantMap, boolean thing) {
+	public static String groundClause(GdlNode clauseNode, Map<String, List<String>> constantMap, boolean thing)
+			throws IOException {
 		// Duplicate method signature error
 		StringBuilder groundedClauses = new StringBuilder();
+
+		boolean useTempFile = false;
+		File tempClauseFile = File.createTempFile("clause", ".gdl.tmp");
+		FileWriter clauseWrite = new FileWriter(tempClauseFile);
+		if (clauseWrite != null) {
+			useTempFile = true;
+			System.out.println("Using temp file for clause grounding: " + clauseNode.toString());
+		}
 
 		Queue<String> subClauses = new ArrayDeque<String>();
 		Queue<String> subClausesAlt = new ArrayDeque<String>();
@@ -438,10 +483,34 @@ public class GdlParser {
 					if (nextTerm.contains(Q_MARK_Str)) {
 						subClausesAlt.add(nextTerm);
 					} else {
-						groundedClauses.append(nextTerm);
+						if (useTempFile) {
+							clauseWrite.append(nextTerm);
+						} else {
+							groundedClauses.append(nextTerm);
+						}
 					}
 				}
 			}
+		}
+
+		if (useTempFile) {
+			FileReader clauseReader = new FileReader(tempClauseFile);
+			groundedClauses = new StringBuilder();
+			int character;
+			while ((character = clauseReader.read()) > 0) {
+				groundedClauses.append((char) character);
+			}
+
+			if (clauseReader != null) {
+				clauseReader.close();
+			}
+		}
+
+		if (clauseWrite != null) {
+			clauseWrite.close();
+		}
+		if (tempClauseFile != null) {
+			tempClauseFile.delete();
 		}
 
 		return groundedClauses.toString();
@@ -449,10 +518,12 @@ public class GdlParser {
 
 	/**
 	 * Ground a clause in a game description
+	 * 
 	 * @param clauseNode
 	 * @param domainMap
 	 * @return
 	 */
+	@Deprecated
 	public static String groundClause(GdlNode clauseNode,
 			Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap) {
 		Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
