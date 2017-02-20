@@ -11,7 +11,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-//import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -175,6 +174,7 @@ public class GdlParser {
 				openBracket = true;
 				break;
 			case CLOSE_P_Str:
+				parent.getChildren().trimToSize();
 				parent = parent.getParent();
 				if (scopedVariable == true && parent.getType() == GdlType.ROOT) {
 					scopedVariable = false;
