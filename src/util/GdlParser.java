@@ -9,12 +9,15 @@ import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
 
 import util.grammar.Gdl;
 import util.grammar.GdlNode;
@@ -32,6 +35,8 @@ import util.graph.DomainGraph;
  *
  */
 public class GdlParser {
+	
+	public static boolean GROUND_WITH_TEMP_FILES = false;
 
 	public final static char OPEN_P_Char = '(';// block/scope
 	public final static char CLOSE_P_Char = ')';// block/scope
@@ -310,8 +315,16 @@ public class GdlParser {
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
-
+		
+		int maxNumVarsInRule = 0;
+		
 		for (GdlNode node : root) {
+			if (node instanceof GdlRule) {
+				int numVarsInRule = GdlParser.variablesInTree(node).size();
+				if (numVarsInRule > maxNumVarsInRule) {
+					maxNumVarsInRule = numVarsInRule;
+				}
+			}
 			if ((node.getType() == GdlType.FUNCTION || node.getType() == GdlType.FORMULA)
 					&& !node.getAtom().equals(GdlNode.NOT)) {
 				if (node.getType() == GdlType.FUNCTION) {
@@ -339,9 +352,13 @@ public class GdlParser {
 			}
 		}
 
+		
 		graph.addEdge(GdlNode.BASE, 1, GdlNode.TRUE, 1);
 		graph.addEdge(GdlNode.INPUT, 1, GdlNode.DOES, 1);
 		graph.addEdge(GdlNode.INPUT, 2, GdlNode.DOES, 2);
+		
+		System.out.println("Grounding complexity: " + maxNumVarsInRule);
+		
 		return graph;
 	}
 
@@ -363,6 +380,46 @@ public class GdlParser {
 		}
 		return false;
 	}
+	
+	/**
+	 * Find the number of variables in sub-tree rooted at node.
+	 * Note: Same variable can be counted multiple times.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public static int numVariablesInTree(GdlNode node){
+		if (node.getType() == GdlType.VARIABLE) {
+			return 1;
+		} else if (node.getType() == GdlType.CONSTANT){
+			return 0;
+		}
+		int varsInSubTree = 0;
+		for (GdlNode child : node.getChildren()) {
+			varsInSubTree += numVariablesInTree(child);
+		}
+		return varsInSubTree;
+	}
+	
+	/**
+	 * Find the number of variables in sub-tree rooted at node.
+	 * Note: Same variable can be counted multiple times.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public static Set<GdlNode> variablesInTree(GdlNode node){
+		if (node.getType() == GdlType.VARIABLE) {
+			return new HashSet<GdlNode>(Collections.singleton(node));
+		} else if (node.getType() == GdlType.CONSTANT){
+			return Collections.emptySet();
+		}
+		Set<GdlNode> varsInSubTree = new HashSet<GdlNode>();
+		for (GdlNode child : node.getChildren()) {
+			varsInSubTree.addAll(variablesInTree(child));
+		}
+		return varsInSubTree;
+	}
 
 	/**
 	 * Ground a game description
@@ -379,14 +436,17 @@ public class GdlParser {
 		File tempGroundedGdlFile = null;
 		FileWriter groundWrite = null;
 
-		tempGroundedGdlFile = File.createTempFile("ground", ".gdl.tmp");
-
-		if (tempGroundedGdlFile != null) {
-			// tempGroundedGdlFile.deleteOnExit();
-			groundWrite = new FileWriter(tempGroundedGdlFile);
-			useTempFile = true;
-			System.out.println("Using temp file for grounding");
+		if (GROUND_WITH_TEMP_FILES) {
+			tempGroundedGdlFile = File.createTempFile("ground", ".gdl.tmp");
+			if (tempGroundedGdlFile != null) {
+				// tempGroundedGdlFile.deleteOnExit();
+				groundWrite = new FileWriter(tempGroundedGdlFile);
+				useTempFile = true;
+				System.out.println("Using temp file for grounding");
+			}
 		}
+
+		
 
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // No variables so already ground
@@ -460,11 +520,16 @@ public class GdlParser {
 		StringBuilder groundedClauses = new StringBuilder();
 
 		boolean useTempFile = false;
-		File tempClauseFile = File.createTempFile("clause", ".gdl.tmp");
-		FileWriter clauseWrite = new FileWriter(tempClauseFile);
-		if (clauseWrite != null) {
-			useTempFile = true;
-			System.out.println("Using temp file for clause grounding: " + clauseNode.toString());
+		File tempClauseFile = null;
+		FileWriter clauseWrite = null;
+		
+		if (GROUND_WITH_TEMP_FILES) {
+			tempClauseFile = File.createTempFile("clause", ".gdl.tmp");
+			clauseWrite = new FileWriter(tempClauseFile);
+			if (clauseWrite != null) {
+				useTempFile = true;
+				System.out.println("Using temp file for clause grounding: " + clauseNode.toString());
+			}
 		}
 
 		Queue<String> subClauses = new ArrayDeque<String>();
