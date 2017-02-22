@@ -38,7 +38,7 @@ import util.graph.DomainGraph;
 public class GdlParser {
 
 	public static boolean GROUND_WITH_TEMP_FILES = false;
-	public static boolean PREPROCESS_DISTINCT = false;
+	public static boolean PREPROCESS_DISTINCT = true;
 
 	public final static char OPEN_P_Char = '(';// block/scope
 	public final static char CLOSE_P_Char = ')';// block/scope
@@ -515,7 +515,6 @@ public class GdlParser {
 		StringBuilder groundedClauses = new StringBuilder();
 
 		boolean hasDistinct = false;
-
 		if (PREPROCESS_DISTINCT) {
 			for (GdlNode node : clauseNode.getChildren()) {
 				if (node.getAtom().equals(GdlNode.DISTINCT) || (node.getAtom().equals(GdlNode.NOT)
@@ -539,14 +538,16 @@ public class GdlParser {
 			}
 		}
 
+		groundedClauses.append(clauseNode.toString());
 		for (String variable : constantMap.keySet()) {
 			Set<String> domain = constantMap.get(variable);
-
+			
+			String nextTerm = groundedClauses.toString();
+			groundedClauses = new StringBuilder();
 			for (String term : domain) {
-				String nextTerm = groundedClauses.toString().replace(variable, term);
-				groundedClauses = new StringBuilder();
+				nextTerm = nextTerm.replace(variable, term);
 				
-				if (hasDistinct) {
+				if (PREPROCESS_DISTINCT && hasDistinct) {
 					GdlNode clause = parseString(nextTerm);
 					boolean cullRule = false;
 					Iterator<GdlNode> clauseIterator = clause.getChildren().iterator();
@@ -572,9 +573,9 @@ public class GdlParser {
 					}
 					if (!cullRule) {
 						if (useTempFile) {
-							clauseWrite.append(nextTerm);
+							clauseWrite.append(clause.toString());
 						} else {
-							groundedClauses.append(nextTerm);
+							groundedClauses.append(clause.toString());
 						}
 					}
 				} else {
