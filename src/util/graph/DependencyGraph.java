@@ -217,7 +217,7 @@ public class DependencyGraph {
 					} else if (stratumMap.get(to) < 0) {
 						if (oldifyList.contains(to)) {
 							continue;
-						} else if (hasCycle && to.substring(0, 5).equals(GdlParser.TRUE_PREFIX)) { // "true_"
+						} else if (hasCycle && to.length() > 5 && to.substring(0, 5).equals(GdlParser.TRUE_PREFIX)) { // "true_"
 							oldifyList.add(to);
 							hasCycle = false;
 						} else {
