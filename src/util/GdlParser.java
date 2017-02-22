@@ -38,7 +38,7 @@ import util.graph.DomainGraph;
 public class GdlParser {
 
 	public static boolean GROUND_WITH_TEMP_FILES = false;
-	public static boolean PREPROCESS_DISTINCT = true;
+	public static boolean PREPROCESS_DISTINCT = false;
 
 	public final static char OPEN_P_Char = '(';// block/scope
 	public final static char CLOSE_P_Char = ')';// block/scope
@@ -458,20 +458,14 @@ public class GdlParser {
 				Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();
 				for (GdlNode node : clause) {
 					if (node.getType() == GdlType.VARIABLE) {
-						// if (!constantMap.containsKey(node.getAtom())) {
 						constantMap.put(node.getAtom(), new HashSet<String>());
-						// }
 
 						DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
 								node.getParent().getChildren().indexOf(node) + 1);
 
 						if (domainGraph.getMap().containsKey(varTerm)) {
 							for (DomainGraph.Term term : domainGraph.getMap().get(varTerm)) {
-								// if
-								// (!constantMap.get(node.getAtom()).contains(term.getTerm()))
-								// {
 								constantMap.get(node.getAtom()).add(term.getTerm());
-								// }
 							}
 						}
 					}
