@@ -854,8 +854,10 @@ public class MckTranslator {
 						+ "_" + move + ")");
 				spec.append(MckFormat.AND);
 			}
+			if (spec.length() > MckFormat.AND.length()) {
+				spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
+			}
 		}
-		spec.delete(spec.length() - 4, spec.length());
 		spec.append("))");
 		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 		for (String role : ATd.keySet()) {
