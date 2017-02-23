@@ -856,8 +856,8 @@ public class MckTranslator {
 			if (spec.length() > MckFormat.AND.length()) {
 				spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
 			}
+			spec.append(")");
 		}
-		spec.append(")");
 		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 		for (String role : ATd.keySet()) {
 			spec.append("((" + MckFormat.DOES_PREFIX + role + " == " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
