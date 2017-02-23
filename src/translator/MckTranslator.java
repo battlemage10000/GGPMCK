@@ -847,7 +847,7 @@ public class MckTranslator {
 
 		// Specification
 		for (String role : ATd.keySet()) {
-		spec.append(System.lineSeparator() + "--spec_obs = AG((terminal" + MckFormat.OR);
+		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 			for (String move : ATd.get(role)) {
 				spec.append("(legal_" + role + "_" + move + " => Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role
 						+ "_" + move + ")");
@@ -857,7 +857,7 @@ public class MckTranslator {
 				spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
 			}
 		}
-		spec.append("))");
+		spec.append(")");
 		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 		for (String role : ATd.keySet()) {
 			spec.append("((" + MckFormat.DOES_PREFIX + role + " == " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
