@@ -358,6 +358,36 @@ public class GdlParser {
 		graph.addEdge(GdlNode.INPUT, 2, GdlNode.DOES, 2);
 		
 		System.out.println("Grounding complexity: " + maxNumVarsInRule);
+		int totalRules = 0;
+		for (GdlNode clause : root.getChildren()) {
+			int resultingRules = 1;
+			
+			Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();
+			for (GdlNode node : clause) {
+				if (node.getType() == GdlType.VARIABLE) {
+					if (!constantMap.containsKey(node.getAtom())) {
+						constantMap.put(node.getAtom(), new HashSet<String>());
+					}
+
+					DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
+							node.getParent().getChildren().indexOf(node) + 1);
+
+					if (graph.getMap().containsKey(varTerm)) {
+						for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
+							constantMap.get(node.getAtom()).add(term.getTerm());
+						}
+					}
+				}
+			}
+			
+			for (String var : constantMap.keySet()) {
+				//TODO approximation function
+				resultingRules *= constantMap.get(var).size();
+			}
+			
+			totalRules += resultingRules;
+		}
+		System.out.println("Ground from " + root.getChildren().size() + " -> " + totalRules);
 		
 		return graph;
 	}
@@ -825,16 +855,16 @@ public class GdlParser {
 		for (GdlNode clause : root.getChildren()) {
 			if (clause instanceof GdlRule) {
 				for (GdlNode literal : clause.getChildren()) {
-					if (literal == getRuleHead(((GdlRule) clause))) {
-						sb.append(System.lineSeparator() + "(<= " + literal.toString());
+					if (literal == clause.getChild(0)) {
+						sb.append("(<= " + literal.toString());
 					} else if (literal == clause.getChildren().get(clause.getChildren().size() - 1)) {
-						sb.append(System.lineSeparator() + "   " + literal.toString() + ")");
+						sb.append(" " + literal.toString() + ")");
 					} else {
-						sb.append(System.lineSeparator() + "   " + literal.toString());
+						sb.append(" " + literal.toString());
 					}
 				}
 			} else {
-				sb.append(System.lineSeparator() + clause);
+				sb.append(clause);
 			}
 			sb.append(System.lineSeparator());
 		}
