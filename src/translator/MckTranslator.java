@@ -846,9 +846,8 @@ public class MckTranslator {
 		StringBuilder spec = new StringBuilder();
 
 		// Specification
-		//spec.append(System.lineSeparator() + "--spec_obs = AG((");
 		for (String role : ATd.keySet()) {
-			spec.append(System.lineSeparator() + "--spec_obs = AG((");
+		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 			for (String move : ATd.get(role)) {
 				spec.append("(legal_" + role + "_" + move + " => Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role
 						+ "_" + move + ")");
@@ -857,15 +856,15 @@ public class MckTranslator {
 			if (spec.length() > MckFormat.AND.length()) {
 				spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
 			}
+			spec.append(")");
 		}
-		spec.append("))");
 		spec.append(System.lineSeparator() + "--spec_obs = AG(");
 		for (String role : ATd.keySet()) {
 			spec.append("((" + MckFormat.DOES_PREFIX + role + " == " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
 					+ role + ") => terminal)");
 			spec.append(MckFormat.AND);
 		}
-		spec.delete(spec.length() - 4, spec.length());
+		spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
 		spec.append(")");
 		spec.append(System.lineSeparator() + "--spec_obs = AF terminal");
 		spec.append(System.lineSeparator());

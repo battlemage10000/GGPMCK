@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -36,9 +35,8 @@ import util.graph.DomainGraph;
  *
  */
 public class GdlParser {
-
+	
 	public static boolean GROUND_WITH_TEMP_FILES = false;
-	public static boolean PREPROCESS_DISTINCT = true;
 
 	public final static char OPEN_P_Char = '(';// block/scope
 	public final static char CLOSE_P_Char = ')';// block/scope
@@ -317,9 +315,9 @@ public class GdlParser {
 	public static DomainGraph constructDomainGraph(GdlNode root) {
 		DomainGraph graph = new DomainGraph();
 		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
-
+		
 		int maxNumVarsInRule = 0;
-
+		
 		for (GdlNode node : root) {
 			if (node instanceof GdlRule) {
 				int numVarsInRule = GdlParser.variablesInTree(node).size();
@@ -354,12 +352,43 @@ public class GdlParser {
 			}
 		}
 
+		
 		graph.addEdge(GdlNode.BASE, 1, GdlNode.TRUE, 1);
 		graph.addEdge(GdlNode.INPUT, 1, GdlNode.DOES, 1);
 		graph.addEdge(GdlNode.INPUT, 2, GdlNode.DOES, 2);
-
+		
 		System.out.println("Grounding complexity: " + maxNumVarsInRule);
+		int totalRules = 0;
+		for (GdlNode clause : root.getChildren()) {
+			int resultingRules = 1;
+			
+			Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();
+			for (GdlNode node : clause) {
+				if (node.getType() == GdlType.VARIABLE) {
+					if (!constantMap.containsKey(node.getAtom())) {
+						constantMap.put(node.getAtom(), new HashSet<String>());
+					}
 
+					DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
+							node.getParent().getChildren().indexOf(node) + 1);
+
+					if (graph.getMap().containsKey(varTerm)) {
+						for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
+							constantMap.get(node.getAtom()).add(term.getTerm());
+						}
+					}
+				}
+			}
+			
+			for (String var : constantMap.keySet()) {
+				//TODO approximation function
+				resultingRules *= constantMap.get(var).size();
+			}
+			
+			totalRules += resultingRules;
+		}
+		System.out.println("Ground from " + root.getChildren().size() + " -> " + totalRules);
+		
 		return graph;
 	}
 
@@ -381,18 +410,18 @@ public class GdlParser {
 		}
 		return false;
 	}
-
+	
 	/**
-	 * Find the number of variables in sub-tree rooted at node. Note: Same
-	 * variable can be counted multiple times.
+	 * Find the number of variables in sub-tree rooted at node.
+	 * Note: Same variable can be counted multiple times.
 	 * 
 	 * @param node
 	 * @return
 	 */
-	public static int numVariablesInTree(GdlNode node) {
+	public static int numVariablesInTree(GdlNode node){
 		if (node.getType() == GdlType.VARIABLE) {
 			return 1;
-		} else if (node.getType() == GdlType.CONSTANT) {
+		} else if (node.getType() == GdlType.CONSTANT){
 			return 0;
 		}
 		int varsInSubTree = 0;
@@ -401,18 +430,18 @@ public class GdlParser {
 		}
 		return varsInSubTree;
 	}
-
+	
 	/**
-	 * Find the number of variables in sub-tree rooted at node. Note: Same
-	 * variable can be counted multiple times.
+	 * Find the number of variables in sub-tree rooted at node.
+	 * Note: Same variable can be counted multiple times.
 	 * 
 	 * @param node
 	 * @return
 	 */
-	public static Set<GdlNode> variablesInTree(GdlNode node) {
+	public static Set<GdlNode> variablesInTree(GdlNode node){
 		if (node.getType() == GdlType.VARIABLE) {
 			return new HashSet<GdlNode>(Collections.singleton(node));
-		} else if (node.getType() == GdlType.CONSTANT) {
+		} else if (node.getType() == GdlType.CONSTANT){
 			return Collections.emptySet();
 		}
 		Set<GdlNode> varsInSubTree = new HashSet<GdlNode>();
@@ -447,6 +476,8 @@ public class GdlParser {
 			}
 		}
 
+		
+
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // No variables so already ground
 				if (useTempFile) {
@@ -455,17 +486,21 @@ public class GdlParser {
 					groundedRoot.getChildren().add(clause);
 				}
 			} else {
-				Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();
+				Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
 				for (GdlNode node : clause) {
 					if (node.getType() == GdlType.VARIABLE) {
-						constantMap.put(node.getAtom(), new HashSet<String>());
+						if (!constantMap.containsKey(node.getAtom())) {
+							constantMap.put(node.getAtom(), new ArrayList<String>());
+						}
 
 						DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
 								node.getParent().getChildren().indexOf(node) + 1);
 
 						if (domainGraph.getMap().containsKey(varTerm)) {
 							for (DomainGraph.Term term : domainGraph.getMap().get(varTerm)) {
-								constantMap.get(node.getAtom()).add(term.getTerm());
+								if (!constantMap.get(node.getAtom()).contains(term.getTerm())) {
+									constantMap.get(node.getAtom()).add(term.getTerm());
+								}
 							}
 						}
 					}
@@ -509,26 +544,15 @@ public class GdlParser {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String groundClause(GdlNode clauseNode, Map<String, Set<String>> constantMap, boolean thing)
+	public static String groundClause(GdlNode clauseNode, Map<String, List<String>> constantMap, boolean thing)
 			throws IOException {
 		// Duplicate method signature error
 		StringBuilder groundedClauses = new StringBuilder();
 
-		boolean hasDistinct = false;
-		if (PREPROCESS_DISTINCT) {
-			for (GdlNode node : clauseNode.getChildren()) {
-				if (node.getAtom().equals(GdlNode.DISTINCT) || (node.getAtom().equals(GdlNode.NOT)
-						&& node.getChild(0).getAtom().equals(GdlNode.DISTINCT))) {
-					hasDistinct = true;
-					break;
-				}
-			}
-		}
-
 		boolean useTempFile = false;
 		File tempClauseFile = null;
 		FileWriter clauseWrite = null;
-
+		
 		if (GROUND_WITH_TEMP_FILES) {
 			tempClauseFile = File.createTempFile("clause", ".gdl.tmp");
 			clauseWrite = new FileWriter(tempClauseFile);
@@ -538,51 +562,27 @@ public class GdlParser {
 			}
 		}
 
-		groundedClauses.append(clauseNode.toString());
+		Queue<String> subClauses = new ArrayDeque<String>();
+		Queue<String> subClausesAlt = new ArrayDeque<String>();
+		subClausesAlt.add(clauseNode.toString());
 		for (String variable : constantMap.keySet()) {
-			Set<String> domain = constantMap.get(variable);
-			
-			String nextTerm = groundedClauses.toString();
-			groundedClauses = new StringBuilder();
-			for (String term : domain) {
-				nextTerm = nextTerm.replace(variable, term);
-				
-				if (PREPROCESS_DISTINCT && hasDistinct) {
-					GdlNode clause = parseString(nextTerm);
-					boolean cullRule = false;
-					Iterator<GdlNode> clauseIterator = clause.getChildren().iterator();
-					while (clauseIterator.hasNext()) {
-						GdlNode literal = clauseIterator.next();
-						if (literal.getAtom().equals(GdlNode.DISTINCT)) {
-							if (literal.getChild(0).toString().equals(literal.getChild(1).toString())) {
-								cullRule = true;
-								break;
-							} else {
-								clauseIterator.remove();
-							}
-						} else if (literal.getAtom().equals(GdlNode.NOT)
-								&& literal.getChild(0).getAtom().equals(GdlNode.DISTINCT)) {
-							if (!literal.getChild(0).getChild(0).toString()
-									.equals(literal.getChild(0).getChild(1).toString())) {
-								cullRule = true;
-								break;
-							} else {
-								clauseIterator.remove();
-							}
-						}
-					}
-					if (!cullRule) {
-						if (useTempFile) {
-							clauseWrite.append(clause.toString());
-						} else {
-							groundedClauses.append(clause.toString());
-						}
-					}
-				} else {
-					if (useTempFile) {
-						clauseWrite.append(nextTerm);
+			subClauses = subClausesAlt;
+			subClausesAlt = new ArrayDeque<String>();
+
+			List<String> domain = constantMap.get(variable);
+
+			while (!subClauses.isEmpty()) {
+				String subClause = subClauses.remove();
+				for (String term : domain) {
+					String nextTerm = subClause.replace(variable, term);
+					if (nextTerm.contains(Q_MARK_Str)) {
+						subClausesAlt.add(nextTerm);
 					} else {
-						groundedClauses.append(nextTerm);
+						if (useTempFile) {
+							clauseWrite.append(nextTerm);
+						} else {
+							groundedClauses.append(nextTerm);
+						}
 					}
 				}
 			}
@@ -855,16 +855,16 @@ public class GdlParser {
 		for (GdlNode clause : root.getChildren()) {
 			if (clause instanceof GdlRule) {
 				for (GdlNode literal : clause.getChildren()) {
-					if (literal == getRuleHead(((GdlRule) clause))) {
-						sb.append(System.lineSeparator() + "(<= " + literal.toString());
+					if (literal == clause.getChild(0)) {
+						sb.append("(<= " + literal.toString());
 					} else if (literal == clause.getChildren().get(clause.getChildren().size() - 1)) {
-						sb.append(System.lineSeparator() + "   " + literal.toString() + ")");
+						sb.append(" " + literal.toString() + ")");
 					} else {
-						sb.append(System.lineSeparator() + "   " + literal.toString());
+						sb.append(" " + literal.toString());
 					}
 				}
 			} else {
-				sb.append(System.lineSeparator() + clause);
+				sb.append(clause);
 			}
 			sb.append(System.lineSeparator());
 		}
