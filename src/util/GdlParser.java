@@ -316,15 +316,7 @@ public class GdlParser {
 		DomainGraph graph = new DomainGraph();
 		HashMap<String, DomainGraph.Term> variableMap = new HashMap<String, DomainGraph.Term>();
 		
-		int maxNumVarsInRule = 0;
-		
 		for (GdlNode node : root) {
-			if (node instanceof GdlRule) {
-				int numVarsInRule = GdlParser.variablesInTree(node).size();
-				if (numVarsInRule > maxNumVarsInRule) {
-					maxNumVarsInRule = numVarsInRule;
-				}
-			}
 			if ((node.getType() == GdlType.FUNCTION || node.getType() == GdlType.FORMULA)
 					&& !node.getAtom().equals(GdlNode.NOT)) {
 				if (node.getType() == GdlType.FUNCTION) {
@@ -357,35 +349,12 @@ public class GdlParser {
 		graph.addEdge(GdlNode.INPUT, 1, GdlNode.DOES, 1);
 		graph.addEdge(GdlNode.INPUT, 2, GdlNode.DOES, 2);
 		
-		System.out.println("Grounding complexity: " + maxNumVarsInRule);
 		int totalRules = 0;
 		for (GdlNode clause : root.getChildren()) {
 			int resultingRules = 1;
-			
-			Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();
-			for (GdlNode node : clause) {
-				if (node.getType() == GdlType.VARIABLE) {
-					if (!constantMap.containsKey(node.getAtom())) {
-						constantMap.put(node.getAtom(), new HashSet<String>());
-					}
-
-					DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
-							node.getParent().getChildren().indexOf(node) + 1);
-
-					if (graph.getMap().containsKey(varTerm)) {
-						for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
-							constantMap.get(node.getAtom()).add(term.getTerm());
-						}
-					}
-				}
-			}
-			
-			for (String var : constantMap.keySet()) {
-				//TODO approximation function
-				resultingRules *= constantMap.get(var).size();
-			}
-			
-			totalRules += resultingRules;
+			for (GdlNode variable : variablesInTree(clause)) {
+				resultingRules *= getVariableDomain(variable.getAtom(), clause, graph).size();
+			}			totalRules += resultingRules;
 		}
 		System.out.println("Ground from " + root.getChildren().size() + " -> " + totalRules);
 		
@@ -477,7 +446,7 @@ public class GdlParser {
 		}
 
 		
-
+		Map<String, Set<String>> variableDomainMap = new HashMap<String, Set<String>>();
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // No variables so already ground
 				if (useTempFile) {
@@ -486,30 +455,15 @@ public class GdlParser {
 					groundedRoot.getChildren().add(clause);
 				}
 			} else {
-				Map<String, List<String>> constantMap = new HashMap<String, List<String>>();
-				for (GdlNode node : clause) {
-					if (node.getType() == GdlType.VARIABLE) {
-						if (!constantMap.containsKey(node.getAtom())) {
-							constantMap.put(node.getAtom(), new ArrayList<String>());
-						}
-
-						DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
-								node.getParent().getChildren().indexOf(node) + 1);
-
-						if (domainGraph.getMap().containsKey(varTerm)) {
-							for (DomainGraph.Term term : domainGraph.getMap().get(varTerm)) {
-								if (!constantMap.get(node.getAtom()).contains(term.getTerm())) {
-									constantMap.get(node.getAtom()).add(term.getTerm());
-								}
-							}
-						}
-					}
+				variableDomainMap = new HashMap<String, Set<String>>();
+				for (GdlNode variable : variablesInTree(clause)) {
+					variableDomainMap.put(variable.getAtom(), getVariableDomain(variable.getAtom(), clause, domainGraph));
 				}
 
 				if (useTempFile) {
-					groundWrite.write(groundClause(clause, constantMap, true));
+					groundWrite.write(groundClause(clause, variableDomainMap, true));
 				} else {
-					String groundedClauseString = groundClause(clause, constantMap, true);
+					String groundedClauseString = groundClause(clause, variableDomainMap, true);
 
 					// Default root node if parseString throws error
 					GdlNode clauseTree = GdlNodeFactory.createGdl();
@@ -535,6 +489,20 @@ public class GdlParser {
 
 		return groundedRoot;
 	}
+	
+	public static Set<String> getVariableDomain(String variable, GdlNode clause, DomainGraph graph) {
+		Set<String> variableDomainSet = new HashSet<String>();
+		for (GdlNode node : clause) {
+			if (node.getType() == GdlType.VARIABLE && node.getAtom().equals(variable)) {
+				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
+						node.getParent().getChildren().indexOf(node) + 1);
+				for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
+					variableDomainSet.add(term.getTerm());
+				}
+			}
+		}
+		return variableDomainSet;
+	}
 
 	/**
 	 * Ground a clause in a game description
@@ -544,7 +512,7 @@ public class GdlParser {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String groundClause(GdlNode clauseNode, Map<String, List<String>> constantMap, boolean thing)
+	public static String groundClause(GdlNode clauseNode, Map<String, Set<String>> constantMap, boolean thing)
 			throws IOException {
 		// Duplicate method signature error
 		StringBuilder groundedClauses = new StringBuilder();
@@ -569,7 +537,7 @@ public class GdlParser {
 			subClauses = subClausesAlt;
 			subClausesAlt = new ArrayDeque<String>();
 
-			List<String> domain = constantMap.get(variable);
+			Set<String> domain = constantMap.get(variable);
 
 			while (!subClauses.isEmpty()) {
 				String subClause = subClauses.remove();
@@ -692,11 +660,11 @@ public class GdlParser {
 		PriorityQueue<GdlNode> unordered = new PriorityQueue<GdlNode>(100, new GdlHeadComparator());
 		for (GdlNode clause : root.getChildren()) {
 			if (clause instanceof GdlRule) {
-				if (((GdlRule) clause).getHead().getAtom().equals(GdlNode.NEXT)) {
+				if (clause.getChild(0).getAtom().equals(GdlNode.NEXT)) {
 					((GdlRule) clause).setStratum(graph.getStratum(
-							TRUE_PREFIX + formatGdlNode(getRuleHead((GdlRule) clause).getChildren().get(0))));
+							TRUE_PREFIX + formatGdlNode(clause.getChild(0).getChild(0))));
 				} else {
-					((GdlRule) clause).setStratum(graph.getStratum(getRuleHead((GdlRule) clause).getAtom()));
+					((GdlRule) clause).setStratum(graph.getStratum(clause.getChild(0).getAtom()));
 				}
 			}
 			unordered.add(clause);
