@@ -1,11 +1,12 @@
 package util.graph;
 
 import java.util.Map;
+import java.util.Set;
 
 import util.grammar.GdlType;
 
 import java.util.HashMap;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Collections;
 
 /**
@@ -13,7 +14,7 @@ import java.util.Collections;
  *
  */
 public class DomainGraph {
-	private Map<Term, ArrayList<Term>> adjacencyMap;
+	private Map<Term, Set<Term>> adjacencyMap;
 	
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
 
@@ -22,9 +23,9 @@ public class DomainGraph {
 	 */
 	public DomainGraph() {
 		if (SYNCHRONIZED_COLLECTIONS) {
-			adjacencyMap = Collections.synchronizedMap(new HashMap<Term, ArrayList<Term>>());
+			adjacencyMap = Collections.synchronizedMap(new HashMap<Term, Set<Term>>());
 		} else {
-			adjacencyMap = new HashMap<Term, ArrayList<Term>>();
+			adjacencyMap = new HashMap<Term, Set<Term>>();
 		}
 	}
 
@@ -42,11 +43,11 @@ public class DomainGraph {
 	 * @param arity
 	 * @return
 	 */
-	public ArrayList<Term> getNeighbours(String term, int arity) {
+	public Set<Term> getNeighbours(String term, int arity) {
 		if (hasTerm(term, arity)) {
 			return adjacencyMap.get(new Term(term, arity));
 		} else {
-			return new ArrayList<Term>();
+			return Collections.emptySet();
 		}
 	}
 
@@ -55,8 +56,8 @@ public class DomainGraph {
 	 * @param arity
 	 * @return
 	 */
-	public ArrayList<Term> getDomain(String term, int arity) {
-		ArrayList<Term> domain = new ArrayList<Term>();
+	public Set<Term> getDomain(String term, int arity) {
+		HashSet<Term> domain = new HashSet<Term>();
 		Term termObj = new Term(term, arity);
 
 		// TODO: allow for dependency to be a complex term
@@ -81,8 +82,8 @@ public class DomainGraph {
 	/**
 	 * @return
 	 */
-	public Map<Term, ArrayList<Term>> getMap() {
-		Map<Term, ArrayList<Term>> domainMap = new HashMap<Term, ArrayList<Term>>();
+	public Map<Term, Set<Term>> getMap() {
+		Map<Term, Set<Term>> domainMap = new HashMap<Term, Set<Term>>();
 
 		for (Term term : adjacencyMap.keySet()) {
 			domainMap.put(term, getDomain(term.getTerm(), term.getArity()));
@@ -98,7 +99,7 @@ public class DomainGraph {
 	public void addTerm(String term, int arity) {
 		Term newTerm = new Term(term, arity);
 		if (!adjacencyMap.containsKey(newTerm)) {
-			adjacencyMap.put(newTerm, new ArrayList<Term>());
+			adjacencyMap.put(newTerm, new HashSet<Term>());
 		}
 	}
 
@@ -109,7 +110,7 @@ public class DomainGraph {
 	public void addFunction(String term, int functionArity) {
 		Term function = new Term(term, functionArity, true, GdlType.FUNCTION);
 		if (!adjacencyMap.containsKey(function)) {
-			adjacencyMap.put(function, new ArrayList<Term>());
+			adjacencyMap.put(function, new HashSet<Term>());
 		} else {
 			adjacencyMap.put(function, adjacencyMap.get(function));
 		}
@@ -128,7 +129,7 @@ public class DomainGraph {
 	public void addFormula(String term, int formulaArity) {
 		Term formula = new Term(term, formulaArity, true, GdlType.FORMULA);
 		if (!adjacencyMap.containsKey(formula)) {
-			adjacencyMap.put(formula, new ArrayList<Term>());
+			adjacencyMap.put(formula, new HashSet<Term>());
 		} else {
 			adjacencyMap.put(formula, adjacencyMap.get(formula));
 		}
