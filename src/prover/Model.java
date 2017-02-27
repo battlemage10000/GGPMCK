@@ -30,8 +30,8 @@ public class Model {
 
 	public boolean contains(String literal) {
 		boolean isNegative = false;
-		while (literal.substring(0, Prover.NOT_PREFIX.length()).equals(Prover.NOT_PREFIX)) {
-			literal = literal.substring(Prover.NOT_PREFIX.length());
+		while (literal.substring(0, GdlRuleSet.NOT_PREFIX.length()).equals(GdlRuleSet.NOT_PREFIX)) {
+			literal = literal.substring(GdlRuleSet.NOT_PREFIX.length());
 			isNegative = !isNegative;
 		}
 		if (model.contains(literal)) {

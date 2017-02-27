@@ -2,7 +2,7 @@ package translator;
 
 import java.util.Set;
 
-import prover.Prover;
+import prover.GdlRuleSet;
 import util.GdlParser;
 import util.grammar.GdlLiteral;
 import util.grammar.GdlNode;
@@ -118,7 +118,7 @@ public class MckFormat {
 		return string;
 	}
 	
-	public static String formatClause(Set<String> oldSet, Prover prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
+	public static String formatClause(Set<String> oldSet, GdlRuleSet prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
 		StringBuilder DNF = new StringBuilder();
 		if (prover.getDnfRuleOfHead(headNode) == null) {
 			return "";

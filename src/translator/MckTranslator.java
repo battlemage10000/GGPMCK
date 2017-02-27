@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import prover.Prover;
+import prover.GdlRuleSet;
 import util.GdlParser;
 import util.grammar.GDLSyntaxException;
 import util.grammar.Gdl;
@@ -46,7 +46,7 @@ public class MckTranslator {
 	private Map<String, String> ATdef;
 
 	private DependencyGraph graph;
-	private Prover prover;
+	private GdlRuleSet ruleSet;
 
 	private boolean DEBUG;
 	private boolean ONE_LINE_TRANSITIONS = true;
@@ -59,7 +59,7 @@ public class MckTranslator {
 	private boolean TRANSITIONS_WITH_DEFINE = false;
 	private boolean USE_PROVER = false;
 	
-	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG, Prover prover) {
+	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG, GdlRuleSet ruleSet) {
 		this.root = root;
 		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
 		this.DEBUG = DEBUG;
@@ -85,13 +85,13 @@ public class MckTranslator {
 			this.ATs = new HashMap<String, List<String>>();
 		}
 		this.defineBasedDeclarations = new StringBuilder();
-		if (prover != null) {
-			this.prover = prover;
+		if (ruleSet != null) {
+			this.ruleSet = ruleSet;
 			USE_PROVER = true;
 		} else if (USE_PROVER) {
 			try {
-				this.prover = new Prover((Gdl) root);
-				System.out.println(this.prover.cullVariables(true) + " iterations");
+				this.ruleSet = new GdlRuleSet((Gdl) root);
+				System.out.println(this.ruleSet.cullVariables(true) + " iterations");
 			} catch (GDLSyntaxException e) {
 				this.USE_PROVER = false;
 				e.printStackTrace();
@@ -112,9 +112,9 @@ public class MckTranslator {
 	 * Set pre-initialized prover
 	 * @param prover
 	 */
-	public void setProver(Prover prover) {
+	public void setProver(GdlRuleSet prover) {
 		if (prover != null) {
-			this.prover = prover;
+			this.ruleSet = prover;
 			USE_PROVER = true;
 		}
 	}
@@ -346,8 +346,8 @@ public class MckTranslator {
 		// It's called in constructor but prover is set after construction
 		if (USE_PROVER) {
 			String mckFormatted = null;
-			for (String literal : prover.getLiteralSet()) {
-				if (prover.getRuleSet().get(literal) == null) {
+			for (String literal : ruleSet.getLiteralSet()) {
+				if (ruleSet.getRuleSet().get(literal) == null) {
 					GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
 					if (!literalNode.getAtom().equals(GdlNode.TRUE)
 							&& !literalNode.getAtom().equals(GdlNode.DOES)) {
@@ -357,7 +357,7 @@ public class MckTranslator {
 							ATc.add(mckFormatted);
 						}
 					}
-				} else if (prover.getRuleSet().get(literal).isEmpty()) {
+				} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
 					GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
 					if (!literalNode.getAtom().equals(GdlNode.TRUE)
 							&& !literalNode.getAtom().equals(GdlNode.DOES)) {
@@ -774,7 +774,7 @@ public class MckTranslator {
 					useDefine = false;
 				}
 
-				String formattedClause = MckFormat.formatClause(oldSet, prover, (GdlLiteral) repeatHead,
+				String formattedClause = MckFormat.formatClause(oldSet, ruleSet, (GdlLiteral) repeatHead,
 						useDefine, ONE_LINE_TRANSITIONS);
 
 				if (useDefine

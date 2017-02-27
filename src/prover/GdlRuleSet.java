@@ -11,7 +11,7 @@ import util.grammar.GdlLiteral;
 import util.grammar.GdlNode;
 import util.grammar.GdlRule;
 
-public class Prover {
+public class GdlRuleSet {
 	public static String NOT_PREFIX = "(not ";
 	public static String NEXT_PREFIX = "(next ";
 	public static String TRUE_PREFIX = "(true ";
@@ -30,11 +30,11 @@ public class Prover {
 	public boolean CULL_NULL_RULES; // Remove [headNode -> null] rules from
 									// ruleset
 
-	public Prover(Gdl root) throws GDLSyntaxException {
+	public GdlRuleSet(Gdl root) throws GDLSyntaxException {
 		this(root, true);
 	}
 
-	public Prover(Gdl root, boolean DEBUG) throws GDLSyntaxException {
+	public GdlRuleSet(Gdl root, boolean DEBUG) throws GDLSyntaxException {
 		this.DEBUG = DEBUG;
 		literalSet = new HashSet<String>();
 		initialSet = new HashSet<String>();

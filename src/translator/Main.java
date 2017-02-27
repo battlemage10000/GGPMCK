@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import prover.Prover;
+import prover.GdlRuleSet;
 import util.GdlParser;
 import util.grammar.GDLSyntaxException;
 import util.grammar.Gdl;
@@ -207,11 +207,11 @@ public class Main {
 			}
 
 			// Initialize prover
-			Prover prover = null;
+			GdlRuleSet prover = null;
 			if (useProverSwitch) {
 				System.out.print("Minimizing game ... ");
 				try {
-					prover = new Prover((Gdl)root, debugSwitch);
+					prover = new GdlRuleSet((Gdl)root, debugSwitch);
 					prover.cullVariables(true);
 				} catch (GDLSyntaxException e) {
 					useProverSwitch = false;
