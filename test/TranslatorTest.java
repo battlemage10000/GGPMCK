@@ -3,16 +3,18 @@ import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
-import prover.Prover;
+import prover.GdlRuleSet;
 import translator.MckFormat;
 import translator.MckTranslator;
 import util.GdlParser;
 import util.grammar.GDLSyntaxException;
 import util.grammar.Gdl;
+import util.grammar.GdlLiteral;
 import util.grammar.GdlNode;
 import util.graph.DomainGraph;
 
@@ -68,24 +70,24 @@ public class TranslatorTest {
 		//System.out.println(root.toString());
 		root = GdlParser.groundGdl(root, graph);
 		//System.out.println(root.toString());
-		Prover prover = new Prover((Gdl)root);
-		prover.cullVariables(true);
-		MckTranslator translator = new MckTranslator(root, false, false, prover);
+		GdlRuleSet ruleSet = new GdlRuleSet((Gdl)root);
+		ruleSet.cullVariables(true);
 		
 		GdlNode headNode = root.getChildren().get(7).getChildren().get(0);
 		ArrayList<GdlNode> bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(7));
-		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_2 := ( step_1 );"));
+		//assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_2 := ( step_1 );"));
+		assertThat(MckFormat.formatClause(Collections.emptySet(), ruleSet, (GdlLiteral)headNode, false, true), is("step_2 := (step_1);"));
 		
 		headNode = root.getChildren().get(8).getChildren().get(0);
 		bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(8));
-		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_3 := ( step_2 );"));
+		assertThat(MckFormat.formatClause(Collections.emptySet(), ruleSet, (GdlLiteral)headNode, false, true), is("step_3 := (step_2);"));
 		
 		headNode = root.getChildren().get(9).getChildren().get(0);
 		bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(9));
-		assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_4 := ( step_3 );"));
+		assertThat(MckFormat.formatClause(Collections.emptySet(), ruleSet, (GdlLiteral)headNode, false, true), is("step_4 := (step_3);"));
 	}
 
 	@Test
@@ -93,20 +95,19 @@ public class TranslatorTest {
 		try {
 			GdlNode mhRoot = GdlParser.parseFile(montyHallGame);
 			DomainGraph graph = GdlParser.constructDomainGraph(mhRoot);
-			System.out.println(mhRoot.toString());
+			//System.out.println(mhRoot.toString());
 			mhRoot = GdlParser.groundGdl(mhRoot, graph);
-			System.out.println(mhRoot.toString());
+			//System.out.println(mhRoot.toString());
 			
-			Prover mhProver = new Prover((Gdl)mhRoot);
+			GdlRuleSet mhProver = new GdlRuleSet((Gdl)mhRoot);
 			mhProver.cullVariables(true);
 			
 			MckTranslator mhTrans = new MckTranslator(mhRoot, true, false, mhProver);
-			//mhTrans.setProver(mhProver);
 			
 			String translation = mhTrans.toMck();
-			System.out.println("Number of contradictions: " + mhTrans.ATc.size());
-			System.out.println(translation);
-			
+			//System.out.println("Number of contradictions: " + mhTrans.ATc.size());
+			//System.out.println(translation);
+			assertThat(translation, is(not("")));
 		}catch (URISyntaxException e){
 			e.printStackTrace();
 		}catch (IOException e){

@@ -461,9 +461,9 @@ public class GdlParser {
 				}
 
 				if (useTempFile) {
-					groundWrite.write(groundClause(clause, variableDomainMap, true));
+					groundWrite.write(groundClause(clause, variableDomainMap, false));
 				} else {
-					String groundedClauseString = groundClause(clause, variableDomainMap, true);
+					String groundedClauseString = groundClause(clause, variableDomainMap, false);
 
 					// Default root node if parseString throws error
 					GdlNode clauseTree = GdlNodeFactory.createGdl();
@@ -508,74 +508,23 @@ public class GdlParser {
 	 * Ground a clause in a game description
 	 * 
 	 * @param clauseNode
-	 * @param domainMap
+	 * @param constantMap
 	 * @return
 	 * @throws IOException
 	 */
-	public static String groundClause(GdlNode clauseNode, Map<String, Set<String>> constantMap, boolean thing)
+	public static String groundClause(GdlNode clauseNode, Map<String, Set<String>> constantMap, boolean useTempFile)
 			throws IOException {
 		// Duplicate method signature error
 		StringBuilder groundedClauses = new StringBuilder();
-
-		boolean useTempFile = false;
-		File tempClauseFile = null;
-		FileWriter clauseWrite = null;
+		groundedClauses.append(clauseNode.toString());
 		
-		if (GROUND_WITH_TEMP_FILES) {
-			tempClauseFile = File.createTempFile("clause", ".gdl.tmp");
-			clauseWrite = new FileWriter(tempClauseFile);
-			if (clauseWrite != null) {
-				useTempFile = true;
-				System.out.println("Using temp file for clause grounding: " + clauseNode.toString());
-			}
-		}
-
-		Queue<String> subClauses = new ArrayDeque<String>();
-		Queue<String> subClausesAlt = new ArrayDeque<String>();
-		subClausesAlt.add(clauseNode.toString());
 		for (String variable : constantMap.keySet()) {
-			subClauses = subClausesAlt;
-			subClausesAlt = new ArrayDeque<String>();
-
-			Set<String> domain = constantMap.get(variable);
-
-			while (!subClauses.isEmpty()) {
-				String subClause = subClauses.remove();
-				for (String term : domain) {
-					String nextTerm = subClause.replace(variable, term);
-					if (nextTerm.contains(Q_MARK_Str)) {
-						subClausesAlt.add(nextTerm);
-					} else {
-						if (useTempFile) {
-							clauseWrite.append(nextTerm);
-						} else {
-							groundedClauses.append(nextTerm);
-						}
-					}
-				}
+			String varTerm = groundedClauses.toString();
+			groundedClauses.replace(0, groundedClauses.length(), "");
+			for (String constant : constantMap.get(variable)) {
+				groundedClauses.append(varTerm.replace(variable, constant));
 			}
 		}
-
-		if (useTempFile) {
-			FileReader clauseReader = new FileReader(tempClauseFile);
-			groundedClauses = new StringBuilder();
-			int character;
-			while ((character = clauseReader.read()) > 0) {
-				groundedClauses.append((char) character);
-			}
-
-			if (clauseReader != null) {
-				clauseReader.close();
-			}
-		}
-
-		if (clauseWrite != null) {
-			clauseWrite.close();
-		}
-		if (tempClauseFile != null) {
-			tempClauseFile.delete();
-		}
-
 		return groundedClauses.toString();
 	}
 

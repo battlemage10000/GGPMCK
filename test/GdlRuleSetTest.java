@@ -7,15 +7,14 @@ import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 
-import org.hamcrest.core.IsNull;
 import org.junit.Test;
 
-import prover.Prover;
+import prover.GdlRuleSet;
 import util.GdlParser;
 import util.grammar.GDLSyntaxException;
 import util.grammar.Gdl;
 
-public class ProverTest {
+public class GdlRuleSetTest {
 	String mhGdlPath = "res/gdlii/MontyHall.gdl";
 	String meierGdlPath = "res/gdlii/meier.gdl";
 	String GDL_STRING = "(role p1)" + "(role p2)" + "(init (step 1))" + "(<= (legal ?p (move 1)) (role ?p))"
@@ -35,7 +34,7 @@ public class ProverTest {
 		// Gdl root = GdlParser.parseFile(mhGdlPath);
 		Gdl root = GdlParser.parseString(BETTER_VALUE_GDL_STRING);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
-		Prover prover = new Prover(root);
+		GdlRuleSet prover = new GdlRuleSet(root);
 		prover.cullVariables(true);
 		for (String head : prover.getRuleSet().keySet()) {
 			if (prover.getRuleSet().get(head) != null) {
@@ -49,7 +48,7 @@ public class ProverTest {
 		// Gdl root = GdlParser.parseFile(mhGdlPath);
 		Gdl root = GdlParser.parseString(GDL_STRING);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
-		Prover prover = new Prover(root);
+		GdlRuleSet prover = new GdlRuleSet(root);
 		prover.cullVariables(true);
 		// System.out.println(prover.debug());
 		// System.out.println();
@@ -88,7 +87,7 @@ public class ProverTest {
 	public void mhRulesetTest() throws GDLSyntaxException, IOException, URISyntaxException {
 		Gdl root = GdlParser.parseFile(mhGdlPath);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
-		Prover prover = new Prover(root);
+		GdlRuleSet prover = new GdlRuleSet(root);
 		prover.cullVariables(true);
 
 		assertThat(prover.getRuleSet().keySet().contains("terminal"), is(true));
@@ -99,12 +98,12 @@ public class ProverTest {
 	public void meierRulesetTest() throws GDLSyntaxException, IOException, URISyntaxException {
 		Gdl root = GdlParser.parseFile(meierGdlPath);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
-		Prover prover = new Prover(root, true);
+		GdlRuleSet prover = new GdlRuleSet(root, true);
 		prover.cullVariables(true);
 		Map<String, Set<Set<String>>> ruleSet = prover.getRuleSet();
 		String minimalGdl = prover.toGdl();
 		//System.out.println(minimalGdl);
-		prover = new Prover(GdlParser.parseString(minimalGdl), true);
+		prover = new GdlRuleSet(GdlParser.parseString(minimalGdl), true);
 		prover.cullVariables(true);
 		for (String head : prover.getRuleSet().keySet()) {
 			assertThat(ruleSet.keySet().contains(head), is(true));

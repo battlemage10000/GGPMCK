@@ -14,7 +14,7 @@ public class GraphTest {
 		
 		assertThat(graph.getDependencyMap().keySet(), hasItems("goal", "win"));
 		
-		System.out.println(graph.dotEncodedGraph());
+		//System.out.println(graph.dotEncodedGraph());
 	}
 	
 	@Test
@@ -34,7 +34,7 @@ public class GraphTest {
 		domainGraph.addEdge("thing", 1, "function", 0);
 		
 		assertThat(domainGraph.getNeighbours("thing", 2).size(), is(1));
-		assertThat(domainGraph.getNeighbours("thing", 2).get(0), is(new DomainGraph.Term("thing", 0)));
+		assertThat(domainGraph.getNeighbours("thing", 2).iterator().next(), is(new DomainGraph.Term("thing", 0)));
 		assertThat(domainGraph.getNeighbours("something", 2).size(), is(0));
 		
 		assertThat(domainGraph.getDomain("stuff", 3).size(), is(2));

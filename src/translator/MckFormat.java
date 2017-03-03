@@ -170,11 +170,11 @@ public class MckFormat {
 		
 		StringBuilder clause = new StringBuilder();
 		if (useDefine) {
-			clause.append(System.lineSeparator() + DEFINE + " " + formatMckNode(headNode) + " = " + DNF.toString());
+			clause.append(DEFINE + " " + formatMckNode(headNode) + " = " + DNF.toString());
 		} else if (oneLineTransition) {
-			clause.append(System.lineSeparator() + "  " + formatMckNode(headNode) + " := " + DNF.toString() + ";");
+			clause.append(formatMckNode(headNode) + " := " + DNF.toString() + ";");
 		} else {
-			clause.append(System.lineSeparator() + "if " + DNF.toString());
+			clause.append("if " + DNF.toString());
 			clause.append(System.lineSeparator() + "  -> " + formatMckNode(headNode) + " := " + TRUE);
 			clause.append(System.lineSeparator() + "  [] otherwise -> " + formatMckNode(headNode) + " := " + FALSE);
 			clause.append(System.lineSeparator() + "fi;");

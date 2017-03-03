@@ -2,18 +2,19 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
-import prover.Prover;
+import prover.GdlRuleSet;
 import util.GdlParser;
 import util.grammar.GDLSyntaxException;
-import util.grammar.Gdl;
 import util.grammar.GdlNode;
-import util.grammar.GdlNodeFactory;
 import util.grammar.GdlType;
 import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
+import util.graph.DomainGraph.Term;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class ParserTest {
 
 		GdlNode root = GdlParser.expandParseTree(tokens);
 
-		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = GdlParser.constructDomainGraph(root).getMap();
+		Map<Term, Set<Term>> domainMap = GdlParser.constructDomainGraph(root).getMap();
 
 		assertThat(domainMap.keySet(), hasItems(new DomainGraph.Term("goal", 0)));
 		assertThat(domainMap.keySet(), hasItem(not(new DomainGraph.Term("?1_?player", 0))));
@@ -61,7 +62,7 @@ public class ParserTest {
 	}
 
 	@Test
-	public void testSimpleDomainGraphOnGdl() {
+	public void testSimpleDomainGraphOnGdl() throws IOException {
 		List<String> tokens = null;
 		try {
 			tokens = GdlParser.tokenizeFile("res/gdlii/tictactoe.kif");
@@ -79,7 +80,7 @@ public class ParserTest {
 	}
 
 	@Test
-	public void testCreationOfGroundedClause() {
+	public void testCreationOfGroundedClause() throws IOException {
 		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = new HashMap<DomainGraph.Term, ArrayList<DomainGraph.Term>>();
 		ArrayList<DomainGraph.Term> domain = new ArrayList<DomainGraph.Term>();
 		domain.add(new DomainGraph.Term("red", 0));
@@ -87,10 +88,14 @@ public class ParserTest {
 		domainMap.put(new DomainGraph.Term("goal", 1), domain);
 		domainMap.put(new DomainGraph.Term("win", 1), domain);
 
-		List<String> tokens = new ArrayList<String>();
-		tokens = GdlParser.tokenizeString(testGoalGrounding);
+		GdlNode clause = GdlParser.parseString(testGoalGrounding);
 
-		String groundedClauses = GdlParser.groundClause(GdlParser.expandParseTree(tokens), domainMap);
+		Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();
+		Set<String> constantDomain = new HashSet<String>();
+		constantDomain.add("red");
+		constantDomain.add("blue");
+		constantMap.put("?1_?player", constantDomain);
+		String groundedClauses = GdlParser.groundClause(clause, constantMap , false);
 
 		assertThat(groundedClauses, is("(<= (goal red 100) (true (win red)))" + System.lineSeparator()
 				+ "(<= (goal blue 100) (true (win blue)))" + System.lineSeparator()));
@@ -175,7 +180,7 @@ public class ParserTest {
 			List<String> tokens = GdlParser.tokenizeFile(testGdlPath);
 			GdlNode root = GdlParser.expandParseTree(tokens);
 			String lparse = GdlParser.toLparse(root);
-			// System.out.println(lparse);
+			assertThat(lparse, not(""));
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -183,41 +188,23 @@ public class ParserTest {
 		}
 	}
 
-	@Test
+	//@Test
 	public void groundLargeGame() {
 		try {
 			GdlNode root = GdlParser.parseFile(largeGdlPath);
 			DomainGraph domGraph = GdlParser.constructDomainGraph(root);
 
-			Prover prover = new Prover(GdlParser.groundGdl(root, domGraph));
+			GdlRuleSet ruleSet = new GdlRuleSet(GdlParser.groundGdl(root, domGraph));
 
-			/*
-			Gdl factRoot = null;
-			String groundedClauseString = null;
-			
-			for (GdlNode clause : root.getChildren()) {
-				if (!GdlParser.isVariableInTree(clause)) { // No variables is
-					factRoot = null;										// already ground
-					factRoot = GdlNodeFactory.createGdl();
-					factRoot.getChildren().add(clause);
-					prover.joinRuleSet(factRoot);
-				} else {
-					groundedClauseString = null;
-					groundedClauseString = GdlParser.groundClause(clause, domGraph.getMap());
-					prover.joinRuleSet(GdlParser.parseString(groundedClauseString));
-				}
-			}
-			*/
-			prover.cullVariables(true);
-			System.out.println(prover.debug());
-			String gdlString = prover.toGdl();
+			ruleSet.cullVariables(true);
+			System.out.println(ruleSet.debug());
+			String gdlString = ruleSet.toGdl();
 			System.out.println(gdlString);
 			System.out.println();
 
 			DependencyGraph depGraph = GdlParser.constructDependencyGraph(root);
 			gdlString = GdlParser.orderGdlRules(root, depGraph);
-			System.out.println(gdlString);
-			System.out.println();
+			//System.out.println(gdlString);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
