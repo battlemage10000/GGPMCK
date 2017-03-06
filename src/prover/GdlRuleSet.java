@@ -23,31 +23,34 @@ public class GdlRuleSet {
 	private Set<String> initialSet; // I
 	private Set<String> tautologySet; // T
 	private Set<String> contradictionSet; // C
-	private Map<String, Set<Set<String>>> dnfRuleSet;
+	private Map<String, Set<Set<String>>> ruleSet;
 	private Map<String, Integer> stratumMap;
 
-	public boolean DEBUG;
-	public boolean CULL_NULL_RULES; // Remove [headNode -> null] rules from
+	public boolean debug;
+	//public boolean CULL_NULL_RULES; // Remove [headNode -> null] rules from
 									// ruleset
 
+	public GdlRuleSet() {
+		debug = true;
+		literalSet = new HashSet<String>();
+		initialSet = new HashSet<String>();
+		tautologySet = new HashSet<String>();
+		contradictionSet = new HashSet<String>();
+		ruleSet = new HashMap<String, Set<Set<String>>>();
+		stratumMap = new HashMap<String, Integer>();
+	}
+	
 	public GdlRuleSet(Gdl root) throws GDLSyntaxException {
 		this(root, true);
 	}
 
 	public GdlRuleSet(Gdl root, boolean DEBUG) throws GDLSyntaxException {
-		this.DEBUG = DEBUG;
-		literalSet = new HashSet<String>();
-		initialSet = new HashSet<String>();
-		tautologySet = new HashSet<String>();
-		contradictionSet = new HashSet<String>();
-		dnfRuleSet = new HashMap<String, Set<Set<String>>>();
-		stratumMap = new HashMap<String, Integer>();
-
+		this();
 		joinRuleSet(root);
 	}
 
-	public void joinRuleSet(Gdl ruleSet) throws GDLSyntaxException {
-		for (GdlNode node : ruleSet.getChildren()) {
+	public void joinRuleSet(Gdl game) throws GDLSyntaxException {
+		for (GdlNode node : game.getChildren()) {
 			if (node instanceof GdlLiteral) {
 				// These are facts
 				if (node.getAtom().contentEquals(GdlNode.INIT)) {
@@ -62,7 +65,7 @@ public class GdlRuleSet {
 				} else {
 					// Non-init facts added to tautology set and rule set as
 					// empty body clauses
-					dnfRuleSet.put(node.toString(), new HashSet<Set<String>>());
+					ruleSet.put(node.toString(), new HashSet<Set<String>>());
 
 					if (!literalSet.contains(node.toString())) {
 						literalSet.add(node.toString().intern());
@@ -72,8 +75,8 @@ public class GdlRuleSet {
 			} else if (node instanceof GdlRule) {
 				// These are clauses
 				GdlNode headNode = node.getChild(0);
-				if (!dnfRuleSet.containsKey(headNode.toString())) {
-					dnfRuleSet.put(headNode.toString(), new HashSet<Set<String>>());
+				if (!ruleSet.containsKey(headNode.toString())) {
+					ruleSet.put(headNode.toString(), new HashSet<Set<String>>());
 				}
 				Set<String> clauseLiteralSet = new HashSet<String>();
 
@@ -98,18 +101,18 @@ public class GdlRuleSet {
 					// Evaluate distinct but don't remove yet
 					if (literal.getAtom().equals(GdlNode.DISTINCT)) {
 						if (!literal.getChild(0).toString().equals(literal.getChild(1).toString())) {
-							dnfRuleSet.put(headNode.toString(), new HashSet<Set<String>>());
+							ruleSet.put(headNode.toString(), new HashSet<Set<String>>());
 						}
 					}
 				}
-				dnfRuleSet.get(headNode.toString()).add(clauseLiteralSet);
+				ruleSet.get(headNode.toString()).add(clauseLiteralSet);
 			} else {
 				throw new GDLSyntaxException();
 			}
 		}
 	}
 	
-	public int cullVariables(boolean CULL_NULL_RULES) {
+	public int cullVariables(boolean cullNullRules) {
 		int numIterations = 0;
 		boolean changed = true;
 		while (changed) {
@@ -118,15 +121,15 @@ public class GdlRuleSet {
 
 			Set<String> removeRuleSet = new HashSet<String>();
 
-			for (String headNode : dnfRuleSet.keySet()) {
-				Set<Set<String>> dnfRule = dnfRuleSet.get(headNode);
+			for (String headNode : ruleSet.keySet()) {
+				Set<Set<String>> dnfRule = ruleSet.get(headNode);
 				Set<Set<String>> newDnfRule = new HashSet<Set<String>>();
 
 				boolean ruleContainsNonFalse = false;
 				boolean headIsTautology = false;
 				boolean headIsContradiction = false;
 
-				if (dnfRuleSet.get(headNode) == null || dnfRuleSet.get(headNode).isEmpty()) {
+				if (ruleSet.get(headNode) == null || ruleSet.get(headNode).isEmpty()) {
 					continue;
 				}
 
@@ -157,14 +160,14 @@ public class GdlRuleSet {
 								&& posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
 							// No change for true
 							newDisjunct.add(literal.intern());
-						} else if (dnfRuleSet.get(posLiteral) == null) {
+						} else if (ruleSet.get(posLiteral) == null) {
 							if (isNegative) {
 								// True literal
 							} else {
 								// False literal
 								newDisjunct.add(FALSE);
 							}
-						} else if (dnfRuleSet.get(posLiteral).isEmpty()) {
+						} else if (ruleSet.get(posLiteral).isEmpty()) {
 							if (isNegative) {
 								// False literal
 								newDisjunct.add(FALSE);
@@ -188,21 +191,21 @@ public class GdlRuleSet {
 				}
 
 				if (headIsTautology) {
-					dnfRuleSet.put(headNode, new HashSet<Set<String>>());
+					ruleSet.put(headNode, new HashSet<Set<String>>());
 					changed = true;
 				} else if (headIsContradiction) {
-					dnfRuleSet.put(headNode, null);
+					ruleSet.put(headNode, null);
 					changed = true;
-					if (CULL_NULL_RULES) {
+					if (cullNullRules) {
 						removeRuleSet.add(headNode.intern());
 					}
 				} else {
-					dnfRuleSet.put(headNode, newDnfRule);
+					ruleSet.put(headNode, newDnfRule);
 				}
 			} // End head-for-loop
-			if (CULL_NULL_RULES) {
+			if (cullNullRules) {
 				for (String removeHead : removeRuleSet) {
-					dnfRuleSet.remove(removeHead);
+					ruleSet.remove(removeHead);
 				}
 			}
 			removeRuleSet.clear();
@@ -211,7 +214,7 @@ public class GdlRuleSet {
 	}
 	
 	public Map<String, Integer> generateStratumMap(){
-		for (String head : dnfRuleSet.keySet()) {
+		for (String head : ruleSet.keySet()) {
 			if (!stratumMap.containsKey(head)) {
 				stratumMap.put(head, computeStratum(head));
 			}
@@ -223,7 +226,7 @@ public class GdlRuleSet {
 		if (headNode == null) {
 			return -2; // Null parameter
 		}
-		Set<Set<String>> rule = dnfRuleSet.get(headNode);
+		Set<Set<String>> rule = ruleSet.get(headNode);
 		if (rule == null) {
 			return -2; // Contradiction
 		} else if (rule.isEmpty()) {
@@ -277,7 +280,7 @@ public class GdlRuleSet {
 		// Evaluate all the head nodes
 		Set<String> falseLiterals = new HashSet<String>();
 		falseLiterals.addAll(contradictionSet);
-		for (String headNode : dnfRuleSet.keySet()) {
+		for (String headNode : ruleSet.keySet()) {
 			if (evaluateHeadNode(headNode, trueLiterals, falseLiterals)) {
 				if (!trueLiterals.contains(headNode)) {
 					trueLiterals.add(headNode);
@@ -312,7 +315,7 @@ public class GdlRuleSet {
 		// Evaluate head nodes for this model
 		Set<String> falseLiterals = new HashSet<String>();
 		falseLiterals.addAll(contradictionSet);
-		for (String headNode : dnfRuleSet.keySet()) {
+		for (String headNode : ruleSet.keySet()) {
 			if (evaluateHeadNode(headNode, trueLiterals, falseLiterals)) {
 				if (!trueLiterals.contains(headNode)) {
 					trueLiterals.add(headNode);
@@ -328,7 +331,7 @@ public class GdlRuleSet {
 	}
 
 	public boolean evaluateHeadNode(String headNode, Set<String> trueLiterals, Set<String> falseLiterals) {
-		if (dnfRuleSet.get(headNode) == null) {
+		if (ruleSet.get(headNode) == null) {
 			if (headNode.length() > TRUE_PREFIX.length()
 					&& !headNode.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)
 					&& headNode.length() > DOES_PREFIX.length()
@@ -337,12 +340,12 @@ public class GdlRuleSet {
 			}
 			return false;
 		}
-		if (dnfRuleSet.get(headNode).isEmpty()) {
+		if (ruleSet.get(headNode).isEmpty()) {
 			tautologySet.add(headNode);
 			return true;
 		}
 
-		for (Set<String> disjunct : dnfRuleSet.get(headNode)) {
+		for (Set<String> disjunct : ruleSet.get(headNode)) {
 			boolean disjunctHasFalse = false;
 			for (String literal : disjunct) {
 				// Get rid of prefixing negations
@@ -390,12 +393,12 @@ public class GdlRuleSet {
 		return false;
 	}
 
-	public Set<Set<String>> getDnfRuleOfHead(GdlLiteral headNode) {
-		return dnfRuleSet.get(headNode.toString());
+	public Set<Set<String>> getRule(GdlLiteral headNode) {
+		return ruleSet.get(headNode.toString());
 	}
 
 	public Map<String, Set<Set<String>>> getRuleSet() {
-		return dnfRuleSet;
+		return ruleSet;
 	}
 
 	public Set<String> getTautologySet() {
@@ -413,8 +416,8 @@ public class GdlRuleSet {
 	public String toGdl() {
 		StringBuilder gdl = new StringBuilder();
 
-		for (String headNode : dnfRuleSet.keySet()) {
-			Set<Set<String>> rule = dnfRuleSet.get(headNode);
+		for (String headNode : ruleSet.keySet()) {
+			Set<Set<String>> rule = ruleSet.get(headNode);
 			if (rule == null) {
 				continue;
 			} else if (rule.isEmpty()) {
@@ -441,11 +444,11 @@ public class GdlRuleSet {
 		StringBuilder debug = new StringBuilder();
 		debug.append(System.lineSeparator() + "Literals: " + literalSet.toString());
 		for (String literal : literalSet) {
-			if (dnfRuleSet.get(literal) == null) {
+			if (ruleSet.get(literal) == null) {
 				if (!contradictionSet.contains(literal)) {
 					contradictionSet.add(literal);
 				}
-			} else if (dnfRuleSet.get(literal).isEmpty()) {
+			} else if (ruleSet.get(literal).isEmpty()) {
 				if (!tautologySet.contains(literal)) {
 					tautologySet.add(literal);
 				}

@@ -120,10 +120,10 @@ public class MckFormat {
 	
 	public static String formatClause(Set<String> oldSet, GdlRuleSet prover, GdlLiteral headNode, boolean useDefine, boolean oneLineTransition) {
 		StringBuilder DNF = new StringBuilder();
-		if (prover.getDnfRuleOfHead(headNode) == null) {
+		if (prover.getRule(headNode) == null) {
 			return "";
 		}
-		for (Set<String> disjunct : prover.getDnfRuleOfHead(headNode)) {
+		for (Set<String> disjunct : prover.getRule(headNode)) {
 			if (disjunct.isEmpty()) {
 				continue; // Shouldn't reach here after cull variables
 			}

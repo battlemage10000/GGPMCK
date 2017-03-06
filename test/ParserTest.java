@@ -26,7 +26,8 @@ public class ParserTest {
 
 	static final String testGdlPath = "test/gdlii/paperScissorsRock.kif";
 	static final String groundedTestGdlPath = "test/gdlii/paperScissorsRock.ground.kif";
-	static final String largeGdlPath = "res/gdlii/mastermind.gdl";
+	static final String largeGdlPath = "res/gdlii/mastermind448.gdl";
+	static final String simpleGdlPath = "res/gdl/tictactoe.kif";
 
 	@Test
 	public void testSimpleDependencyGraph() {
@@ -65,7 +66,7 @@ public class ParserTest {
 	public void testSimpleDomainGraphOnGdl() throws IOException {
 		List<String> tokens = null;
 		try {
-			tokens = GdlParser.tokenizeFile("res/gdlii/tictactoe.kif");
+			tokens = GdlParser.tokenizeFile(simpleGdlPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (URISyntaxException e) {
@@ -81,13 +82,6 @@ public class ParserTest {
 
 	@Test
 	public void testCreationOfGroundedClause() throws IOException {
-		Map<DomainGraph.Term, ArrayList<DomainGraph.Term>> domainMap = new HashMap<DomainGraph.Term, ArrayList<DomainGraph.Term>>();
-		ArrayList<DomainGraph.Term> domain = new ArrayList<DomainGraph.Term>();
-		domain.add(new DomainGraph.Term("red", 0));
-		domain.add(new DomainGraph.Term("blue", 0));
-		domainMap.put(new DomainGraph.Term("goal", 1), domain);
-		domainMap.put(new DomainGraph.Term("win", 1), domain);
-
 		GdlNode clause = GdlParser.parseString(testGoalGrounding);
 
 		Map<String, Set<String>> constantMap = new HashMap<String, Set<String>>();

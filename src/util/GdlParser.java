@@ -19,6 +19,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
+import prover.GdlRuleSet;
 import util.grammar.Gdl;
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
@@ -215,6 +216,57 @@ public class GdlParser {
 		return root;
 	}
 
+	
+	public static GdlRuleSet expandRuleSet(List<String> tokens) {
+		GdlRuleSet ruleSet = new GdlRuleSet();
+		
+		for (String token : tokens) {
+			StringBuilder literal = new StringBuilder();
+			int bracketLevel = 0;
+			boolean isHead = true;
+			String workingHead;
+			Set<String> workingBody = null;
+			
+			switch(token){
+			case OPEN_P_Str:
+				bracketLevel++;
+				break;
+			case CLOSE_P_Str:
+				bracketLevel--;
+				if (bracketLevel == 0){
+					if (isHead){
+						if (ruleSet.getRuleSet().get(literal.toString()) == null) {
+							ruleSet.getRuleSet().put(literal.toString(), new HashSet<Set<String>>());
+						}
+						workingHead = literal.toString();
+						isHead = false;
+					} else {
+						if (workingBody == null) {
+							workingBody = new HashSet<String>();
+						}
+						workingBody.add(literal.toString());
+					}
+					literal = new StringBuilder();
+				} else if (bracketLevel < 0) {
+					bracketLevel = 0;
+					isHead = true;
+				}
+				break;
+			case GdlNode.CLAUSE:
+				bracketLevel = 0;
+				isHead = true;
+				break;
+			default:
+				if (literal.length() == 0) {
+					
+				} else {
+					literal.append(token);
+				}
+			}
+		}
+		return ruleSet;
+	}
+	
 	/**
 	 * Overloaded method which doesn't require casting to Reader for game
 	 * descriptions in Files
@@ -494,11 +546,16 @@ public class GdlParser {
 		Set<String> variableDomainSet = new HashSet<String>();
 		for (GdlNode node : clause) {
 			if (node.getType() == GdlType.VARIABLE && node.getAtom().equals(variable)) {
+				boolean hasMultiVarInstance = !variableDomainSet.isEmpty();
 				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
 						node.getParent().getChildren().indexOf(node) + 1);
 				for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
+					if (hasMultiVarInstance && !variableDomainSet.contains(term.getTerm())) {
+						System.out.println("InconsistentDomainException: Const: " + term.getTerm() + " not in domain of var: " + node.getAtom());
+					}
 					variableDomainSet.add(term.getTerm());
 				}
+				break;
 			}
 		}
 		return variableDomainSet;

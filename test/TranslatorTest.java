@@ -76,7 +76,6 @@ public class TranslatorTest {
 		GdlNode headNode = root.getChildren().get(7).getChildren().get(0);
 		ArrayList<GdlNode> bodyList = new ArrayList<GdlNode>();
 		bodyList.add(root.getChildren().get(7));
-		//assertThat(translator.formatClause(headNode, bodyList) , is("\nstep_2 := ( step_1 );"));
 		assertThat(MckFormat.formatClause(Collections.emptySet(), ruleSet, (GdlLiteral)headNode, false, true), is("step_2 := (step_1);"));
 		
 		headNode = root.getChildren().get(8).getChildren().get(0);
@@ -99,10 +98,11 @@ public class TranslatorTest {
 			mhRoot = GdlParser.groundGdl(mhRoot, graph);
 			//System.out.println(mhRoot.toString());
 			
-			GdlRuleSet mhProver = new GdlRuleSet((Gdl)mhRoot);
-			mhProver.cullVariables(true);
+			GdlRuleSet mhRuleSet = new GdlRuleSet((Gdl)mhRoot);
+			mhRuleSet.cullVariables(true);
 			
-			MckTranslator mhTrans = new MckTranslator(mhRoot, true, false, mhProver);
+			MckTranslator mhTrans = new MckTranslator(mhRoot, true, false, mhRuleSet);
+			//mhTrans.setProver(mhProver);
 			
 			String translation = mhTrans.toMck();
 			//System.out.println("Number of contradictions: " + mhTrans.ATc.size());
