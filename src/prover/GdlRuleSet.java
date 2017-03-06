@@ -1,6 +1,8 @@
 package prover;
 
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +30,7 @@ public class GdlRuleSet {
 	private Set<String> contradictionSet; // C
 	private Map<String, Set<Set<String>>> ruleSet;
 	private Map<String, Integer> stratumMap;
+	private Set<String> oldSet;
 
 	public boolean debug;
 	//public boolean CULL_NULL_RULES; // Remove [headNode -> null] rules from
@@ -226,10 +229,22 @@ public class GdlRuleSet {
 		return stratumMap;
 	}
 	
+
 	public int computeStratum(String headNode) {
-		if (headNode == null || headNode.substring(0, INIT_PREFIX.length()).equals(INIT_PREFIX)) {
+		return computeStratum(headNode, new ArrayDeque<String>());
+	}
+	
+	public int computeStratum(String headNode, Deque<String> stack) {
+		if (headNode == null || (headNode.length() > INIT_PREFIX.length() && headNode.substring(0, INIT_PREFIX.length()).equals(INIT_PREFIX))) {
 			return -2; // Null parameter
 		}
+		if (stack.contains(headNode)) {
+			if (!oldSet.contains(headNode)) {
+				oldSet.add(headNode);
+			}
+			return 0;
+		}
+		
 		Set<Set<String>> rule = ruleSet.get(headNode);
 		if (rule == null) {
 			return -2; // Contradiction
@@ -245,26 +260,31 @@ public class GdlRuleSet {
 							&& literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
 						literal = literal.substring(NOT_PREFIX.length(), literal.length() - 1);
 					}
-					// If stratum known
 					if (stratumMap.containsKey(literal)) {
+						// If stratum known
 						if (stratumMap.get(literal) > max) {
 							max = stratumMap.get(literal);
 						}
 					} else if (literal.length() >= DOES_PREFIX.length()
 							&& literal.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
+						// Stratum unknown, does is 0
 						stratumMap.put(literal, 0);
 						if (max < 0) {
 							max = 0;
 						}
 					} else if (literal.length() >= TRUE_PREFIX.length()
 							&& literal.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
+						// Stratum unknown, true is 0
 						stratumMap.put(literal, 0);
 						if (max < 0) {
 							max = 0;
 						}
 					} else {
+						// Stratum unknown, compute stratum(recursive)
 						int literalStratum = computeStratum(literal);
-						stratumMap.put(literal, literalStratum);
+						if (literalStratum != 0 || !oldSet.contains(literal)) {
+							stratumMap.put(literal, literalStratum);
+						}
 						if (literalStratum > max) {
 							max = literalStratum;
 						}
@@ -274,6 +294,10 @@ public class GdlRuleSet {
 			
 			return max + 1;
 		}
+	}
+	
+	public Set<String> getOldSet(){
+		return oldSet;
 	}
 	
 	public Model generateInitialModel() {
