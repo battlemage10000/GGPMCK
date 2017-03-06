@@ -3,6 +3,7 @@ import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -31,27 +32,35 @@ public class GdlRuleSetTest {
 
 	@Test
 	public void betterValueGameRulesetTest() throws IOException, URISyntaxException, GDLSyntaxException {
-		// Gdl root = GdlParser.parseFile(mhGdlPath);
 		Gdl root = GdlParser.parseString(BETTER_VALUE_GDL_STRING);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
-		GdlRuleSet prover = new GdlRuleSet(root);
-		prover.cullVariables(true);
-		for (String head : prover.getRuleSet().keySet()) {
-			if (prover.getRuleSet().get(head) != null) {
-				assertThat(prover.getRuleSet().get(head).isEmpty(), is(true));
+		GdlRuleSet ruleSet = new GdlRuleSet(root);
+		ruleSet.cullVariables(true);
+		for (String head : ruleSet.getRuleSet().keySet()) {
+			if (ruleSet.getRuleSet().get(head) != null) {
+				assertThat(ruleSet.getRuleSet().get(head).isEmpty(), is(true));
 			}
 		}
 	}
 
 	@Test
 	public void testGameRulesetTest() throws IOException, URISyntaxException, GDLSyntaxException {
-		// Gdl root = GdlParser.parseFile(mhGdlPath);
 		Gdl root = GdlParser.parseString(GDL_STRING);
 		root = GdlParser.groundGdl(root, GdlParser.constructDomainGraph(root));
-		GdlRuleSet prover = new GdlRuleSet(root);
-		prover.cullVariables(true);
-		// System.out.println(prover.debug());
-		// System.out.println();
+		GdlRuleSet ruleSet = new GdlRuleSet(root);
+		//System.out.println(ruleSet.debug());
+		//System.out.println(ruleSet.toGdl());
+		ruleSet.cullVariables(true);
+		//System.out.println(ruleSet.toGdl());
+		assertThat(ruleSet.toGdl(), is(not("")));
+		int stratum = Integer.MIN_VALUE;
+		PriorityQueue<String> orderedSet = ruleSet.getOrderedSet();
+		while (!orderedSet.isEmpty()) {
+			String orderedHead = orderedSet.poll();
+			assertThat(ruleSet.getStratum(orderedHead) >= stratum, is(true));
+			stratum = ruleSet.getStratum(orderedHead);
+			//System.out.println("Stratum: " + ruleSet.getStratum(orderedHead) + ", Head: " + orderedHead + ", Rule: " + ruleSet.getRule(orderedHead));
+		}
 
 		// for (String head : prover.getRuleSet().keySet()) {
 		// System.out.println(head + " -> " + prover.getRuleSet().get(head));

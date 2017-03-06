@@ -1,8 +1,10 @@
 package prover;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import util.grammar.GDLSyntaxException;
@@ -13,6 +15,7 @@ import util.grammar.GdlRule;
 
 public class GdlRuleSet {
 	public static String NOT_PREFIX = "(not ";
+	public static String INIT_PREFIX = "(init ";
 	public static String NEXT_PREFIX = "(next ";
 	public static String TRUE_PREFIX = "(true ";
 	public static String DOES_PREFIX = "(does ";
@@ -62,6 +65,7 @@ public class GdlRuleSet {
 					if (!literalSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
 						literalSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
 					}
+					ruleSet.put(node.toString(), new HashSet<Set<String>>());
 				} else {
 					// Non-init facts added to tautology set and rule set as
 					// empty body clauses
@@ -223,7 +227,7 @@ public class GdlRuleSet {
 	}
 	
 	public int computeStratum(String headNode) {
-		if (headNode == null) {
+		if (headNode == null || headNode.substring(0, INIT_PREFIX.length()).equals(INIT_PREFIX)) {
 			return -2; // Null parameter
 		}
 		Set<Set<String>> rule = ruleSet.get(headNode);
@@ -393,8 +397,26 @@ public class GdlRuleSet {
 		return false;
 	}
 
-	public Set<Set<String>> getRule(GdlLiteral headNode) {
-		return ruleSet.get(headNode.toString());
+	public PriorityQueue<String> getOrderedSet(){
+		if (stratumMap == null ||  stratumMap.isEmpty()) {
+			generateStratumMap();
+		}
+		PriorityQueue<String> orderer = new PriorityQueue<String>(ruleSet.keySet().size(), new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+				return stratumMap.get(o1) - stratumMap.get(o2);
+			}
+		});
+		orderer.addAll(ruleSet.keySet());
+		return orderer;
+	}
+	
+	public int getStratum(String headNode){
+		return stratumMap.get(headNode);
+	}
+	
+	public Set<Set<String>> getRule(String headNode) {
+		return ruleSet.get(headNode);
 	}
 
 	public Map<String, Set<Set<String>>> getRuleSet() {
@@ -417,6 +439,35 @@ public class GdlRuleSet {
 		StringBuilder gdl = new StringBuilder();
 
 		for (String headNode : ruleSet.keySet()) {
+			Set<Set<String>> rule = ruleSet.get(headNode);
+			if (rule == null) {
+				continue;
+			} else if (rule.isEmpty()) {
+				gdl.append(System.lineSeparator() + headNode);
+			} else {
+				for (Set<String> disjunct : rule) {
+					StringBuilder clause = new StringBuilder();
+					for (String literal : disjunct) {
+						clause.append(literal + " ");
+					}
+					gdl.append(System.lineSeparator());
+					if (clause.length() > 0) {
+						gdl.append("(<= " + headNode + " " + clause.substring(0, clause.length() - 1) + ")");
+					} else {
+						gdl.append(headNode);
+					}
+				}
+			}
+		}
+		return gdl.toString();
+	}
+	
+	public String toGdlOrdered(){
+		StringBuilder gdl = new StringBuilder();
+
+		PriorityQueue<String> orderedSet = getOrderedSet();
+		while (!orderedSet.isEmpty()) {
+			String headNode = orderedSet.poll();
 			Set<Set<String>> rule = ruleSet.get(headNode);
 			if (rule == null) {
 				continue;

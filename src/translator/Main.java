@@ -207,12 +207,12 @@ public class Main {
 			}
 
 			// Initialize prover
-			GdlRuleSet prover = null;
+			GdlRuleSet ruleSet = null;
 			if (useProverSwitch) {
 				System.out.print("Minimizing game ... ");
 				try {
-					prover = new GdlRuleSet((Gdl)root, debugSwitch);
-					prover.cullVariables(true);
+					ruleSet = new GdlRuleSet((Gdl)root, debugSwitch);
+					ruleSet.cullVariables(true);
 				} catch (GDLSyntaxException e) {
 					useProverSwitch = false;
 					e.printStackTrace();
@@ -246,14 +246,18 @@ public class Main {
 			if (outputFileSwitch || outputMckSwitch) {
 				if (!orderedSwitch) {
 					System.out.print("Ordering rules ... ");
-					root = GdlParser.parseString(GdlParser.orderGdlRules(root));
+					if (useProverSwitch) {
+						root = GdlParser.parseString(ruleSet.toGdlOrdered());
+					} else {
+						root = GdlParser.parseString(GdlParser.orderGdlRules(root));
+					}
 
 					System.out.println("finished");
 					totalTime = (int) (System.currentTimeMillis() - startTime);
 					System.out.println(
 							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 				}
-				MckTranslator translator = new MckTranslator(root, useDefineSwitch, debugSwitch, prover);
+				MckTranslator translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
 					GdlParser.saveFile(translator.toMck(), outputFilePath);
