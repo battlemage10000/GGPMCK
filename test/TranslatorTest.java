@@ -21,6 +21,7 @@ import util.graph.DomainGraph;
 public class TranslatorTest {
 	
 	private String montyHallGame = "res/gdlii/MontyHall.gdl";
+	private String tictactoeGame = "res/gdl/tictactoe.kif";
 
 	@Test
 	public void testFormatMckNodeMethod() {
@@ -113,5 +114,16 @@ public class TranslatorTest {
 		}catch (IOException e){
 			e.printStackTrace();
 		}
+	}
+	
+	@Test
+	public void testTicTacToeTranslation() throws IOException, URISyntaxException, GDLSyntaxException {
+		GdlNode tttRoot = GdlParser.parseFile(tictactoeGame);
+		tttRoot = GdlParser.groundGdl(tttRoot, GdlParser.constructDomainGraph(tttRoot));
+		GdlRuleSet tttRuleSet = new GdlRuleSet((Gdl)tttRoot);
+		MckTranslator tttTrans = new MckTranslator(tttRoot, true, false, tttRuleSet);
+		String tttTranslation = tttTrans.toMck();
+		assertThat(tttTranslation, is(not("")));
+		System.out.println(tttTranslation);
 	}
 }
