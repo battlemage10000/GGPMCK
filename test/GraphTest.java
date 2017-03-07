@@ -1,11 +1,19 @@
 import static org.junit.Assert.assertThat;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
+import util.GdlParser;
+import util.grammar.GdlNode;
 import util.graph.DependencyGraph;
 import util.graph.DomainGraph;
+import util.graph.DomainGraph.Term;
 
 public class GraphTest {
+	private String tttPath = "res/gdl/tictactoe.kif";
 	
 	@Test
 	public void dependencyGraphTest(){
@@ -43,5 +51,24 @@ public class GraphTest {
 		assertThat(domainGraph.hasTerm("function", 0), is(true));
 		assertThat(domainGraph.hasTerm("function", 1), is(true));
 		assertThat(domainGraph.hasTerm("function", 2), is(true));
+	}
+	
+	/**
+	 * Test against bug in tictactoe domains
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	@Test
+	public void tictactoeDomainTest() throws IOException, URISyntaxException{
+		GdlNode tttRoot = GdlParser.parseFile(tttPath);
+		DomainGraph graph = GdlParser.constructDomainGraph(tttRoot);
+		for (Term neighbour : graph.getNeighbours("cell", 1)) {
+			System.out.println(neighbour);
+		}
+		System.out.println();
+		for (Term neighbour : graph.getNeighbours("distinct", 2)) {
+			System.out.println(neighbour);
+		}
+		assertThat(graph.getDomain("cell", 1).size(), is(3));
 	}
 }

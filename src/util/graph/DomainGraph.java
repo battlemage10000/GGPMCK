@@ -3,6 +3,7 @@ package util.graph;
 import java.util.Map;
 import java.util.Set;
 
+import util.grammar.GdlNode;
 import util.grammar.GdlType;
 
 import java.util.HashMap;
@@ -62,7 +63,9 @@ public class DomainGraph {
 
 		// TODO: allow for dependency to be a complex term
 		for (Term dependency : adjacencyMap.get(termObj)) {
-			if (dependency.getArity() == 0 && !domain.contains(dependency)) {
+			if (dependency.getTerm().equals(GdlNode.DISTINCT)) {
+				continue;
+			} else if (dependency.getArity() == 0 && !domain.contains(dependency)) {
 				domain.add(dependency);
 			} else {
 				if (!dependency.visited) {
