@@ -121,7 +121,8 @@ public class TranslatorTest {
 		GdlNode tttRoot = GdlParser.parseFile(tictactoeGame);
 		tttRoot = GdlParser.groundGdl(tttRoot, GdlParser.constructDomainGraph(tttRoot));
 		GdlRuleSet tttRuleSet = new GdlRuleSet((Gdl)tttRoot);
-		MckTranslator tttTrans = new MckTranslator(tttRoot, true, false, tttRuleSet);
+		tttRuleSet.cullVariables(true);
+		MckTranslator tttTrans = new MckTranslator(tttRoot, false, false, tttRuleSet);
 		String tttTranslation = tttTrans.toMck();
 		assertThat(tttTranslation, is(not("")));
 		System.out.println(tttTranslation);
