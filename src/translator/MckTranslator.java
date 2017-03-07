@@ -63,6 +63,7 @@ public class MckTranslator {
 		this.root = root;
 		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
 		this.DEBUG = DEBUG;
+		this.SHOW_PRUNED_VARS = DEBUG;
 		if (SYNCHRONIZED_COLLECTIONS) {
 			this.AT = Collections.synchronizedSet(new HashSet<String>());
 			this.ATf = Collections.synchronizedSet(new HashSet<String>());
@@ -610,7 +611,7 @@ public class MckTranslator {
 			protocols.append(System.lineSeparator() + "init_cond = did == " + MckFormat.INIT + "_" + role);
 			if (TRANSITIONS_WITH_DEFINE) {
 				for (String definition : ATdef.values()) {
-					protocols.append(definition);
+					protocols.append(System.lineSeparator() + definition);
 				}
 			}
 			
@@ -778,15 +779,14 @@ public class MckTranslator {
 						useDefine, ONE_LINE_TRANSITIONS);
 
 				if (useDefine
-						&& formattedClause.length() > (System.lineSeparator() + MckFormat.DEFINE + " ").length()
-						&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
-								.equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
+						&& formattedClause.length() > (MckFormat.DEFINE + " ").length()
+						&& formattedClause.substring(0, (MckFormat.DEFINE + " ").length())
+								.equals(MckFormat.DEFINE + " ")) {
 					// Check for 'define ' prefix
 					defineBasedDeclarations.append(formattedClause);
-					String formattedHead = MckFormat.formatMckNode(repeatHead);
-					ATdef.put(formattedHead, formattedClause);
-				} else {
-					state_trans.append(formattedClause);
+					ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
+				} else if(formattedClause.length() > 0){
+					state_trans.append(System.lineSeparator() + "  " + formattedClause);
 				}
 			} else {
 				if (repeatHead != null && clause.getChild(0).toString().equals(repeatHead.toString())) {
@@ -795,12 +795,13 @@ public class MckTranslator {
 					if (repeatHead != null) {
 						String formattedClause = formatClause(graph, repeatHead, repeatHeadList);
 						if (TRANSITIONS_WITH_DEFINE
-								&& formattedClause.length() > (System.lineSeparator() + MckFormat.DEFINE + " ").length()
+								&& formattedClause.length() > (MckFormat.DEFINE + " ").length()
 								&& formattedClause
-										.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
-										.equals((System.lineSeparator() + MckFormat.DEFINE + " "))) {
+										.substring(0, (MckFormat.DEFINE + " ").length())
+										.equals(MckFormat.DEFINE + " ")) {
 							// Check for 'define ' prefix
 							defineBasedDeclarations.append(formattedClause);
+							ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
 						} else {
 							state_trans.append(formattedClause);
 						}
@@ -818,11 +819,12 @@ public class MckTranslator {
 				formattedClause = formatClause(graph, repeatHead, repeatHeadList);
 			}
 			if (TRANSITIONS_WITH_DEFINE
-					&& formattedClause.length() >= (System.lineSeparator() + MckFormat.DEFINE + " ").length()
-					&& formattedClause.substring(0, (System.lineSeparator() + MckFormat.DEFINE + " ").length())
-							.equals(System.lineSeparator() + MckFormat.DEFINE + " ")) {
+					&& formattedClause.length() >= (MckFormat.DEFINE + " ").length()
+					&& formattedClause.substring(0, (MckFormat.DEFINE + " ").length())
+							.equals(MckFormat.DEFINE + " ")) {
 				// Check for 'define ' prefix
 				defineBasedDeclarations.append(formattedClause);
+				ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
 			} else {
 				state_trans.append(formattedClause);
 			}
@@ -1094,7 +1096,9 @@ public class MckTranslator {
 
 		if (TRANSITIONS_WITH_DEFINE) {
 			env_vars.append(System.lineSeparator() + "-- Define based Transitions:");
-			env_vars.append(defineBasedDeclarations);
+			for (String defHead : ATdef.keySet()) {
+				env_vars.append(ATdef.get(System.lineSeparator() + defHead));
+			}
 			env_vars.append(System.lineSeparator());
 		}
 
