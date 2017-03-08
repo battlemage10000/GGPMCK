@@ -39,6 +39,7 @@ public class GdlRuleSet {
 
 	public GdlRuleSet() {
 		debug = true;
+		oldSet = new HashSet<String>();
 		literalSet = new HashSet<String>();
 		initialSet = new HashSet<String>();
 		tautologySet = new HashSet<String>();

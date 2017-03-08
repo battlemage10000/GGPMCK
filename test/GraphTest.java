@@ -62,13 +62,6 @@ public class GraphTest {
 	public void tictactoeDomainTest() throws IOException, URISyntaxException{
 		GdlNode tttRoot = GdlParser.parseFile(tttPath);
 		DomainGraph graph = GdlParser.constructDomainGraph(tttRoot);
-		for (Term neighbour : graph.getNeighbours("cell", 1)) {
-			System.out.println(neighbour);
-		}
-		System.out.println();
-		for (Term neighbour : graph.getNeighbours("distinct", 2)) {
-			System.out.println(neighbour);
-		}
 		assertThat(graph.getDomain("cell", 1).size(), is(3));
 	}
 }
