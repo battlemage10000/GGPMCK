@@ -300,7 +300,88 @@ public class GdlRuleSet {
 		return oldSet;
 	}
 	
-	public Model generateInitialModel() {
+	public Model generateInitialModel(){
+		Set<String> initLiterals = new HashSet<String>();
+		for (String init : initialSet) {
+			initLiterals.add(init.replace(TRUE_PREFIX, NEXT_PREFIX));
+		}
+		return generateModel(new Model(initLiterals));
+	}
+	
+	public Model generateModel(Model oldModel) {
+		Set<String> trueLiterals = new HashSet<String>();
+		Set<String> falseLiterals = new HashSet<String>();
+		for (String init : oldModel.getModel()) {
+			trueLiterals.add(init.replace(NEXT_PREFIX, TRUE_PREFIX));
+		}
+		ArrayDeque<String> iterationQueue = new ArrayDeque<String>();
+		iterationQueue.addAll(ruleSet.keySet());
+		while(!iterationQueue.isEmpty()){
+			int queueSize = iterationQueue.size();
+			Iterator<String> dequeIterator = iterationQueue.iterator();
+			while (dequeIterator.hasNext()) {
+				String rule = dequeIterator.next();
+				if (ruleSet.get(rule) == null) {
+					falseLiterals.add(rule);
+					dequeIterator.remove();
+				} else if (ruleSet.get(rule).isEmpty()) {
+					trueLiterals.add(rule);
+					dequeIterator.remove();
+				} else {
+					boolean ruleHasOnlyFalse = true;
+					for (Set<String> disjunct : ruleSet.get(rule)) {
+						boolean clauseHasFalse = false;
+						boolean clauseHasNotRecorded = false;
+						for (String literal : disjunct) {
+							boolean isNegative = false;
+							while(literal.length() > NOT_PREFIX.length() && literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
+								literal = literal.substring(NOT_PREFIX.length(), literal.length() - 1);
+								isNegative = !isNegative;
+							}
+							if (trueLiterals.contains(literal) && !isNegative) {
+								// True
+							} else if (trueLiterals.contains(literal) && isNegative) {
+								// False
+								clauseHasFalse = true;
+							} else if (falseLiterals.contains(literal) && !isNegative) {
+								// False
+								clauseHasFalse = true;
+							} else if (falseLiterals.contains(literal) && isNegative) {
+								// True
+							} else {
+								// Unknown
+								clauseHasNotRecorded = true;
+							}
+						}
+						
+						if (!clauseHasFalse) {
+							ruleHasOnlyFalse = false;// rule contains non false clause
+							
+							if (!clauseHasNotRecorded) {
+								// All known true literals in this clause
+								trueLiterals.add(rule);
+								dequeIterator.remove();
+								break;
+							}
+						}
+					}
+					if (ruleHasOnlyFalse) {
+						falseLiterals.add(rule);
+						dequeIterator.remove();
+					}
+				}
+			}
+			if (iterationQueue.size() == queueSize) {
+				break;
+			}
+		}
+		trueLiterals.addAll(tautologySet);
+		
+		return new Model(trueLiterals);
+	}
+	
+	@Deprecated
+	public Model generateInitialModel(boolean thing) {
 		Set<String> trueLiterals = new HashSet<String>();
 		trueLiterals.addAll(initialSet);
 		trueLiterals.addAll(tautologySet);
@@ -322,7 +403,8 @@ public class GdlRuleSet {
 		return new Model(trueLiterals);
 	}
 
-	public Model generateModel(Model oldModel) {
+	@Deprecated
+	public Model generateModel(Model oldModel, boolean thing) {
 		Set<String> trueLiterals = new HashSet<String>();
 		trueLiterals.addAll(tautologySet);
 
@@ -358,6 +440,7 @@ public class GdlRuleSet {
 		return new Model(trueLiterals);
 	}
 
+	@Deprecated
 	public boolean evaluateHeadNode(String headNode, Set<String> trueLiterals, Set<String> falseLiterals) {
 		if (ruleSet.get(headNode) == null) {
 			if (headNode.length() > TRUE_PREFIX.length()
