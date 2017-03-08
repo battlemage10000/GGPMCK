@@ -701,9 +701,9 @@ public class MckTranslator {
 		}
 		// Update _old variables
 		for (String trueNode : ATf) {
-			if (trueNode.length() >= 4 && trueNode.substring(trueNode.length() - 4).equals(MckFormat.OLD_SUFFIX)) {
+			if (trueNode.length() > MckFormat.OLD_SUFFIX.length() && trueNode.substring(trueNode.length() - 4).equals(MckFormat.OLD_SUFFIX)) {
 				old_values.append(System.lineSeparator() + "  " + trueNode + " := "
-						+ trueNode.substring(0, trueNode.length() - 4) + ";");
+						+ trueNode.substring(0, trueNode.length() - MckFormat.OLD_SUFFIX.length()) + ";");
 			}
 		}
 		if (old_values.length() > 0 && old_values.charAt(old_values.length() - 1) == ';') {
