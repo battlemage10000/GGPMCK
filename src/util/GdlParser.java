@@ -549,13 +549,17 @@ public class GdlParser {
 				boolean hasMultiVarInstance = !variableDomainSet.isEmpty();
 				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
 						node.getParent().getChildren().indexOf(node) + 1);
-				for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
-					if (hasMultiVarInstance && !variableDomainSet.contains(term.getTerm())) {
+				//for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
+				for (DomainGraph.Term term : graph.getDomain(node.getParent().getAtom(),
+						node.getParent().getChildren().indexOf(node) + 1)) {
+					if (hasMultiVarInstance && !term.getTerm().equals(GdlNode.DISTINCT) && !variableDomainSet.contains(term.getTerm())) {
 						System.out.println("InconsistentDomainException: Const: " + term.getTerm() + " not in domain of var: " + node.getAtom());
 					}
 					variableDomainSet.add(term.getTerm());
 				}
-				break;
+				if (!clause.toString().contains(GdlNode.DISTINCT)) {
+					break;
+				}
 			}
 		}
 		return variableDomainSet;

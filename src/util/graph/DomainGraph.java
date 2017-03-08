@@ -58,14 +58,19 @@ public class DomainGraph {
 	 * @return
 	 */
 	public Set<Term> getDomain(String term, int arity) {
+		if (term.equals(GdlNode.DISTINCT)) {
+			return Collections.emptySet();
+		}
+		
 		HashSet<Term> domain = new HashSet<Term>();
 		Term termObj = new Term(term, arity);
 
 		// TODO: allow for dependency to be a complex term
 		for (Term dependency : adjacencyMap.get(termObj)) {
-			if (dependency.getTerm().equals(GdlNode.DISTINCT)) {
-				continue;
-			} else if (dependency.getArity() == 0 && !domain.contains(dependency)) {
+			//if (dependency.getTerm().equals(GdlNode.DISTINCT)) {
+			//	continue;
+			//} else 
+			if (dependency.getArity() == 0 && !domain.contains(dependency)) {
 				domain.add(dependency);
 			} else {
 				if (!dependency.visited) {
