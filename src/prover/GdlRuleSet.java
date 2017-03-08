@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -62,13 +63,12 @@ public class GdlRuleSet {
 				if (node.getAtom().contentEquals(GdlNode.INIT)) {
 					// Change init clauses to true and add to initialSet which
 					// will be set true exactly once
-					if (!initialSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
-						initialSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
+					if (!initialSet.contains(node.getChild(0).toString())) {
+						initialSet.add((node.getChild(0).toString()).intern());
 					}
 					if (!literalSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
 						literalSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
 					}
-					ruleSet.put(node.toString(), new HashSet<Set<String>>());
 				} else {
 					// Non-init facts added to tautology set and rule set as
 					// empty body clauses
@@ -303,7 +303,7 @@ public class GdlRuleSet {
 	public Model generateInitialModel(){
 		Set<String> initLiterals = new HashSet<String>();
 		for (String init : initialSet) {
-			initLiterals.add(init.replace(TRUE_PREFIX, NEXT_PREFIX));
+			initLiterals.add(NEXT_PREFIX + init + ")");
 		}
 		return generateModel(new Model(initLiterals));
 	}

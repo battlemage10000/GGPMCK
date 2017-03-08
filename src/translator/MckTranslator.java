@@ -891,7 +891,15 @@ public class MckTranslator {
 
 		// Add all initial true legal clauses to ATi
 		// TODO: fix initial condition bugs
-		if (DERIVE_INITIAL_CONDITIONS) {
+		if (DERIVE_INITIAL_CONDITIONS && USE_PROVER) {
+			Set<String> initialSet = ruleSet.generateInitialModel().getModel();
+			ATi.clear();
+			for (String init : initialSet) {
+				if (init.length() > GdlNode.NEXT.length() + 1 && !init.substring(1, GdlNode.NEXT.length() + 1).equals(GdlNode.NEXT)) {
+					ATi.add(MckFormat.formatMckNode(GdlParser.parseString(init).getChild(0)));
+				}
+			}
+		} else if (DERIVE_INITIAL_CONDITIONS) {
 			for (GdlNode clause : root.getChildren()) {
 				if (clause instanceof GdlRule) {
 					boolean initHeadHasFalse = false;
