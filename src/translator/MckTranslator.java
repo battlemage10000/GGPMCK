@@ -754,8 +754,12 @@ public class MckTranslator {
 		GdlNode repeatHead = null;
 		for (GdlNode clause : root.getChildren()) {
 			// Type of clause that isn't BASE or INPUT
-			if (clause.getChild(0).getAtom().equals(GdlNode.BASE)
-					|| clause.getChild(0).getAtom().equals(GdlNode.INPUT)) {
+			if (clause.getAtom().equals(GdlNode.BASE) || 
+					clause.getAtom().equals(GdlNode.BASE)){
+				continue;
+			} else if (!clause.getChildren().isEmpty() && 
+					(clause.getChild(0).getAtom().equals(GdlNode.BASE) || 
+					clause.getChild(0).getAtom().equals(GdlNode.INPUT))) {
 				continue;
 			}
 			if (USE_PROVER) {
