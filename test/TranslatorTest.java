@@ -122,9 +122,11 @@ public class TranslatorTest {
 		tttRoot = GdlParser.groundGdl(tttRoot, GdlParser.constructDomainGraph(tttRoot));
 		GdlRuleSet tttRuleSet = new GdlRuleSet((Gdl)tttRoot);
 		tttRuleSet.cullVariables(true);
+
 		MckTranslator tttTrans = new MckTranslator(tttRoot, false, false, tttRuleSet);
+		assertThat(tttTrans.ATi, hasItem("control_white"));
+		assertThat(tttTrans.ATi, not(hasItem("control_black")));
 		String tttTranslation = tttTrans.toMck();
 		assertThat(tttTranslation, is(not("")));
-		System.out.println(tttTranslation);
 	}
 }

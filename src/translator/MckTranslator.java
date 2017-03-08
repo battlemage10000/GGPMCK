@@ -29,7 +29,7 @@ public class MckTranslator {
 	// Variables found in true and/or next
 	private Set<String> ATf;
 	// List of variables which are true in the initial state
-	private Set<String> ATi;
+	public Set<String> ATi;
 	// List of variables which are always true(totality)
 	private Set<String> ATt;
 	// List of variables which are always false(contradiction)
