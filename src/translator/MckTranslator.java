@@ -38,10 +38,10 @@ public class MckTranslator {
 	// List of formulae which are heads of clauses or facts
 	private Set<String> ATh;
 	// [Role -> Move] move map from legal
-	private Map<String, List<String>> ATd;
+	public Map<String, List<String>> ATd;
 	// [Role -> Sees] observation map from sees
 	private Map<String, List<String>> ATs;
-	private GdlNode root;
+	@Deprecated private GdlNode root;
 	private StringBuilder defineBasedDeclarations;
 	// List of variables using the define keyword
 	private Map<String, String> ATdef;
@@ -379,7 +379,9 @@ public class MckTranslator {
 					if (ATd.get(literalNode.getChild(0).toString()) == null) {
 						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
 					}
-					ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+					if (!ATd.get(literalNode.getChild(0).toString()).contains(MckFormat.formatMckNode(literalNode.getChild(1)))) {
+						ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+					}
 				} else {
 					ATc.add(MckFormat.formatMckNode(literalNode));
 					AT.add(MckFormat.formatMckNode(literalNode));
@@ -418,7 +420,9 @@ public class MckTranslator {
 					if (ATs.get(literalNode.getChild(0).toString()) == null) {
 						ATs.put(literalNode.getChild(0).toString(), new ArrayList<String>());
 					}
-					ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+					if (!ATd.get(literalNode.getChild(0).toString()).contains(MckFormat.formatMckNode(literalNode.getChild(1)))) {
+						ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+					}
 					break;
 
 				default:
@@ -431,6 +435,7 @@ public class MckTranslator {
 	/**
 	 * Do some initializing and pre-processing steps
 	 */
+	@Deprecated
 	public void initialize() {
 		// Pre-processing
 		// DependencyGraph
@@ -618,7 +623,7 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + generateEnvironmentVariables());
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- Initial Conditions");
-		mck.append(System.lineSeparator() + generateInitialConditions());
+		mck.append(System.lineSeparator() + generateInitialConditions(USE_PROVER));
 		mck.append(System.lineSeparator());
 		mck.append(System.lineSeparator() + "-- Agent Definitions");
 		mck.append(System.lineSeparator() + generateAgents());
@@ -997,7 +1002,7 @@ public class MckTranslator {
 	 * Generate initial condition section of MCK output
 	 * @return
 	 */
-	private String generateInitialConditions() {
+	private String generateInitialConditions(boolean useRuleSet) {
 		StringBuilder init_cond = new StringBuilder();
 
 		// Shouldn't need to reference ATt after this
@@ -1009,7 +1014,7 @@ public class MckTranslator {
 
 		// Add all initial true legal clauses to ATi
 		// TODO: fix initial condition bugs
-		if (DERIVE_INITIAL_CONDITIONS && USE_PROVER) {
+		if (DERIVE_INITIAL_CONDITIONS && useRuleSet) {
 			Set<String> initialSet = ruleSet.generateInitialModel().getModel();
 			ATi.clear();
 			for (String init : initialSet) {
