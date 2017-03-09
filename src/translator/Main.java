@@ -257,7 +257,12 @@ public class Main {
 					System.out.println(
 							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 				}
-				MckTranslator translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
+				MckTranslator translator = null;
+				if (useProverSwitch) {
+					translator = new MckTranslator(ruleSet, useDefineSwitch, debugSwitch);
+				} else {
+					translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
+				}
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
 					GdlParser.saveFile(translator.toMck(), outputFilePath);
