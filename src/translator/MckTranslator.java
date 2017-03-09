@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,7 +59,38 @@ public class MckTranslator {
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
 	private boolean USE_PROVER = false;
-	
+
+	public MckTranslator(GdlRuleSet ruleSet, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG) {
+		this.root = null;
+		this.ruleSet = ruleSet;
+		this.USE_PROVER = true;
+		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
+		this.DEBUG = DEBUG;
+		this.SHOW_PRUNED_VARS = DEBUG;
+		if (SYNCHRONIZED_COLLECTIONS) {
+			this.AT = Collections.synchronizedSet(new HashSet<String>());
+			this.ATf = Collections.synchronizedSet(new HashSet<String>());
+			this.ATi = Collections.synchronizedSet(new HashSet<String>());
+			this.ATt = Collections.synchronizedSet(new HashSet<String>());
+			this.ATc = Collections.synchronizedSet(new HashSet<String>());
+			this.ATh = Collections.synchronizedSet(new HashSet<String>());
+			this.ATdef = Collections.synchronizedMap(new HashMap<String, String>());
+			this.ATd = Collections.synchronizedMap(new HashMap<String, List<String>>());
+			this.ATs = Collections.synchronizedMap(new HashMap<String, List<String>>());
+		} else {
+			this.AT = new HashSet<String>();
+			this.ATf = new HashSet<String>();
+			this.ATi = new HashSet<String>();
+			this.ATt = new HashSet<String>();
+			this.ATc = new HashSet<String>();
+			this.ATh = new HashSet<String>();
+			this.ATdef = new HashMap<String, String>();
+			this.ATd = new HashMap<String, List<String>>();
+			this.ATs = new HashMap<String, List<String>>();
+		}
+		initialize(true);
+	}
+
 	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG, GdlRuleSet ruleSet) {
 		this.root = root;
 		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
@@ -329,6 +361,73 @@ public class MckTranslator {
 		return mckNode.toString();
 	}
 
+	public void initialize(boolean useRuleSet) {
+		if (!useRuleSet) {
+			initialize();
+			return;
+		}
+
+		// getLiteralSet is non-negative only
+		for (String literal : ruleSet.getLiteralSet()) {
+			GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
+			if (ruleSet.getRuleSet().get(literal) == null) {
+				if (literalNode.getAtom().equals(GdlNode.TRUE) || literalNode.getAtom().equals(GdlNode.NEXT)
+						|| literalNode.getAtom().equals(GdlNode.BASE)) {
+					ATf.add(MckFormat.formatMckNode(literalNode));
+				} else if (literalNode.getAtom().equals(GdlNode.DOES) || literalNode.getAtom().equals(GdlNode.LEGAL)
+						|| literalNode.getAtom().equals(GdlNode.INPUT)) {
+					if (ATd.get(literalNode.getChild(0).toString()) == null) {
+						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
+					}
+					ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+				} else {
+					ATc.add(MckFormat.formatMckNode(literalNode));
+					AT.add(MckFormat.formatMckNode(literalNode));
+				}
+			} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
+				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
+
+					if (literalNode.getAtom().equals(GdlNode.ROLE)) {
+						if (ATd.get(literalNode.getChild(0).toString()) == null) {
+							ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
+						}
+						if (ATs.get(literalNode.getChild(0).toString()) == null) {
+							ATs.put(literalNode.getChild(0).toString(), new ArrayList<String>());
+						}
+					} else if (literalNode.getAtom().equals(GdlNode.INIT)) {
+						ATi.add(MckFormat.formatMckNode(literalNode));
+					} else {
+						ATt.add(MckFormat.formatMckNode(literalNode));
+						AT.add(MckFormat.formatMckNode(literalNode));
+					}
+				}
+			} else {
+				ATh.add(MckFormat.formatMckNode(literalNode));
+				switch (literalNode.getAtom()) {
+				case GdlNode.TRUE:
+				case GdlNode.NEXT:
+				case GdlNode.BASE:
+					ATf.add(MckFormat.formatMckNode(literalNode));
+					break;
+				case GdlNode.DOES:
+				case GdlNode.LEGAL:
+				case GdlNode.INPUT:
+					if (ATd.get(literalNode.getChild(0).toString()) == null) {
+						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
+					}
+					if (ATs.get(literalNode.getChild(0).toString()) == null) {
+						ATs.put(literalNode.getChild(0).toString(), new ArrayList<String>());
+					}
+					ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+					break;
+
+				default:
+					AT.add(MckFormat.formatMckNode(literalNode));
+				}
+			}
+		}
+	}
+
 	/**
 	 * Do some initializing and pre-processing steps
 	 */
@@ -343,8 +442,6 @@ public class MckTranslator {
 			}
 		}
 
-		// TODO: find another home for this section. 
-		// It's called in constructor but prover is set after construction
 		if (USE_PROVER) {
 			String mckFormatted = null;
 			for (String literal : ruleSet.getLiteralSet()) {
@@ -483,7 +580,7 @@ public class MckTranslator {
 
 		String stateTrans = "";
 		try {
-			stateTrans = generateStateTransitions();
+			stateTrans = generateStateTransitions(USE_PROVER);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -650,7 +747,7 @@ public class MckTranslator {
 	 * @return
 	 * @throws Exception
 	 */
-	private String generateStateTransitions() throws Exception {
+	private String generateStateTransitions(boolean useRuleSet) throws Exception {
 		StringBuilder state_trans = new StringBuilder();
 
 		// State Transitions
@@ -717,10 +814,16 @@ public class MckTranslator {
 		}
 
 		Set<String> oldSet = new HashSet<String>();
-		for (String term : ATf) {
-			if (term.length() > MckFormat.OLD_SUFFIX.length()
-					&& term.substring(term.length() - MckFormat.OLD_SUFFIX.length()).equals(MckFormat.OLD_SUFFIX)) {
-				oldSet.add(term);
+		if (useRuleSet) {
+			for (String oldLit : ruleSet.getOldSet()) {
+				oldSet.add((MckFormat.formatMckNode(GdlParser.parseString(oldLit)) + MckFormat.OLD_SUFFIX).intern());
+			}
+		} else {
+			for (String term : ATf) {
+				if (term.length() > MckFormat.OLD_SUFFIX.length()
+						&& term.substring(term.length() - MckFormat.OLD_SUFFIX.length()).equals(MckFormat.OLD_SUFFIX)) {
+					oldSet.add(term);
+				}
 			}
 		}
 		
@@ -747,90 +850,101 @@ public class MckTranslator {
 			state_trans.append(System.lineSeparator() + "  fi;");
 		}
 		state_trans.append(System.lineSeparator());
-		
-		
-		// Add transition rules
-		ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
-		GdlNode repeatHead = null;
-		for (GdlNode clause : root.getChildren()) {
-			// Type of clause that isn't BASE or INPUT
-			if (clause.getAtom().equals(GdlNode.BASE) || 
-					clause.getAtom().equals(GdlNode.BASE)){
-				continue;
-			} else if (!clause.getChildren().isEmpty() && 
-					(clause.getChild(0).getAtom().equals(GdlNode.BASE) || 
-					clause.getChild(0).getAtom().equals(GdlNode.INPUT))) {
-				continue;
-			}
-			if (USE_PROVER) {
-				if (!(clause instanceof GdlRule)) {
-					// Skip if not Rule
-					continue;
-				}
-				if (repeatHead != null && repeatHead.equals(clause.getChild(0).toString())) {
-					// Skip multiple clauses for same head
-					continue;
-				}
 
-				repeatHead = clause.getChild(0);
+		if (useRuleSet) {
+			PriorityQueue<String> orderedGdl = ruleSet.getOrderedSet();
+			while(!orderedGdl.isEmpty()) {
+				if (ruleSet.getRuleSet().get(orderedGdl.peek()) == null || ruleSet.getRuleSet().get(orderedGdl.peek()).isEmpty()) {
+					orderedGdl.poll();
+					continue;
+				}
+				GdlNode headNode = GdlParser.parseString(orderedGdl.poll()).getChild(0);
 				
 				boolean useDefine = TRANSITIONS_WITH_DEFINE;
-				if (useDefine && repeatHead.getAtom().equals(GdlNode.NEXT)) {
+				if (useDefine && headNode.getAtom().equals(GdlNode.NEXT)) {
 					useDefine = false;
 				}
+				String formattedClause = MckFormat.formatClause(oldSet, ruleSet, (GdlLiteral) headNode, useDefine,
+						ONE_LINE_TRANSITIONS);
+				state_trans.append(System.lineSeparator() + "  " + formattedClause);
+			}
+		} else {
+			// Add transition rules
+			ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
+			GdlNode repeatHead = null;
+			for (GdlNode clause : root.getChildren()) {
+				// Type of clause that isn't BASE or INPUT
+				if (clause.getAtom().equals(GdlNode.BASE) || clause.getAtom().equals(GdlNode.BASE)) {
+					continue;
+				} else if (!clause.getChildren().isEmpty() && (clause.getChild(0).getAtom().equals(GdlNode.BASE)
+						|| clause.getChild(0).getAtom().equals(GdlNode.INPUT))) {
+					continue;
+				}
+				if (USE_PROVER) {
+					if (!(clause instanceof GdlRule)) {
+						// Skip if not Rule
+						continue;
+					}
+					if (repeatHead != null && repeatHead.equals(clause.getChild(0).toString())) {
+						// Skip multiple clauses for same head
+						continue;
+					}
 
-				String formattedClause = MckFormat.formatClause(oldSet, ruleSet, (GdlLiteral) repeatHead,
-						useDefine, ONE_LINE_TRANSITIONS);
+					repeatHead = clause.getChild(0);
 
-				if (useDefine
-						&& formattedClause.length() > (MckFormat.DEFINE + " ").length()
+					boolean useDefine = TRANSITIONS_WITH_DEFINE;
+					if (useDefine && repeatHead.getAtom().equals(GdlNode.NEXT)) {
+						useDefine = false;
+					}
+
+					String formattedClause = MckFormat.formatClause(oldSet, ruleSet, (GdlLiteral) repeatHead, useDefine,
+							ONE_LINE_TRANSITIONS);
+
+					if (useDefine && formattedClause.length() > (MckFormat.DEFINE + " ").length() && formattedClause
+							.substring(0, (MckFormat.DEFINE + " ").length()).equals(MckFormat.DEFINE + " ")) {
+						// Check for 'define ' prefix
+						defineBasedDeclarations.append(formattedClause);
+						ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
+					} else if (formattedClause.length() > 0) {
+						state_trans.append(System.lineSeparator() + "  " + formattedClause);
+					}
+				} else {
+					if (repeatHead != null && clause.getChild(0).toString().equals(repeatHead.toString())) {
+						repeatHeadList.add(clause);
+					} else {
+						if (repeatHead != null) {
+							String formattedClause = formatClause(graph, repeatHead, repeatHeadList);
+							if (TRANSITIONS_WITH_DEFINE && formattedClause.length() > (MckFormat.DEFINE + " ").length()
+									&& formattedClause.substring(0, (MckFormat.DEFINE + " ").length())
+											.equals(MckFormat.DEFINE + " ")) {
+								// Check for 'define ' prefix
+								defineBasedDeclarations.append(formattedClause);
+								ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
+							} else {
+								state_trans.append(formattedClause);
+							}
+						}
+						repeatHead = clause.getChild(0);
+						repeatHeadList = new ArrayList<GdlNode>();
+						repeatHeadList.add(clause);
+					}
+				}
+			}
+			// Fix to skipping last clause in game
+			if (repeatHead != null) {
+				String formattedClause = "";
+				if (!USE_PROVER) {
+					formattedClause = formatClause(graph, repeatHead, repeatHeadList);
+				}
+				if (TRANSITIONS_WITH_DEFINE && formattedClause.length() >= (MckFormat.DEFINE + " ").length()
 						&& formattedClause.substring(0, (MckFormat.DEFINE + " ").length())
 								.equals(MckFormat.DEFINE + " ")) {
 					// Check for 'define ' prefix
 					defineBasedDeclarations.append(formattedClause);
 					ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
-				} else if(formattedClause.length() > 0){
-					state_trans.append(System.lineSeparator() + "  " + formattedClause);
-				}
-			} else {
-				if (repeatHead != null && clause.getChild(0).toString().equals(repeatHead.toString())) {
-					repeatHeadList.add(clause);
 				} else {
-					if (repeatHead != null) {
-						String formattedClause = formatClause(graph, repeatHead, repeatHeadList);
-						if (TRANSITIONS_WITH_DEFINE
-								&& formattedClause.length() > (MckFormat.DEFINE + " ").length()
-								&& formattedClause
-										.substring(0, (MckFormat.DEFINE + " ").length())
-										.equals(MckFormat.DEFINE + " ")) {
-							// Check for 'define ' prefix
-							defineBasedDeclarations.append(formattedClause);
-							ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
-						} else {
-							state_trans.append(formattedClause);
-						}
-					}
-					repeatHead = clause.getChild(0);
-					repeatHeadList = new ArrayList<GdlNode>();
-					repeatHeadList.add(clause);
+					state_trans.append(formattedClause);
 				}
-			}
-		}
-		// Fix to skipping last clause in game
-		if (repeatHead != null) {
-			String formattedClause = "";
-			if (!USE_PROVER) {
-				formattedClause = formatClause(graph, repeatHead, repeatHeadList);
-			}
-			if (TRANSITIONS_WITH_DEFINE
-					&& formattedClause.length() >= (MckFormat.DEFINE + " ").length()
-					&& formattedClause.substring(0, (MckFormat.DEFINE + " ").length())
-							.equals(MckFormat.DEFINE + " ")) {
-				// Check for 'define ' prefix
-				defineBasedDeclarations.append(formattedClause);
-				ATdef.put(MckFormat.formatMckNode(repeatHead), formattedClause);
-			} else {
-				state_trans.append(formattedClause);
 			}
 		}
 
