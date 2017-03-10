@@ -133,6 +133,8 @@ public class Main {
 			// Scan and parse gdl
 			List<String> tokens;
 			GdlNode root = GdlNodeFactory.createGdl();
+			// Initialize prover
+			GdlRuleSet ruleSet = null;
 			try {
 				System.out.print("Parsing ... ");
 				if (inputFilePath.equals("")) {
@@ -164,11 +166,21 @@ public class Main {
 				if (outputDotSwitch) {
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
-				try {
-					root = GdlParser.groundGdl(root, domain);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				if (useProverSwitch) {
+					try {
+						ruleSet = new GdlRuleSet((Gdl)root, debugSwitch);
+						ruleSet.groundRuleSet(domain);
+					} catch (GDLSyntaxException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						root = GdlParser.groundGdl(root, domain);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 
 				System.out.println("finished");
@@ -206,13 +218,13 @@ public class Main {
 						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
 			}
 
-			// Initialize prover
-			GdlRuleSet ruleSet = null;
 			if (useProverSwitch) {
 				System.out.print("Minimizing game ... ");
 				try {
-					ruleSet = new GdlRuleSet((Gdl)root, debugSwitch);
-					ruleSet.cullVariables(true);
+					if (ruleSet == null) {
+						ruleSet = new GdlRuleSet((Gdl)root, debugSwitch);
+						ruleSet.cullVariables(true);
+					}
 				} catch (GDLSyntaxException e) {
 					useProverSwitch = false;
 					e.printStackTrace();
