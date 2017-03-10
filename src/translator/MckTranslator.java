@@ -371,63 +371,60 @@ public class MckTranslator {
 		for (String literal : ruleSet.getLiteralSet()) {
 			GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
 			if (ruleSet.getRuleSet().get(literal) == null) {
-				if (literalNode.getAtom().equals(GdlNode.TRUE) || literalNode.getAtom().equals(GdlNode.NEXT)
-						|| literalNode.getAtom().equals(GdlNode.BASE)) {
-					ATf.add(MckFormat.formatMckNode(literalNode));
-				} else if (literalNode.getAtom().equals(GdlNode.DOES) || literalNode.getAtom().equals(GdlNode.LEGAL)
-						|| literalNode.getAtom().equals(GdlNode.INPUT)) {
-					if (ATd.get(literalNode.getChild(0).toString()) == null) {
-						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
-					}
-					if (!ATd.get(literalNode.getChild(0).toString()).contains(MckFormat.formatMckNode(literalNode.getChild(1)))) {
-						ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
-					}
-				} else {
+				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
 					ATc.add(MckFormat.formatMckNode(literalNode));
-					AT.add(MckFormat.formatMckNode(literalNode));
 				}
+
 			} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
 				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
-
-					if (literalNode.getAtom().equals(GdlNode.ROLE)) {
-						if (ATd.get(literalNode.getChild(0).toString()) == null) {
-							ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
-						}
-						if (ATs.get(literalNode.getChild(0).toString()) == null) {
-							ATs.put(literalNode.getChild(0).toString(), new ArrayList<String>());
-						}
-					} else if (literalNode.getAtom().equals(GdlNode.INIT)) {
-						ATi.add(MckFormat.formatMckNode(literalNode));
-					} else {
-						ATt.add(MckFormat.formatMckNode(literalNode));
-						AT.add(MckFormat.formatMckNode(literalNode));
-					}
+					ATt.add(MckFormat.formatMckNode(literalNode));
 				}
 			} else {
 				ATh.add(MckFormat.formatMckNode(literalNode));
-				switch (literalNode.getAtom()) {
-				case GdlNode.TRUE:
-				case GdlNode.NEXT:
-				case GdlNode.BASE:
-					ATf.add(MckFormat.formatMckNode(literalNode));
-					break;
-				case GdlNode.DOES:
-				case GdlNode.LEGAL:
-				case GdlNode.INPUT:
-					if (ATd.get(literalNode.getChild(0).toString()) == null) {
-						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
-					}
-					if (ATs.get(literalNode.getChild(0).toString()) == null) {
-						ATs.put(literalNode.getChild(0).toString(), new ArrayList<String>());
-					}
-					if (!ATd.get(literalNode.getChild(0).toString()).contains(MckFormat.formatMckNode(literalNode.getChild(1)))) {
-						ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
-					}
-					break;
-
-				default:
-					AT.add(MckFormat.formatMckNode(literalNode));
+			}
+		}
+		for (String head : ruleSet.getRuleSet().keySet()) {
+			GdlNode headNode = GdlParser.parseString(head).getChild(0);
+			switch (headNode.getAtom()) {
+			case GdlNode.DOES:
+			case GdlNode.INPUT:
+			case GdlNode.BASE:
+				break;
+			case GdlNode.ROLE:
+				if (ATd.get(headNode.getChild(0).toString()) == null) {
+					ATd.put(headNode.getChild(0).toString(), new ArrayList<String>());
 				}
+				if (ATs.get(headNode.getChild(0).toString()) == null) {
+					ATs.put(headNode.getChild(0).toString(), new ArrayList<String>());
+				}
+				break;
+			case GdlNode.INIT:
+				ATi.add(MckFormat.formatMckNode(headNode));
+				break;
+			//case GdlNode.TRUE: //TODO: TRUE should never be in head
+			case GdlNode.NEXT:
+				ATf.add(MckFormat.formatMckNode(headNode));
+				break;
+			case GdlNode.LEGAL:
+				AT.add(MckFormat.formatMckNode(headNode));
+				if (ATd.get(headNode.getChild(0).toString()) == null) {
+					ATd.put(headNode.getChild(0).toString(), new ArrayList<String>());
+				}
+				if (!ATd.get(headNode.getChild(0).toString())
+						.contains(MckFormat.formatMckNode(headNode.getChild(1)))) {
+					ATd.get(headNode.getChild(0).toString()).add(MckFormat.formatMckNode(headNode.getChild(1)));
+				}
+				break;
+			case GdlNode.SEES:
+				if (ATs.get(headNode.getChild(0).toString()) == null) {
+					ATs.put(headNode.toString(), new ArrayList<String>());
+				}
+				if (!ATs.get(headNode.getChild(0).toString()).contains(headNode.getChild(1).toString())) {
+					ATs.get(headNode.getChild(0).toString()).add(headNode.getChild(1).toString());
+				}
+				break;
+			default:
+				AT.add(MckFormat.formatMckNode(headNode));
 			}
 		}
 	}
