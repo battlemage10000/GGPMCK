@@ -1,6 +1,7 @@
 package prover;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -130,65 +131,26 @@ public class GdlRuleSet {
 			Set<String> removeRuleSet = new HashSet<String>();
 
 			for (String headNode : ruleSet.keySet()) {
-				Set<Set<String>> dnfRule = ruleSet.get(headNode);
-				Set<Set<String>> newDnfRule = new HashSet<Set<String>>();
-
-				boolean ruleContainsNonFalse = false;
-				boolean headIsTautology = false;
-				boolean headIsContradiction = false;
-
 				if (ruleSet.get(headNode) == null || ruleSet.get(headNode).isEmpty()) {
 					continue;
 				}
-
+				
+				Set<Set<String>> dnfRule = ruleSet.get(headNode);
+				Set<Set<String>> newDnfRule = new HashSet<Set<String>>();
+				boolean ruleContainsNonFalse = false;
+				boolean headIsTautology = false;
+				boolean headIsContradiction = false;
+				
 				for (Set<String> disjunct : dnfRule) {
-					Set<String> newDisjunct = new HashSet<String>();
-
-					if (disjunct.isEmpty()) {
-						// Clause is tautology so rule is tautology
+					disjunct = processClause(disjunct);
+					if (disjunct == null){
+						
+					} else if (disjunct.isEmpty()) {
+						newDnfRule.clear();
 						headIsTautology = true;
 						break;
-					}
-
-					for (String literal : disjunct) {
-						// Filter negative prefix
-						boolean isNegative = false;
-						String posLiteral = literal;
-						while (posLiteral.length() >= NOT_PREFIX.length()
-								&& posLiteral.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
-							posLiteral = posLiteral.substring(NOT_PREFIX.length(), posLiteral.length() - 1);
-							isNegative = !isNegative;
-						}
-
-						if (posLiteral.length() >= DOES_PREFIX.length()
-								&& posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
-							// No change for does
-							newDisjunct.add(literal.intern());
-						} else if (posLiteral.length() >= TRUE_PREFIX.length()
-								&& posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
-							// No change for true
-							newDisjunct.add(literal.intern());
-						} else if (ruleSet.get(posLiteral) == null) {
-							if (isNegative) {
-								// True literal
-							} else {
-								// False literal
-								newDisjunct.add(FALSE);
-							}
-						} else if (ruleSet.get(posLiteral).isEmpty()) {
-							if (isNegative) {
-								// False literal
-								newDisjunct.add(FALSE);
-							} else {
-								// True literal
-							}
-						} else {
-							newDisjunct.add(literal.intern());
-						}
-					} // End literal-for-loop
-
-					if (!newDisjunct.contains(FALSE)) {
-						newDnfRule.add(newDisjunct);
+					} else {
+						newDnfRule.add(disjunct);
 						ruleContainsNonFalse = true;
 					}
 				} // End disjunct-for-loop
@@ -199,7 +161,7 @@ public class GdlRuleSet {
 				}
 
 				if (headIsTautology) {
-					ruleSet.put(headNode, new HashSet<Set<String>>());
+					ruleSet.put(headNode, Collections.emptySet());
 					changed = true;
 				} else if (headIsContradiction) {
 					ruleSet.put(headNode, null);
@@ -219,6 +181,45 @@ public class GdlRuleSet {
 			removeRuleSet.clear();
 		} // End change-while-loop
 		return numIterations;
+	}
+	
+	/**
+	 * Minimize on a per-clause basis 
+	 * @param clause
+	 * @return
+	 */
+	private Set<String> processClause(Set<String> clause){
+		if (clause == null || clause.isEmpty()) {
+			return clause;
+		}
+		Iterator<String> clauseIterator = clause.iterator();
+		while (clauseIterator.hasNext()) {
+			String literal = clauseIterator.next();
+			boolean isNegative = false;
+			String posLiteral = literal;
+			while (posLiteral.length() > NOT_PREFIX.length()
+					&& posLiteral.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
+				posLiteral = posLiteral.substring(NOT_PREFIX.length(), posLiteral.length() - 1);
+				isNegative = !isNegative;
+			}
+			if (!(posLiteral.length() > DOES_PREFIX.length() && 
+					posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) && 
+					!(posLiteral.length() > TRUE_PREFIX.length() && 
+					posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)))
+			{
+				
+				if (ruleSet.get(posLiteral) == null && !isNegative) {
+					return null; // false
+				} else if (ruleSet.get(posLiteral) == null && isNegative) {
+					clauseIterator.remove(); // true
+				} else if (ruleSet.get(posLiteral).isEmpty() && !isNegative) {
+					clauseIterator.remove(); // true
+				} else if (ruleSet.get(posLiteral).isEmpty() && isNegative) {
+					return null; // false
+				}
+			}
+		}
+		return clause;
 	}
 	
 	public Map<String, Integer> generateStratumMap(){

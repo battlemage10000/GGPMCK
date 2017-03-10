@@ -417,7 +417,7 @@ public class MckTranslator {
 				break;
 			case GdlNode.SEES:
 				if (ATs.get(headNode.getChild(0).toString()) == null) {
-					ATs.put(headNode.toString(), new ArrayList<String>());
+					ATs.put(headNode.getChild(0).toString(), new ArrayList<String>());
 				}
 				if (!ATs.get(headNode.getChild(0).toString()).contains(headNode.getChild(1).toString())) {
 					ATs.get(headNode.getChild(0).toString()).add(headNode.getChild(1).toString());
