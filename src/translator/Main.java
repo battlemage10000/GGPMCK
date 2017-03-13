@@ -166,21 +166,12 @@ public class Main {
 				if (outputDotSwitch) {
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
-				if (useProverSwitch) {
-					try {
-						ruleSet = new GdlRuleSet((Gdl)root, debugSwitch);
-						ruleSet.groundRuleSet(domain);
-					} catch (GDLSyntaxException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
-					try {
-						root = GdlParser.groundGdl(root, domain);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+				
+				try {
+					root = GdlParser.groundGdl(root, domain);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
 				System.out.println("finished");
