@@ -367,22 +367,6 @@ public class MckTranslator {
 			return;
 		}
 
-		// getLiteralSet is non-negative only
-		for (String literal : ruleSet.getLiteralSet()) {
-			GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
-			if (ruleSet.getRuleSet().get(literal) == null) {
-				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
-					ATc.add(MckFormat.formatMckNode(literalNode));
-				}
-
-			} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
-				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
-					ATt.add(MckFormat.formatMckNode(literalNode));
-				}
-			} else {
-				ATh.add(MckFormat.formatMckNode(literalNode));
-			}
-		}
 		for (String head : ruleSet.getRuleSet().keySet()) {
 			GdlNode headNode = GdlParser.parseString(head).getChild(0);
 			switch (headNode.getAtom()) {
@@ -399,7 +383,7 @@ public class MckTranslator {
 				}
 				break;
 			case GdlNode.INIT:
-				ATi.add(MckFormat.formatMckNode(headNode));
+				ATi.add(MckFormat.formatMckNode(headNode.getChild(0)));
 				break;
 			//case GdlNode.TRUE: //TODO: TRUE should never be in head
 			case GdlNode.NEXT:
@@ -425,6 +409,33 @@ public class MckTranslator {
 				break;
 			default:
 				AT.add(MckFormat.formatMckNode(headNode));
+			}
+		}
+		
+		// getLiteralSet is non-negative only
+		for (String literal : ruleSet.getLiteralSet()) {
+			GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
+			if (ruleSet.getRuleSet().get(literal) == null) {
+				if (literalNode.getAtom().equals(GdlNode.TRUE)) {
+					ATf.add(MckFormat.formatMckNode(literalNode));
+				} else if (literalNode.getAtom().equals(GdlNode.DOES)) {
+					if (ATd.get(literalNode.getChild(0).toString()) == null) {
+						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
+					}
+					if (!ATd.get(literalNode.getChild(0).toString())
+							.contains(MckFormat.formatMckNode(literalNode.getChild(1)))) {
+						ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
+					}
+				} else {
+					ATc.add(MckFormat.formatMckNode(literalNode));
+				}
+
+			} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
+				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
+					ATt.add(MckFormat.formatMckNode(literalNode));
+				}
+			} else {
+				ATh.add(MckFormat.formatMckNode(literalNode));
 			}
 		}
 	}
