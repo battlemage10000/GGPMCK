@@ -579,7 +579,15 @@ public class GdlParser {
 		StringBuilder groundedClauses = new StringBuilder();
 		groundedClauses.append(clauseNode.toString());
 		
-		for (String variable : constantMap.keySet()) {
+		PriorityQueue<String> orderedVars = new PriorityQueue<String>(new Comparator<String>() {
+			public int compare(String str1, String str2) {
+				return str2.length() - str1.length();
+			}
+		});
+		
+		orderedVars.addAll(constantMap.keySet());
+		while (!orderedVars.isEmpty()) {
+			String variable = orderedVars.poll();
 			String varTerm = groundedClauses.toString();
 			groundedClauses.replace(0, groundedClauses.length(), "");
 			for (String constant : constantMap.get(variable)) {
