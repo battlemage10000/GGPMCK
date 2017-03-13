@@ -418,15 +418,7 @@ public class MckTranslator {
 			if (ruleSet.getRuleSet().get(literal) == null) {
 				if (literalNode.getAtom().equals(GdlNode.TRUE)) {
 					ATf.add(MckFormat.formatMckNode(literalNode));
-				} else if (literalNode.getAtom().equals(GdlNode.DOES)) {
-					if (ATd.get(literalNode.getChild(0).toString()) == null) {
-						ATd.put(literalNode.getChild(0).toString(), new ArrayList<String>());
-					}
-					if (!ATd.get(literalNode.getChild(0).toString())
-							.contains(MckFormat.formatMckNode(literalNode.getChild(1)))) {
-						ATd.get(literalNode.getChild(0).toString()).add(MckFormat.formatMckNode(literalNode.getChild(1)));
-					}
-				} else {
+				} else if (!literalNode.getAtom().equals(GdlNode.DOES)) {
 					ATc.add(MckFormat.formatMckNode(literalNode));
 				}
 
