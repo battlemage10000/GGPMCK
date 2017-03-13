@@ -383,7 +383,7 @@ public class MckTranslator {
 				}
 				break;
 			case GdlNode.INIT:
-				ATi.add(MckFormat.formatMckNode(headNode.getChild(0)));
+				ATi.add(MckFormat.formatMckNode(headNode));
 				break;
 			//case GdlNode.TRUE: //TODO: TRUE should never be in head
 			case GdlNode.NEXT:
@@ -421,7 +421,6 @@ public class MckTranslator {
 				} else if (!literalNode.getAtom().equals(GdlNode.DOES)) {
 					ATc.add(MckFormat.formatMckNode(literalNode));
 				}
-
 			} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
 				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
 					ATt.add(MckFormat.formatMckNode(literalNode));
