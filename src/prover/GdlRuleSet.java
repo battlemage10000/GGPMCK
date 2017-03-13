@@ -202,9 +202,17 @@ public class GdlRuleSet {
 				posLiteral = posLiteral.substring(NOT_PREFIX.length(), posLiteral.length() - 1);
 				isNegative = !isNegative;
 			}
-			if (!(posLiteral.length() > DOES_PREFIX.length() && 
-					posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) && 
-					!(posLiteral.length() > TRUE_PREFIX.length() && 
+			if (posLiteral.length() > DOES_PREFIX.length() && 
+					posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
+				if (ruleSet.get("(legal" + posLiteral.substring(DOES_PREFIX.length())) == null){
+					// does must always have a corresponding legal
+					if (!isNegative) {
+						return null;
+					} else {
+						clauseIterator.remove();
+					}
+				}
+			} else if (!(posLiteral.length() > TRUE_PREFIX.length() && 
 					posLiteral.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)))
 			{
 				
