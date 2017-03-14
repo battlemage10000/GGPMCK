@@ -204,7 +204,7 @@ public class GdlRuleSet {
 			}
 			if (posLiteral.length() > DOES_PREFIX.length() && 
 					posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
-				if (ruleSet.get("(legal" + posLiteral.substring(DOES_PREFIX.length())) == null){
+				if (ruleSet.get("(legal " + posLiteral.substring(DOES_PREFIX.length())) == null){
 					// does must always have a corresponding legal
 					if (!isNegative) {
 						return null;
