@@ -20,6 +20,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import prover.GdlRuleSet;
+import util.grammar.GDLSyntaxException;
 import util.grammar.Gdl;
 import util.grammar.GdlNode;
 import util.grammar.GdlNodeFactory;
@@ -472,6 +473,82 @@ public class GdlParser {
 		return varsInSubTree;
 	}
 
+
+	/**
+	 * Ground a game description
+	 * 
+	 * @param root
+	 * @param domainGraph
+	 * @return
+	 * @throws IOException
+	 * @throws GDLSyntaxException 
+	 */
+	public static GdlRuleSet groundGdlToRuleSet(GdlNode root, DomainGraph domainGraph) throws IOException, GDLSyntaxException {
+		Gdl groundedRoot = GdlNodeFactory.createGdl();
+		GdlRuleSet groundedRuleSet = new GdlRuleSet(GdlNodeFactory.createGdl(), false);
+		
+		/*boolean useTempFile = false;
+		File tempGroundedGdlFile = null;
+		FileWriter groundWrite = null;
+
+		if (GROUND_WITH_TEMP_FILES) {
+			tempGroundedGdlFile = File.createTempFile("ground", ".gdl.tmp");
+			if (tempGroundedGdlFile != null) {
+				// tempGroundedGdlFile.deleteOnExit();
+				groundWrite = new FileWriter(tempGroundedGdlFile);
+				useTempFile = true;
+				System.out.println("Using temp file for grounding");
+			}
+		}*/
+
+		
+		Map<String, Set<String>> variableDomainMap = new HashMap<String, Set<String>>();
+		for (GdlNode clause : root.getChildren()) {
+			if (!isVariableInTree(clause)) { // No variables so already ground
+				//if (useTempFile) {
+				//	groundWrite.write(clause.toString());
+				//} else {
+					groundedRoot.getChildren().add(clause);
+				//}
+			} else {
+				variableDomainMap = new HashMap<String, Set<String>>();
+				for (GdlNode variable : variablesInTree(clause)) {
+					variableDomainMap.put(variable.getAtom(), getVariableDomain(variable.getAtom(), clause, domainGraph));
+				}
+
+				//if (useTempFile) {
+				//	groundWrite.write(groundClause(clause, variableDomainMap, false));
+				//} else {
+					String groundedClauseString = groundClause(clause, variableDomainMap, false);
+
+					// Default root node if parseString throws error
+					GdlNode clauseTree = GdlNodeFactory.createGdl();
+					clauseTree = GdlParser.parseString(groundedClauseString);
+					if (!clauseTree.getChildren().isEmpty()) {
+						//groundedRoot.getChildren().addAll(clauseTree.getChildren());
+						groundedRuleSet.joinRuleSet((Gdl)clauseTree);
+					}
+				//}
+			}
+		}
+		
+		groundedRuleSet.joinRuleSet(groundedRoot);
+
+		/*if (useTempFile) {
+			try {
+				groundWrite.flush();
+				groundedRoot = parseFile(tempGroundedGdlFile.getAbsolutePath());
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			} finally {
+				groundWrite.close();
+				tempGroundedGdlFile.delete();
+			}
+		}*/
+
+		return groundedRuleSet;
+	}
+	
 	/**
 	 * Ground a game description
 	 * 
