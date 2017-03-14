@@ -251,6 +251,7 @@ public class GdlRuleSet {
 		if (stack.contains(headNode)) {
 			if (!oldSet.contains(headNode)) {
 				oldSet.add(headNode);
+				System.out.println("Oldify " + headNode);
 			}
 			return 0;
 		}
@@ -291,7 +292,9 @@ public class GdlRuleSet {
 						}
 					} else {
 						// Stratum unknown, compute stratum(recursive)
-						int literalStratum = computeStratum(literal);
+						stack.push(headNode);
+						int literalStratum = computeStratum(literal, stack);
+						stack.pop(); // pop head node
 						if (literalStratum != 0 || !oldSet.contains(literal)) {
 							stratumMap.put(literal, literalStratum);
 						}

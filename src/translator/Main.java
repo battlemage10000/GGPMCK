@@ -168,8 +168,16 @@ public class Main {
 				}
 				
 				try {
-					root = GdlParser.groundGdl(root, domain);
+					if (useProverSwitch) {
+						ruleSet = GdlParser.groundGdlToRuleSet(root, domain);
+						ruleSet.cullVariables(true);
+					} else {
+						root = GdlParser.groundGdl(root, domain);
+					}
 				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (GDLSyntaxException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -195,6 +203,7 @@ public class Main {
 			}
 			
 			// Order rules by stratum
+			// TODO: remove this section of code
 			if (orderedSwitch) {
 				System.out.print("Ordering rules ... ");
 				if (graph == null) {
