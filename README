@@ -1,11 +1,14 @@
+This project is a java based translator from GDLII(Game Description Language with Incomplete Information) to MCK(Model Checking of Knowledge)
 
-This project is a java based translator from GDL(Game Description Language) to MCK(Model Checking of Knowledge)
-
-To run, first make sure you have java and ant installed then from the root folder type
- ant compile
- cd build
- java MckTranslator path/to/file.gdl
+To run the translator, first make sure you have java and ant installed then from the root folder type
+$ ant jar
+$ java -jar deploy/MckTranslator -i path/to/file.gdl -o path/to/output.mck --use-prover
  
-If you run the unit tests
- ant test
+To run unit tests enter
+$ ant test
 then a test mck file is saved in build-test/mck-translation.mck
+
+To run the generated mck file
+$ mck path/to/file.mck
+
+You can edit specification definitions in the section labeled "--Specifications" of the generated mck file.
