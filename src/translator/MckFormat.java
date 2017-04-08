@@ -85,7 +85,7 @@ public class MckFormat {
 	 * @return
 	 */
 	public static String formatSpecialCharacters(String string){
-		if (Character.isUpperCase(string.charAt(0))) {
+		if (string.length() > 0 && Character.isUpperCase(string.charAt(0))) {
 			string.replace(string.charAt(0), Character.toLowerCase(string.charAt(0)));
 		}
 		if (string.contains("+")){
