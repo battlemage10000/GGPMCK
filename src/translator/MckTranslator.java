@@ -1238,7 +1238,7 @@ public class MckTranslator {
 		if (TRANSITIONS_WITH_DEFINE) {
 			env_vars.append(System.lineSeparator() + "-- Define based Transitions:");
 			for (String defHead : ATdef.keySet()) {
-				env_vars.append(ATdef.get(System.lineSeparator() + defHead));
+				env_vars.append(System.lineSeparator() + ATdef.get(defHead));
 			}
 			env_vars.append(System.lineSeparator());
 		}
