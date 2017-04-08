@@ -45,6 +45,7 @@ public class MckTranslator {
 	private StringBuilder defineBasedDeclarations;
 	// List of variables using the define keyword
 	private Map<String, String> ATdef;
+	private Set<String> oldSet;
 
 	private DependencyGraph graph;
 	private GdlRuleSet ruleSet;
@@ -68,6 +69,7 @@ public class MckTranslator {
 		this.DEBUG = DEBUG;
 		this.SHOW_PRUNED_VARS = DEBUG;
 		if (SYNCHRONIZED_COLLECTIONS) {
+			this.oldSet = Collections.synchronizedSet(new HashSet<String>());
 			this.AT = Collections.synchronizedSet(new HashSet<String>());
 			this.ATf = Collections.synchronizedSet(new HashSet<String>());
 			this.ATi = Collections.synchronizedSet(new HashSet<String>());
@@ -78,6 +80,7 @@ public class MckTranslator {
 			this.ATd = Collections.synchronizedMap(new HashMap<String, List<String>>());
 			this.ATs = Collections.synchronizedMap(new HashMap<String, List<String>>());
 		} else {
+			this.oldSet = new HashSet<String>();
 			this.AT = new HashSet<String>();
 			this.ATf = new HashSet<String>();
 			this.ATi = new HashSet<String>();
@@ -429,6 +432,11 @@ public class MckTranslator {
 				ATh.add(MckFormat.formatMckNode(literalNode));
 			}
 		}
+		
+		// Initialize oldSet from ruleSet
+		for (String oldLit : ruleSet.getOldSet()) {
+			oldSet.add((MckFormat.formatMckNode(GdlParser.parseString(oldLit).getChild(0)) + MckFormat.OLD_SUFFIX).intern());
+		}
 	}
 
 	/**
@@ -443,6 +451,7 @@ public class MckTranslator {
 		for (String old : graph.getDependencyMap().keySet()) {
 			if (old.length() >= 5 && old.substring(old.length() - 4).equals(MckFormat.OLD_SUFFIX)) {
 				ATf.add(old.substring(5));
+				oldSet.add(old.substring(5));
 			}
 		}
 
@@ -801,7 +810,7 @@ public class MckTranslator {
 			old_values.append(System.lineSeparator() + "  begin");
 		}
 		// Update _old variables
-		for (String trueNode : ATf) {
+		for (String trueNode : oldSet) {
 			if (trueNode.length() > MckFormat.OLD_SUFFIX.length() && trueNode.substring(trueNode.length() - 4).equals(MckFormat.OLD_SUFFIX)) {
 				old_values.append(System.lineSeparator() + "  " + trueNode + " := "
 						+ trueNode.substring(0, trueNode.length() - MckFormat.OLD_SUFFIX.length()) + ";");
@@ -815,20 +824,6 @@ public class MckTranslator {
 			}
 			state_trans.append(old_values);
 			state_trans.append(System.lineSeparator());
-		}
-
-		Set<String> oldSet = new HashSet<String>();
-		if (useRuleSet) {
-			for (String oldLit : ruleSet.getOldSet()) {
-				oldSet.add((MckFormat.formatMckNode(GdlParser.parseString(oldLit)) + MckFormat.OLD_SUFFIX).intern());
-			}
-		} else {
-			for (String term : ATf) {
-				if (term.length() > MckFormat.OLD_SUFFIX.length()
-						&& term.substring(term.length() - MckFormat.OLD_SUFFIX.length()).equals(MckFormat.OLD_SUFFIX)) {
-					oldSet.add(term);
-				}
-			}
 		}
 		
 		StringBuilder reset_initial = new StringBuilder();
@@ -856,6 +851,7 @@ public class MckTranslator {
 		state_trans.append(System.lineSeparator());
 
 		if (useRuleSet) {
+			int stratum = 0;
 			PriorityQueue<String> orderedGdl = ruleSet.getOrderedSet();
 			while(!orderedGdl.isEmpty()) {
 				if (ruleSet.getRuleSet().get(orderedGdl.peek()) == null || ruleSet.getRuleSet().get(orderedGdl.peek()).isEmpty()) {
@@ -870,7 +866,15 @@ public class MckTranslator {
 				}
 				String formattedClause = MckFormat.formatClause(oldSet, ruleSet, (GdlLiteral) headNode, useDefine,
 						ONE_LINE_TRANSITIONS);
-				state_trans.append(System.lineSeparator() + "  " + formattedClause);
+				if (!useDefine && ruleSet.getStratum(headNode.toString()) != stratum) {
+					stratum = ruleSet.getStratum(headNode.toString());
+					state_trans.append(System.lineSeparator() + "  --stratum: " + stratum);
+				}
+				if (useDefine) {
+					ATdef.put(MckFormat.formatMckNode(headNode), formattedClause);
+				} else {
+					state_trans.append(System.lineSeparator() + "  " + formattedClause);
+				}
 			}
 		} else {
 			// Add transition rules
@@ -1202,6 +1206,13 @@ public class MckTranslator {
 		for (String node : ATf) {
 			if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey(node)) {
 				env_vars.append(System.lineSeparator() + node + " : Bool");
+			}
+		}
+		if (USE_PROVER) {
+			for (String oldNode : oldSet) {
+				if (!TRANSITIONS_WITH_DEFINE || !ATdef.containsKey(oldNode)) {
+					env_vars.append(System.lineSeparator() + oldNode + " : Bool");
+				}
 			}
 		}
 		env_vars.append(System.lineSeparator());
