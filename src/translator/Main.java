@@ -152,7 +152,6 @@ public class Main {
 			}
 
 			File outputDir = new File(new File(inputFilePath).getName() + ".out");
-			outputDir.mkdir();
 
 			// Use internal grounder
 			if (!noGroundSwitch) {
@@ -161,6 +160,7 @@ public class Main {
 				DomainGraph domain = GdlParser.constructDomainGraph(root);
 				System.out.print("finish domain graph ... ");
 				if (outputDotSwitch) {
+					outputDir.mkdir();
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
 				}
 				
@@ -184,8 +184,13 @@ public class Main {
 			DependencyGraph graph = null;
 			if (outputDepDotSwitch) {
 				System.out.print("Generating dependency.dot ... ");
-				graph = GdlParser.constructDependencyGraph(root);
+				if (useProverSwitch) {
+					graph = GdlParser.constructDependencyGraph(GdlParser.parseString(ruleSet.toGdl()));
+				} else {
+					graph = GdlParser.constructDependencyGraph(root);
+				}
 				graph.computeStratum();
+				outputDir.mkdir();
 				GdlParser.saveFile(graph.dotEncodedGraph(), outputDir.getName() + "/dependency.dot");
 
 				System.out.println("finished");
@@ -223,21 +228,29 @@ public class Main {
 			
 			// Print parse tree for debugging
 			if (parseTreeSwitch) {
+				outputDir.mkdir();
 				GdlParser.saveFile(GdlParser.printParseTree(root), outputDir.getName() + "/parsetree");
 			}
 
 			// Print parse tree types for debugging
 			if (parseTreeTypesSwitch) {
+				outputDir.mkdir();
 				GdlParser.saveFile(GdlParser.printParseTreeTypes(root), outputDir.getName() + "/treetypes");
 			}
 
 			// Output as another formatted gdl file
 			if (prettyPrintSwitch) {
-				GdlParser.saveFile(GdlParser.prettyPrint(root), outputDir.getName() + "/pretty.kif");
+				outputDir.mkdir();
+				if (useProverSwitch) {
+					GdlParser.saveFile(ruleSet.toGdlOrdered(), outputDir.getName() + "/pretty.kif"); 
+				} else {
+					GdlParser.saveFile(GdlParser.prettyPrint(root), outputDir.getName() + "/pretty.kif");
+				}
 			}
 
 			// Output lparse for grounding (lparse cannot be read)
 			if (outputLparseSwitch) {
+				outputDir.mkdir();
 				GdlParser.saveFile(GdlParser.toLparse(root), outputDir.getName() + "/unground.lparse");
 			}
 
@@ -261,6 +274,7 @@ public class Main {
 				}
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
+					outputDir.mkdir();
 					GdlParser.saveFile(translator.toMck(), outputFilePath);
 				} else if (outputMckSwitch) {
 					System.out.println(translator.toMck());
