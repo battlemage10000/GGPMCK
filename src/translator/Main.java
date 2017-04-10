@@ -174,9 +174,6 @@ public class Main {
 					} else {
 						root = GdlParser.groundGdl(root, domain);
 					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				} catch (GDLSyntaxException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

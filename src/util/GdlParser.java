@@ -407,7 +407,8 @@ public class GdlParser {
 			int resultingRules = 1;
 			for (GdlNode variable : variablesInTree(clause)) {
 				resultingRules *= getVariableDomain(variable.getAtom(), clause, graph).size();
-			}			totalRules += resultingRules;
+			}
+			totalRules += resultingRules;
 		}
 		System.out.println("Ground from " + root.getChildren().size() + " -> " + totalRules);
 		
@@ -473,78 +474,42 @@ public class GdlParser {
 		return varsInSubTree;
 	}
 
-
 	/**
-	 * Ground a game description
+	 * Ground a game description. Replaces all variable clauses with grounded
+	 * versions and output directly into a GdlRuleSet object.
 	 * 
-	 * @param root
-	 * @param domainGraph
-	 * @return
+	 * @param root the root of a GdlNode tree
+	 * @param graph the DomainGraph of a GdlNode tree
+	 * @return groundedRuleSet the GdlRuleSet with grounded rules
 	 * @throws IOException
-	 * @throws GDLSyntaxException 
+	 * @throws GDLSyntaxException
 	 */
-	public static GdlRuleSet groundGdlToRuleSet(GdlNode root, DomainGraph domainGraph) throws IOException, GDLSyntaxException {
+	public static GdlRuleSet groundGdlToRuleSet(GdlNode root, DomainGraph domainGraph) throws GDLSyntaxException {
 		Gdl groundedRoot = GdlNodeFactory.createGdl();
 		GdlRuleSet groundedRuleSet = new GdlRuleSet(GdlNodeFactory.createGdl(), false);
-		
-		/*boolean useTempFile = false;
-		File tempGroundedGdlFile = null;
-		FileWriter groundWrite = null;
 
-		if (GROUND_WITH_TEMP_FILES) {
-			tempGroundedGdlFile = File.createTempFile("ground", ".gdl.tmp");
-			if (tempGroundedGdlFile != null) {
-				// tempGroundedGdlFile.deleteOnExit();
-				groundWrite = new FileWriter(tempGroundedGdlFile);
-				useTempFile = true;
-				System.out.println("Using temp file for grounding");
-			}
-		}*/
-
-		
 		Map<String, Set<String>> variableDomainMap = new HashMap<String, Set<String>>();
 		for (GdlNode clause : root.getChildren()) {
-			if (!isVariableInTree(clause)) { // No variables so already ground
-				//if (useTempFile) {
-				//	groundWrite.write(clause.toString());
-				//} else {
-					groundedRoot.getChildren().add(clause);
-				//}
+			if (!isVariableInTree(clause)) { // Variable-free so already ground
+				groundedRoot.getChildren().add(clause);
 			} else {
 				variableDomainMap = new HashMap<String, Set<String>>();
 				for (GdlNode variable : variablesInTree(clause)) {
-					variableDomainMap.put(variable.getAtom(), getVariableDomain(variable.getAtom(), clause, domainGraph));
+					variableDomainMap.put(variable.getAtom(),
+							getVariableDomain(variable.getAtom(), clause, domainGraph));
 				}
+				String groundedClauseString = groundClause(clause, variableDomainMap, false);
 
-				//if (useTempFile) {
-				//	groundWrite.write(groundClause(clause, variableDomainMap, false));
-				//} else {
-					String groundedClauseString = groundClause(clause, variableDomainMap, false);
-
-					// Default root node if parseString throws error
-					GdlNode clauseTree = GdlNodeFactory.createGdl();
-					clauseTree = GdlParser.parseString(groundedClauseString);
-					if (!clauseTree.getChildren().isEmpty()) {
-						//groundedRoot.getChildren().addAll(clauseTree.getChildren());
-						groundedRuleSet.joinRuleSet((Gdl)clauseTree);
-					}
-				//}
+				// Default root node if parseString throws error
+				GdlNode clauseTree = GdlNodeFactory.createGdl();
+				clauseTree = GdlParser.parseString(groundedClauseString);
+				if (!clauseTree.getChildren().isEmpty()) {
+					groundedRuleSet.joinRuleSet((Gdl) clauseTree);
+				}
 			}
 		}
-		
+		// Add all variable-free clauses
 		groundedRuleSet.joinRuleSet(groundedRoot);
-
-		/*if (useTempFile) {
-			try {
-				groundWrite.flush();
-				groundedRoot = parseFile(tempGroundedGdlFile.getAbsolutePath());
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			} finally {
-				groundWrite.close();
-				tempGroundedGdlFile.delete();
-			}
-		}*/
 
 		return groundedRuleSet;
 	}
@@ -554,83 +519,54 @@ public class GdlParser {
 	 * 
 	 * @param root
 	 * @param domainGraph
-	 * @return
-	 * @throws IOException
+	 * @return groundedRoot the root node of the grounded parse tree
 	 */
-	public static Gdl groundGdl(GdlNode root, DomainGraph domainGraph) throws IOException {
+	public static Gdl groundGdl(GdlNode root, DomainGraph domainGraph) {
 		Gdl groundedRoot = GdlNodeFactory.createGdl();
-
-		boolean useTempFile = false;
-		File tempGroundedGdlFile = null;
-		FileWriter groundWrite = null;
-
-		if (GROUND_WITH_TEMP_FILES) {
-			tempGroundedGdlFile = File.createTempFile("ground", ".gdl.tmp");
-			if (tempGroundedGdlFile != null) {
-				// tempGroundedGdlFile.deleteOnExit();
-				groundWrite = new FileWriter(tempGroundedGdlFile);
-				useTempFile = true;
-				System.out.println("Using temp file for grounding");
-			}
-		}
-
-		
 		Map<String, Set<String>> variableDomainMap = new HashMap<String, Set<String>>();
+		
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // No variables so already ground
-				if (useTempFile) {
-					groundWrite.write(clause.toString());
-				} else {
-					groundedRoot.getChildren().add(clause);
-				}
+				groundedRoot.getChildren().add(clause);
 			} else {
 				variableDomainMap = new HashMap<String, Set<String>>();
 				for (GdlNode variable : variablesInTree(clause)) {
-					variableDomainMap.put(variable.getAtom(), getVariableDomain(variable.getAtom(), clause, domainGraph));
+					variableDomainMap.put(variable.getAtom(),
+							getVariableDomain(variable.getAtom(), clause, domainGraph));
 				}
+				String groundedClauseString = groundClause(clause, variableDomainMap, false);
 
-				if (useTempFile) {
-					groundWrite.write(groundClause(clause, variableDomainMap, false));
-				} else {
-					String groundedClauseString = groundClause(clause, variableDomainMap, false);
-
-					// Default root node if parseString throws error
-					GdlNode clauseTree = GdlNodeFactory.createGdl();
-					clauseTree = GdlParser.parseString(groundedClauseString);
-					if (!clauseTree.getChildren().isEmpty()) {
-						groundedRoot.getChildren().addAll(clauseTree.getChildren());
-					}
+				// Default root node if parseString throws error
+				GdlNode clauseTree = GdlNodeFactory.createGdl();
+				clauseTree = GdlParser.parseString(groundedClauseString);
+				if (!clauseTree.getChildren().isEmpty()) {
+					groundedRoot.getChildren().addAll(clauseTree.getChildren());
 				}
 			}
 		}
-
-		if (useTempFile) {
-			try {
-				groundWrite.flush();
-				groundedRoot = parseFile(tempGroundedGdlFile.getAbsolutePath());
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			} finally {
-				groundWrite.close();
-				tempGroundedGdlFile.delete();
-			}
-		}
-
 		return groundedRoot;
 	}
-	
+
+	/**
+	 * Get the set of terms in the domain of the provided variable name within the scope of the provided clause.
+	 * 
+	 * @param variable the variable we want the domain of
+	 * @param clause the clause that provides the scope of the variable
+	 * @param graph the domain graph
+	 * @return variableDomainSet
+	 */
 	public static Set<String> getVariableDomain(String variable, GdlNode clause, DomainGraph graph) {
 		Set<String> variableDomainSet = new HashSet<String>();
 		for (GdlNode node : clause) {
 			if (node.getType() == GdlType.VARIABLE && node.getAtom().equals(variable)) {
 				boolean hasMultiVarInstance = !variableDomainSet.isEmpty();
-				DomainGraph.Term varTerm = new DomainGraph.Term(node.getParent().getAtom(),
-						node.getParent().getChildren().indexOf(node) + 1);
-				//for (DomainGraph.Term term : graph.getMap().get(varTerm)) {
+				
 				for (DomainGraph.Term term : graph.getDomain(node.getParent().getAtom(),
 						node.getParent().getChildren().indexOf(node) + 1)) {
-					if (hasMultiVarInstance && !term.getTerm().equals(GdlNode.DISTINCT) && !variableDomainSet.contains(term.getTerm())) {
-						System.out.println("InconsistentDomainException: Const: " + term.getTerm() + " not in domain of var: " + node.getAtom());
+					if (hasMultiVarInstance && !term.getTerm().equals(GdlNode.DISTINCT)
+							&& !variableDomainSet.contains(term.getTerm())) {
+						System.out.println("InconsistentDomainException: Const: " + term.getTerm()
+								+ " not in domain of var: " + node.getAtom());
 					}
 					variableDomainSet.add(term.getTerm());
 				}
@@ -645,13 +581,11 @@ public class GdlParser {
 	/**
 	 * Ground a clause in a game description
 	 * 
-	 * @param clauseNode
-	 * @param constantMap
-	 * @return
-	 * @throws IOException
+	 * @param clauseNode the clause to be grounded
+	 * @param constantMap the map from variable to domain of variable
+	 * @return groundedClauses the set of ground clauses as a string to be parsed with the parseString(String) method
 	 */
-	public static String groundClause(GdlNode clauseNode, Map<String, Set<String>> constantMap, boolean useTempFile)
-			throws IOException {
+	public static String groundClause(GdlNode clauseNode, Map<String, Set<String>> constantMap, boolean useTempFile) {
 		// Duplicate method signature error
 		StringBuilder groundedClauses = new StringBuilder();
 		groundedClauses.append(clauseNode.toString());
@@ -661,7 +595,7 @@ public class GdlParser {
 				return str2.length() - str1.length();
 			}
 		});
-		
+
 		orderedVars.addAll(constantMap.keySet());
 		while (!orderedVars.isEmpty()) {
 			String variable = orderedVars.poll();
