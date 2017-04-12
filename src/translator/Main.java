@@ -22,8 +22,7 @@ public class Main {
 	 * MckTranslator.jar path/to/game.gdl which will output to terminal
 	 */
 	public static void main(String[] args) {
-		long startTime = System.currentTimeMillis();
-		int totalTime = 0;
+		long startTime = System.nanoTime();
 		boolean helpSwitch = false;
 		boolean inputFileSwitch = false;
 		boolean inputFileToken = false;
@@ -145,9 +144,7 @@ public class Main {
 				root = GdlParser.expandParseTree(tokens);
 
 				System.out.println("finished");
-				totalTime = (int) (System.currentTimeMillis() - startTime);
-				System.out.println(
-						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+				printTimeDiff(startTime, System.nanoTime());
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -180,9 +177,7 @@ public class Main {
 				}
 
 				System.out.println("finished");
-				totalTime = (int) (System.currentTimeMillis() - startTime);
-				System.out.println(
-						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+				printTimeDiff(startTime, System.nanoTime());
 			}
 			
 			// Output dependency graph as a dot formatted file
@@ -194,9 +189,7 @@ public class Main {
 				GdlParser.saveFile(graph.dotEncodedGraph(), outputDir.getName() + "/dependency.dot");
 
 				System.out.println("finished");
-				totalTime = (int) (System.currentTimeMillis() - startTime);
-				System.out.println(
-						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+				printTimeDiff(startTime, System.nanoTime());
 			}
 			
 			// Order rules by stratum
@@ -210,9 +203,7 @@ public class Main {
 				}
 
 				System.out.println("finished");
-				totalTime = (int) (System.currentTimeMillis() - startTime);
-				System.out.println(
-						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+				printTimeDiff(startTime, System.nanoTime());
 			}
 
 			if (useProverSwitch) {
@@ -227,9 +218,7 @@ public class Main {
 					e.printStackTrace();
 				}
 				System.out.println("finished");
-				totalTime = (int) (System.currentTimeMillis() - startTime);
-				System.out.println(
-						"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+				printTimeDiff(startTime, System.nanoTime());
 			}
 			
 			// Print parse tree for debugging
@@ -262,9 +251,7 @@ public class Main {
 					}
 
 					System.out.println("finished");
-					totalTime = (int) (System.currentTimeMillis() - startTime);
-					System.out.println(
-							"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+					printTimeDiff(startTime, System.nanoTime());
 				}
 				MckTranslator translator = null;
 				if (useProverSwitch) {
@@ -280,9 +267,17 @@ public class Main {
 				}
 				System.out.println("finished");
 			}
-			totalTime = (int) (System.currentTimeMillis() - startTime);
-			System.out.println(
-					"Runtime: " + (totalTime / 60000) + " minutes, " + (totalTime % 60000 / 1000) + " seconds");
+			printTimeDiff(startTime, System.nanoTime());
 		}
+	}
+	
+	
+	private static void printTimeDiff(long initialTime, long finalTime){
+		long timeDiff = (finalTime - initialTime);
+		System.out.print("Runtime: ");
+		System.out.print((int)((timeDiff * ((1/60)*1e-9))) + "m ");
+		System.out.print((int)((timeDiff * 1e-9) % 60) + ".");
+		System.out.print((int)((timeDiff * 1e-6) % 1000) + "s ");
+		System.out.println();
 	}
 }
