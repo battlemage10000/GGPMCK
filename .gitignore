@@ -2,3 +2,4 @@ deploy/
 build*/
 *.DS_Store
 /output/
+/*.mck
