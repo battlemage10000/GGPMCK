@@ -47,7 +47,7 @@ public class MckTranslator {
 	private Map<String, String> ATdef;
 	private Set<String> oldSet;
 
-	private DependencyGraph graph;
+	@Deprecated private DependencyGraph graph;
 	private GdlRuleSet ruleSet;
 
 	private boolean DEBUG;
@@ -94,6 +94,7 @@ public class MckTranslator {
 		initialize(true);
 	}
 
+	@Deprecated
 	public MckTranslator(GdlNode root, boolean TRANSITIONS_WITH_DEFINE, boolean DEBUG, GdlRuleSet ruleSet) {
 		this.root = root;
 		this.TRANSITIONS_WITH_DEFINE = TRANSITIONS_WITH_DEFINE;
@@ -136,10 +137,12 @@ public class MckTranslator {
 		initialize();
 	}
 	
+	@Deprecated
 	public MckTranslator(GdlNode root, boolean USE_DEFINE, boolean DEBUG){
 		this(root, USE_DEFINE, DEBUG, null);
 	}
 
+	@Deprecated
 	public MckTranslator(GdlNode root, boolean DEBUG) {
 		this(root, false, DEBUG, null);
 	}
@@ -833,9 +836,12 @@ public class MckTranslator {
 			reset_initial.append(System.lineSeparator() + "  [] otherwise ->");
 			reset_initial.append(System.lineSeparator() + "  begin");
 		}
-		for (String initial : ATi) {
-			if (graph.getStratum(initial) == 0 || graph.getStratum(MckFormat.TRUE_PREFIX + initial) == 0) {
-				reset_initial.append(System.lineSeparator() + "  " + initial + " := " + MckFormat.FALSE + ";");
+		if (!useRuleSet) {
+			for (String initial : ATi) {
+				graph.toString();
+				if (graph.getStratum(initial) == 0 || graph.getStratum(MckFormat.TRUE_PREFIX + initial + ")") == 0) {
+					reset_initial.append(System.lineSeparator() + "  " + initial + " := " + MckFormat.FALSE + ";");
+				}
 			}
 		}
 		if (reset_initial.length() > 0 && reset_initial.charAt(reset_initial.length() - 1) == ';') {
