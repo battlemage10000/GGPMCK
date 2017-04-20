@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import util.GdlParser;
 import util.grammar.GDLSyntaxException;
 import util.grammar.Gdl;
 import util.grammar.GdlLiteral;
@@ -23,6 +24,7 @@ public class GdlRuleSet {
 	public static String NEXT_PREFIX = "(next ";
 	public static String TRUE_PREFIX = "(true ";
 	public static String DOES_PREFIX = "(does ";
+	public static String DISTINCT_PREFIX = "(distinct ";
 	public static String FALSE = "?FALSE";
 	public static String TRUE = "?TRUE";
 
@@ -121,6 +123,7 @@ public class GdlRuleSet {
 		}
 	}
 	
+	private Set<String> addFactToRuleSet;
 	public int cullVariables(boolean cullNullRules) {
 		int numIterations = 0;
 		boolean changed = true;
@@ -129,6 +132,7 @@ public class GdlRuleSet {
 			changed = false;
 
 			Set<String> removeRuleSet = new HashSet<String>();
+			addFactToRuleSet = new HashSet<String>();
 
 			for (String headNode : ruleSet.keySet()) {
 				if (ruleSet.get(headNode) == null || ruleSet.get(headNode).isEmpty()) {
@@ -173,12 +177,17 @@ public class GdlRuleSet {
 					ruleSet.put(headNode, newDnfRule);
 				}
 			} // End head-for-loop
+			for (String addedFact : addFactToRuleSet) {
+				ruleSet.put(addedFact, Collections.emptySet());
+				changed = true;
+			}
 			if (cullNullRules) {
 				for (String removeHead : removeRuleSet) {
 					ruleSet.remove(removeHead);
 				}
 			}
 			removeRuleSet.clear();
+			addFactToRuleSet.clear();
 		} // End change-while-loop
 		return numIterations;
 	}
@@ -201,6 +210,14 @@ public class GdlRuleSet {
 					&& posLiteral.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
 				posLiteral = posLiteral.substring(NOT_PREFIX.length(), posLiteral.length() - 1);
 				isNegative = !isNegative;
+			}
+			if (!ruleSet.containsKey(posLiteral) && posLiteral.length() > DISTINCT_PREFIX.length() && 
+					posLiteral.substring(0, DISTINCT_PREFIX.length()).equals(DISTINCT_PREFIX)) {
+				GdlNode distinctNode = GdlParser.parseString(posLiteral).getChild(0);
+				if (!distinctNode.getChild(0).toString().equals(distinctNode.getChild(1).toString())){
+					addFactToRuleSet.add(posLiteral);
+					return clause;
+				}
 			}
 			if (posLiteral.length() > DOES_PREFIX.length() && 
 					posLiteral.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
