@@ -409,7 +409,7 @@ public class MckTranslator {
 				if (ATs.get(headNode.getChild(0).toString()) == null) {
 					ATs.put(headNode.getChild(0).toString(), new ArrayList<String>());
 				}
-				if (!ATs.get(headNode.getChild(0).toString()).contains(headNode.getChild(1).toString())) {
+				if (!ATs.get(headNode.getChild(0).toString()).contains(MckFormat.formatMckNodeAbs(headNode.getChild(1)).toString())) {
 					ATs.get(headNode.getChild(0).toString()).add(MckFormat.formatMckNodeAbs(headNode.getChild(1)));
 				}
 				break;
