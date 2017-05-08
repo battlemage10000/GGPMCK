@@ -669,7 +669,7 @@ public class MckTranslator {
 	 * Generate protocol section of MCK output
 	 * @return
 	 */
-	private String generateProtocols() {
+	protected String generateProtocols() {
 		StringBuilder protocols = new StringBuilder();
 		// Signature of protocol
 		for (String role : ATd.keySet()) {
@@ -763,7 +763,7 @@ public class MckTranslator {
 	 * @return
 	 * @throws Exception
 	 */
-	private String generateStateTransitions(boolean useRuleSet) throws Exception {
+	protected String generateStateTransitions(boolean useRuleSet) throws Exception {
 		StringBuilder state_trans = new StringBuilder();
 
 		// State Transitions
@@ -976,7 +976,7 @@ public class MckTranslator {
 	 * Generate specification section of MCK output
 	 * @return
 	 */
-	private String generateSpecification() {
+	protected String generateSpecification() {
 		StringBuilder spec = new StringBuilder();
 
 		// Specification
@@ -1011,7 +1011,7 @@ public class MckTranslator {
 	 * Generate initial condition section of MCK output
 	 * @return
 	 */
-	private String generateInitialConditions(boolean useRuleSet) {
+	protected String generateInitialConditions(boolean useRuleSet) {
 		StringBuilder init_cond = new StringBuilder();
 
 		// Shouldn't need to reference ATt after this
@@ -1114,7 +1114,7 @@ public class MckTranslator {
 	 * Generate agent declaration section of MCK output
 	 * @return
 	 */
-	private String generateAgents() {
+	protected String generateAgents() {
 		StringBuilder agents = new StringBuilder();
 		for (String role : ATd.keySet()) {
 			agents.append(System.lineSeparator() + "agent " + MckFormat.ROLE_PREFIX + role + " \"" + role + "\" (");
@@ -1159,7 +1159,7 @@ public class MckTranslator {
 	 * Generate variable declaration section of MCK output
 	 * @return
 	 */
-	private String generateEnvironmentVariables() {
+	protected String generateEnvironmentVariables() {
 
 		StringBuilder env_vars = new StringBuilder();
 
