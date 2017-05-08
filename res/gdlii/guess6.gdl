@@ -23,12 +23,15 @@
 	(succ ?t0 ?t)
 )
 
-(<= terminal
-	(or
-		(true t7)
-		(true guessRight)
-	)
-)
+;(<= terminal
+;	(or
+;		(true t7)
+;		(true guessRight)
+;	)
+;)
+(<= terminal (true t7))
+(<= terminal (true guessRight))
+
 
 ;;;;;;;;;;;;;;;;;;;; legal moves ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
