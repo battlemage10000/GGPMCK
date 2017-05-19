@@ -22,6 +22,8 @@ public class TranslatorTest {
 	
 	private String montyHallGame = "res/gdlii/MontyHall.gdl";
 	private String tictactoeGame = "res/gdl/tictactoe.kif";
+	private String kriegtictactoeGame = "res/gdlii/KriegTicTacToe.gdl";
+	private String biddingtictactoeGame = "res/gdl/bidding-tictactoe.gdl.txt";
 
 	@Test
 	public void testFormatMckNodeMethod() {
@@ -102,7 +104,7 @@ public class TranslatorTest {
 			GdlRuleSet mhRuleSet = new GdlRuleSet((Gdl)mhRoot);
 			mhRuleSet.cullVariables(true);
 			
-			MckTranslator mhTrans = new MckTranslator(mhRoot, true, false, mhRuleSet);
+			MckTranslator mhTrans = new MckTranslator(mhRuleSet, true, false);
 			//mhTrans.setProver(mhProver);
 			
 			String translation = mhTrans.toMck();
@@ -123,10 +125,37 @@ public class TranslatorTest {
 		GdlRuleSet tttRuleSet = new GdlRuleSet((Gdl)tttRoot);
 		tttRuleSet.cullVariables(true);
 
-		MckTranslator tttTrans = new MckTranslator(tttRoot, false, false, tttRuleSet);
+		MckTranslator tttTrans = new MckTranslator(tttRuleSet, false, false);
+		String tttTranslation = tttTrans.toMck();
 		assertThat(tttTrans.ATi, hasItem("control_white"));
 		assertThat(tttTrans.ATi, not(hasItem("control_black")));
-		String tttTranslation = tttTrans.toMck();
 		assertThat(tttTranslation, is(not("")));
+	}
+	
+	@Test
+	public void testKriegTicTacToeTranslation() throws IOException, URISyntaxException, GDLSyntaxException {
+		GdlNode ktttRoot = GdlParser.parseFile(kriegtictactoeGame);
+		ktttRoot = GdlParser.groundGdl(ktttRoot, GdlParser.constructDomainGraph(ktttRoot));
+		GdlRuleSet ktttRuleSet = new GdlRuleSet((Gdl)ktttRoot);
+		ktttRuleSet.cullVariables(true);
+
+		MckTranslator ktttTrans = new MckTranslator(ktttRuleSet, false, false);
+		
+		String ktttTranslation = ktttTrans.toMck();
+		assertThat(ktttTrans.ATi, hasItem("control_xplayer"));
+		assertThat(ktttTrans.ATi, not(hasItem("control_oplayer")));
+		assertThat(ktttTranslation, is(not("")));
+	}
+	
+	@Test
+	public void testBiddingTicTacToeTranslation() throws IOException, URISyntaxException, GDLSyntaxException {
+		GdlNode btttRoot = GdlParser.parseFile(biddingtictactoeGame);
+		btttRoot = GdlParser.groundGdl(btttRoot, GdlParser.constructDomainGraph(btttRoot));
+		GdlRuleSet btttRuleSet = new GdlRuleSet((Gdl)btttRoot);
+		btttRuleSet.cullVariables(true);
+
+		MckTranslator btttTrans = new MckTranslator(btttRuleSet, false, false);
+		String btttTranslation = btttTrans.toMck();
+		assertThat(btttTranslation, is(not("")));
 	}
 }
