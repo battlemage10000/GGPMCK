@@ -270,7 +270,8 @@ public class Main {
 				if (useProverSwitch) {
 					translator = new MckTranslator(ruleSet, useDefineSwitch, debugSwitch);
 				} else {
-					translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
+					translator = new MckTranslator(ruleSet, useDefineSwitch, debugSwitch);
+					//translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
 				}
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
