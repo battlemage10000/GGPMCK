@@ -177,6 +177,7 @@ public class MckTranslator {
 		}
 		
 		// Initialize oldSet from ruleSet
+		System.out.println(ruleSet.getOldSet().size() + " elements in old set");
 		for (String oldLit : ruleSet.getOldSet()) {
 			oldSet.add((MckFormat.formatMckNode(GdlParser.parseString(oldLit).getChild(0)) + MckFormat.OLD_SUFFIX).intern());
 		}
@@ -478,7 +479,7 @@ public class MckTranslator {
 					state_trans.append(System.lineSeparator() + "  " + formattedClause);
 				}
 			}
-		} else {
+		}/* else {
 			// Add transition rules
 			ArrayList<GdlNode> repeatHeadList = new ArrayList<GdlNode>();
 			GdlNode repeatHead = null;
@@ -519,7 +520,6 @@ public class MckTranslator {
 						state_trans.append(System.lineSeparator() + "  " + formattedClause);
 					}
 				} else {
-					/*
 					if (repeatHead != null && clause.getChild(0).toString().equals(repeatHead.toString())) {
 						repeatHeadList.add(clause);
 					} else {
@@ -539,7 +539,7 @@ public class MckTranslator {
 						repeatHeadList = new ArrayList<GdlNode>();
 						repeatHeadList.add(clause);
 					}
-					*/
+					
 				}
 			}
 			// Fix to skipping last clause in game
@@ -558,7 +558,7 @@ public class MckTranslator {
 					state_trans.append(formattedClause);
 				}
 			}
-		}
+		}*/
 
 		// Conclusion
 		state_trans.deleteCharAt(state_trans.length() - 1); // Remove last ';'
@@ -629,7 +629,7 @@ public class MckTranslator {
 					ATi.add(MckFormat.formatMckNode(GdlParser.parseString(init).getChild(0)));
 				}
 			}
-		} else if (DERIVE_INITIAL_CONDITIONS) {
+		}/* else if (DERIVE_INITIAL_CONDITIONS) {
 			for (GdlNode clause : root.getChildren()) {
 				if (clause instanceof GdlRule) {
 					boolean initHeadHasFalse = false;
@@ -666,7 +666,7 @@ public class MckTranslator {
 					}
 				}
 			}
-		}
+		}*/
 
 		// Initial Conditions
 		init_cond.append(System.lineSeparator() + "init_cond = ");

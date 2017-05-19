@@ -104,6 +104,7 @@ public class TranslatorTest {
 			GdlRuleSet mhRuleSet = new GdlRuleSet((Gdl)mhRoot);
 			mhRuleSet.cullVariables(true);
 			
+			
 			MckTranslator mhTrans = new MckTranslator(mhRuleSet, true, false);
 			//mhTrans.setProver(mhProver);
 			

@@ -156,9 +156,9 @@ public class Main {
 			// Use internal grounder
 			if (!noGroundSwitch) {
 				System.out.print("Grounding ... ");
-				System.out.print("construct domain graph ... ");
+				//System.out.print("construct domain graph ... ");
 				DomainGraph domain = GdlParser.constructDomainGraph(root);
-				System.out.print("finish domain graph ... ");
+				System.out.print("constructed domain graph ... ");
 				if (outputDotSwitch) {
 					outputDir.mkdir();
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
@@ -242,9 +242,9 @@ public class Main {
 			if (prettyPrintSwitch) {
 				outputDir.mkdir();
 				if (useProverSwitch) {
-					GdlParser.saveFile(ruleSet.toGdlOrdered(), outputDir.getName() + "/pretty.kif"); 
+					GdlParser.saveFile(ruleSet.toGdlOrdered(), outputDir.getName() + "/gameDesctiption.kif"); 
 				} else {
-					GdlParser.saveFile(GdlParser.prettyPrint(root), outputDir.getName() + "/pretty.kif");
+					//GdlParser.saveFile(GdlParser.prettyPrint(root), outputDir.getName() + "/pretty.kif");
 				}
 			}
 

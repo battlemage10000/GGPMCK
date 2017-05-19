@@ -301,6 +301,7 @@ public class GdlParser {
 	 * @param root
 	 * @return
 	 */
+	@Deprecated
 	public static DependencyGraph constructDependencyGraph(GdlNode root) {
 		DependencyGraph graph = new DependencyGraph();
 
@@ -671,6 +672,7 @@ public class GdlParser {
 	 * @param root
 	 * @return
 	 */
+	@Deprecated
 	public static String orderGdlRules(GdlNode root) {
 		DependencyGraph graph = constructDependencyGraph(root);
 		graph.computeStratum();
