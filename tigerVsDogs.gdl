@@ -1,0 +1,70 @@
+(role t)
+(role d)
+
+(index 1)
+(index 2)
+(index 3)
+;(index 4)
+;(index 5)
+
+(++ 1 2)
+(++ 2 3)
+;(++ 3 4)
+;(++ 4 5)
+
+
+(init (cell 3 3 t))
+(init (cell 1 ?y d) (index ?y))
+;(init (cell 5 ?y d) (index ?y))
+(init (cell ?x 1 d) (index ?x))
+;(init (cell ?x 5 d) (index ?x))
+(init (cell 2 2 b))
+(init (cell 2 3 b))
+;(init (cell 2 4 b))
+(init (cell 3 2 b))
+;(init (cell 3 4 b))
+;(init (cell 4 2 b))
+;(init (cell 4 3 b))
+;(init (cell 4 4 b))
+
+(init (control t))
+(<= (next (control t)) (true (control d)))
+(<= (next (control d)) (true (control t)))
+
+;; adjacency relation read as ?point1 is ?direction of ?point2
+(<= (adjacent ?xW ?y W ?x ?y) (index ?y) (++ ?xW ?x))
+(<= (adjacent ?xE ?y E ?x ?y) (index ?y) (++ ?x ?xE))
+(<= (adjacent ?x ?yN N ?x ?y) (index ?x) (++ ?yN ?y))
+(<= (adjacent ?x ?yS S ?x ?y) (index ?x) (++ ?y ?yS))
+
+(<= (adjacent ?xW ?yN NW ?x ?y) (++ ?xW ?x) (++ ?yN ?y))
+(<= (adjacent ?xE ?yN NE ?x ?y) (++ ?x ?xE) (++ ?yN ?y))
+(<= (adjacent ?xW ?yS SW ?x ?y) (++ ?xW ?x) (++ ?y ?yS))
+(<= (adjacent ?xE ?yS SE ?x ?y) (++ ?x ?xE) (++ ?y ?yS))
+
+(<= (legal t noop) (true (control d)))
+(<= (legal d noop) (true (control t)))
+(<= (legal t (move ?xNew ?yNew ?x ?y)) (true (control t)) (true (cell ?x ?y t)) (adjacent ?xNew ?yNew ?dir ?x ?y) (true (cell ?xNew ?yNew b)))
+(<= (legal d (move ?xNew ?yNew ?x ?y)) (true (control d)) (true (cell ?x ?y d)) (adjacent ?xNew ?yNew ?dir ?x ?y) (true (cell ?xNew ?yNew b)))
+
+; mark new player
+(<= (next (cell ?x ?y ?p)) (does ?p (move ?x ?y ?xOld ?yOld)) (adjacent ?x ?y ?dir ?xOld ?yOld))
+; mark old blank
+(<= (next (cell ?xOld ?yOld b)) (does ?p (move ?x ?y ?xOld ?yOld)) (adjacent ?x ?y ?dir ?xOld ?yOld)) 
+(<= (next (cell ?x ?y ?p)) (true (cell ?x ?y ?p)) (not (does ?p (move ?xNew ?yNew ?x ?y))))
+(<= (next (cell ?x ?y ?p)) (true (cell ?x ?y ?p)) (not (does ?p (move ?x ?y ?xOld ?yOld))))
+
+(<= dogMove (adjacent ?xNew ?yNew ?dir ?x ?y) (true (cell ?x ?y d)) (true (cell ?xNew ?yNew b)))
+(<= tigerMove (adjacent ?xNew ?yNew ?dir ?x ?y) (true (cell ?x ?y t)) (true (cell ?xNew ?yNew b)))
+(<= terminal (true (control t)) (not (tigerMove)))
+(<= terminal (true (control d)) (not (dogMove)))
+(<= terminal (true (step 5)))
+
+(init (step 1))
+(<= (next (step 2)) (true (step 1)))
+(<= (next (step 3)) (true (step 2)))
+(<= (next (step 4)) (true (step 3)))
+(<= (next (step 5)) (true (step 4)))
+
+(<= (goal d 100))
+(<= (goal t 0))

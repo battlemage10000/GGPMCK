@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
+
 import org.junit.Test;
 
 import prover.GdlRuleSet;
+import prover.Model;
 import translator.MckFormat;
 import translator.MckTranslator;
 import util.GdlParser;
@@ -24,8 +26,9 @@ public class TranslatorTest {
 	private String tictactoeGame = "res/gdl/tictactoe.kif";
 	private String kriegtictactoeGame = "res/gdlii/KriegTicTacToe.gdl";
 	private String biddingtictactoeGame = "res/gdl/bidding-tictactoe.gdl.txt";
+	private String tigerVsDogsGame = "tigerVsDogs.gdl";
 
-	@Test
+	//@Test
 	public void testFormatMckNodeMethod() {
 		// case 1
 		GdlNode node = GdlParser.parseString("(sees player1 (move 1))").getChildren().get(0);
@@ -48,7 +51,7 @@ public class TranslatorTest {
 		assertThat(MckFormat.formatMckNode(node), is("plusplus_1_2"));
 	}
 	
-	@Test
+	//@Test
 	public void testFormatClauseMethod() throws Exception{
 		// case 1
 		String GDL_STRING = 
@@ -92,7 +95,7 @@ public class TranslatorTest {
 		assertThat(MckFormat.formatClause(Collections.emptySet(), ruleSet, (GdlLiteral)headNode, false, true), is("step_4 := (step_3);"));
 	}
 
-	@Test
+	//@Test
 	public void testMontyHallTranslation() throws GDLSyntaxException{
 		try {
 			GdlNode mhRoot = GdlParser.parseFile(montyHallGame);
@@ -119,7 +122,7 @@ public class TranslatorTest {
 		}
 	}
 	
-	@Test
+	//@Test
 	public void testTicTacToeTranslation() throws IOException, URISyntaxException, GDLSyntaxException {
 		GdlNode tttRoot = GdlParser.parseFile(tictactoeGame);
 		tttRoot = GdlParser.groundGdl(tttRoot, GdlParser.constructDomainGraph(tttRoot));
@@ -133,7 +136,7 @@ public class TranslatorTest {
 		assertThat(tttTranslation, is(not("")));
 	}
 	
-	@Test
+	//@Test
 	public void testKriegTicTacToeTranslation() throws IOException, URISyntaxException, GDLSyntaxException {
 		GdlNode ktttRoot = GdlParser.parseFile(kriegtictactoeGame);
 		ktttRoot = GdlParser.groundGdl(ktttRoot, GdlParser.constructDomainGraph(ktttRoot));
@@ -148,7 +151,7 @@ public class TranslatorTest {
 		assertThat(ktttTranslation, is(not("")));
 	}
 	
-	@Test
+	//@Test
 	public void testBiddingTicTacToeTranslation() throws IOException, URISyntaxException, GDLSyntaxException {
 		GdlNode btttRoot = GdlParser.parseFile(biddingtictactoeGame);
 		btttRoot = GdlParser.groundGdl(btttRoot, GdlParser.constructDomainGraph(btttRoot));
@@ -158,5 +161,19 @@ public class TranslatorTest {
 		MckTranslator btttTrans = new MckTranslator(btttRuleSet, false, false);
 		String btttTranslation = btttTrans.toMck();
 		assertThat(btttTranslation, is(not("")));
+	}
+	
+	@Test
+	public void testTigerVsDogs() throws IOException, URISyntaxException, GDLSyntaxException{
+		GdlNode tvdRoot = GdlParser.parseFile(tigerVsDogsGame);
+		GdlRuleSet tvdRuleSet = GdlParser.groundGdlToRuleSet(tvdRoot, GdlParser.constructDomainGraph(tvdRoot));
+		//System.out.println(tvdRuleSet.toGdlOrdered());
+		tvdRuleSet.cullVariables(false);
+		System.out.println(tvdRuleSet.toGdlOrdered());
+		
+		Model init = tvdRuleSet.generateInitialModel();
+		System.out.println("IsTerminal: " + init.contains("terminal"));
+		System.out.println(init.getModel());
+		System.out.println(tvdRuleSet.getOldSet().toString());
 	}
 }
