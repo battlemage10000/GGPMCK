@@ -73,6 +73,7 @@ public class GdlRuleSet {
 					if (!literalSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
 						literalSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
 					}
+					//ruleSet.put(node.toString(), new HashSet<Set<String>>());
 				} else {
 					// Non-init facts added to tautology set and rule set as
 					// empty body clauses
@@ -256,7 +257,6 @@ public class GdlRuleSet {
 		return stratumMap;
 	}
 	
-
 	public int computeStratum(String headNode) {
 		return computeStratum(headNode, new ArrayDeque<String>());
 	}
@@ -575,6 +575,10 @@ public class GdlRuleSet {
 	public String toGdl() {
 		StringBuilder gdl = new StringBuilder();
 
+		for (String init : initialSet) {
+			gdl.append(System.lineSeparator() + "(init " + init + ")");
+		}
+		
 		for (String headNode : ruleSet.keySet()) {
 			Set<Set<String>> rule = ruleSet.get(headNode);
 			if (rule == null) {
@@ -602,9 +606,19 @@ public class GdlRuleSet {
 	public String toGdlOrdered(){
 		StringBuilder gdl = new StringBuilder();
 
+		int stratum = 0;
+		gdl.append(System.lineSeparator() + "; stratum: " + stratum);
+		for (String init : initialSet) {
+			gdl.append(System.lineSeparator() + "(init " + init + ")");
+		}
+		
 		PriorityQueue<String> orderedSet = getOrderedSet();
 		while (!orderedSet.isEmpty()) {
 			String headNode = orderedSet.poll();
+			if (stratumMap.get(headNode) > stratum) {
+				stratum = stratumMap.get(headNode);
+				gdl.append(System.lineSeparator() + "; stratum: " + stratum);
+			}
 			Set<Set<String>> rule = ruleSet.get(headNode);
 			if (rule == null) {
 				continue;
