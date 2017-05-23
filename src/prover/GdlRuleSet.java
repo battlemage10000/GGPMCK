@@ -248,20 +248,38 @@ public class GdlRuleSet {
 		return clause;
 	}
 	
+	
 	public Map<String, Integer> generateStratumMap(){
+		HashSet<String> nextSet = new HashSet<String>();
 		for (String head : ruleSet.keySet()) {
-			if (!stratumMap.containsKey(head)) {
-				stratumMap.put(head, computeStratum(head));
+			if (head.length() > NEXT_PREFIX.length() && head.substring(0, NEXT_PREFIX.length()).equals(NEXT_PREFIX)) {
+				nextSet.add(head);
 			}
 		}
+		
+		for (String head : ruleSet.keySet()) {
+			if (!stratumMap.containsKey(head)) {
+				int stratum = computeStratum(head, new ArrayDeque<String>(), nextSet);
+				if (stratum > -3) {
+					stratumMap.put(head, stratum);
+				}
+			}
+		}
+		
+		for (String next : nextSet) {
+			if (!stratumMap.containsKey(next)) {
+				int stratum = computeStratum(next, new ArrayDeque<String>(), new HashSet<String>());
+				if (stratum > stratumMap.get(next)) {
+					stratumMap.put(next, stratum);
+				}
+			}
+		}
+		
+		//System.out.println(nextSet);
 		return stratumMap;
 	}
 	
-	public int computeStratum(String headNode) {
-		return computeStratum(headNode, new ArrayDeque<String>());
-	}
-	
-	public int computeStratum(String headNode, Deque<String> stack) {
+	public int computeStratum(String headNode, Deque<String> stack, Set<String> nextSet) {
 		if (headNode == null || (headNode.length() > INIT_PREFIX.length() && headNode.substring(0, INIT_PREFIX.length()).equals(INIT_PREFIX))) {
 			return -2; // Null parameter
 		}
@@ -280,45 +298,79 @@ public class GdlRuleSet {
 			return 0;
 		} else {
 			int max = -2;
+			Set<String> trueSet = new HashSet<String>();
 			
 			for (Set<String> disjunct : rule) {
-				for (String literal : disjunct) {
+				for (String predicate : disjunct) {
 					// Prune not from literal
-					while (literal.length() >= NOT_PREFIX.length()
-							&& literal.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
-						literal = literal.substring(NOT_PREFIX.length(), literal.length() - 1);
+					while (predicate.length() >= NOT_PREFIX.length()
+							&& predicate.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
+						predicate = predicate.substring(NOT_PREFIX.length(), predicate.length() - 1);
 					}
-					if (stratumMap.containsKey(literal)) {
+					//if (stratumMap.containsKey(literal)) {
 						// If stratum known
-						if (stratumMap.get(literal) > max) {
-							max = stratumMap.get(literal);
+					//	if (stratumMap.get(literal) > max) {
+					//		max = stratumMap.get(literal);
+					//	}
+					//} else 
+					if (nextSet.contains(predicate)) {
+						if (!nextSet.contains(headNode)) {
+							nextSet.add(headNode);
 						}
-					} else if (literal.length() >= DOES_PREFIX.length()
-							&& literal.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
+						return -3;
+					}
+					if (predicate.length() >= DOES_PREFIX.length()
+							&& predicate.substring(0, DOES_PREFIX.length()).equals(DOES_PREFIX)) {
 						// Stratum unknown, does is 0
-						stratumMap.put(literal, 0);
+						stratumMap.put(predicate, 0);
 						if (max < 0) {
 							max = 0;
 						}
-					} else if (literal.length() >= TRUE_PREFIX.length()
-							&& literal.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
+					} else if (predicate.length() >= TRUE_PREFIX.length()
+							&& predicate.substring(0, TRUE_PREFIX.length()).equals(TRUE_PREFIX)) {
 						// Stratum unknown, true is 0
-						stratumMap.put(literal, 0);
+						stratumMap.put(predicate, 0);
+						
 						if (max < 0) {
 							max = 0;
 						}
+						
+						String nextP = NEXT_PREFIX + predicate.substring(TRUE_PREFIX.length());
+						if (headNode.length() > NEXT_PREFIX.length() && headNode.substring(0, NEXT_PREFIX.length()).equals(NEXT_PREFIX)) {
+							if (stratumMap.containsKey(nextP) && max < stratumMap.get(nextP)) {
+								max = stratumMap.get(nextP);
+							}
+						} else {
+							for (String prev : stack) {
+								if ((prev.length() > NEXT_PREFIX.length() && prev.substring(0, NEXT_PREFIX.length()).equals(NEXT_PREFIX))) {
+									if (stratumMap.containsKey(nextP) && max < stratumMap.get(nextP)) {
+										max = stratumMap.get(nextP);
+									}
+								}
+							}
+						}
+						
+						trueSet.add(predicate);
 					} else {
 						// Stratum unknown, compute stratum(recursive)
 						stack.push(headNode);
-						int literalStratum = computeStratum(literal, stack);
+						int literalStratum = computeStratum(predicate, stack, nextSet);
 						stack.pop(); // pop head node
-						if (literalStratum != 0 || !oldSet.contains(literal)) {
-							stratumMap.put(literal, literalStratum);
+						
+						if (literalStratum != 0 || !oldSet.contains(predicate)) {
+							stratumMap.put(predicate, literalStratum);
 						}
 						if (literalStratum > max) {
 							max = literalStratum;
 						}
 					}
+				}
+			}
+			
+			for (String trueP : trueSet) {
+				String nextP = NEXT_PREFIX + trueP.substring(TRUE_PREFIX.length());
+				if (stratumMap.containsKey(nextP) && stratumMap.get(nextP) <= max + 1) {
+					stratumMap.put(nextP, max + 2);
 				}
 			}
 			
