@@ -349,6 +349,13 @@ public class GdlRuleSet {
 								}
 							}
 						}
+						stack.push(headNode);
+						int literalStratum = computeStratum(nextP, stack, nextSet);
+						stack.pop(); // pop head node
+
+						if (literalStratum > max) {
+							max = literalStratum;
+						}
 						
 						trueSet.add(predicate);
 					} else {

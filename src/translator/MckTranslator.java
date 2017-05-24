@@ -176,6 +176,8 @@ public class MckTranslator {
 			}
 		}
 		
+		ruleSet.generateStratumMap();
+		
 		// Initialize oldSet from ruleSet
 		System.out.println(ruleSet.getOldSet().size() + " elements in old set");
 		for (String oldLit : ruleSet.getOldSet()) {
