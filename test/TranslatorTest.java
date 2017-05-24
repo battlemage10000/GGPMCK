@@ -107,14 +107,14 @@ public class TranslatorTest {
 			GdlRuleSet mhRuleSet = new GdlRuleSet((Gdl)mhRoot);
 			mhRuleSet.cullVariables(true);
 			
-			System.out.println(mhRuleSet.toGdlOrdered());
+			//System.out.println(mhRuleSet.toGdlOrdered());
 			
-			MckTranslator mhTrans = new MckTranslator(mhRuleSet, true, false);
+			MckTranslator mhTrans = new MckTranslator(mhRuleSet, false, false);
 			//mhTrans.setProver(mhProver);
 			
 			String translation = mhTrans.toMck();
 			//System.out.println("Number of contradictions: " + mhTrans.ATc.size());
-			//System.out.println(translation);
+			System.out.println(translation);
 			assertThat(translation, is(not("")));
 		}catch (URISyntaxException e){
 			e.printStackTrace();

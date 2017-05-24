@@ -336,6 +336,12 @@ public class GdlRuleSet {
 						}
 						
 						String nextP = NEXT_PREFIX + predicate.substring(TRUE_PREFIX.length());
+						if (nextP.equals(headNode)) {
+							continue;
+						}
+						if (!trueSet.contains(predicate)) {
+							trueSet.add(predicate);
+						}
 						if (headNode.length() > NEXT_PREFIX.length() && headNode.substring(0, NEXT_PREFIX.length()).equals(NEXT_PREFIX)) {
 							if (stratumMap.containsKey(nextP) && max < stratumMap.get(nextP)) {
 								max = stratumMap.get(nextP);
@@ -349,15 +355,7 @@ public class GdlRuleSet {
 								}
 							}
 						}
-						stack.push(headNode);
-						int literalStratum = computeStratum(nextP, stack, nextSet);
-						stack.pop(); // pop head node
-
-						if (literalStratum > max) {
-							max = literalStratum;
-						}
 						
-						trueSet.add(predicate);
 					} else {
 						// Stratum unknown, compute stratum(recursive)
 						stack.push(headNode);
@@ -379,6 +377,13 @@ public class GdlRuleSet {
 				if (stratumMap.containsKey(nextP) && stratumMap.get(nextP) <= max + 1) {
 					stratumMap.put(nextP, max + 2);
 				}
+						stack.push(headNode);
+						int literalStratum = computeStratum(nextP, stack, nextSet);
+						stack.pop(); // pop head node
+
+						if (literalStratum > max) {
+							max = literalStratum;
+						}
 			}
 			
 			return max + 1;
