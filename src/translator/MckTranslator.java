@@ -435,7 +435,17 @@ public class MckTranslator {
 			reset_initial.append(System.lineSeparator() + "  [] otherwise ->");
 			reset_initial.append(System.lineSeparator() + "  begin");
 		}
-		if (!useRuleSet) {
+		if (useRuleSet) {
+			//for (String init : ruleSet.generateInitialModel().getModel()) {
+			//	if (init.length() > GdlRuleSet.NEXT_PREFIX.length() && !init.substring(0, GdlRuleSet.NEXT_PREFIX.length()).equals(GdlRuleSet.NEXT_PREFIX)) {
+			//		if (ruleSet.getRule(init) == null && ruleSet.getStratum(init) == 0) {
+			//			reset_initial.append(System.lineSeparator() + "  " + MckFormat.formatMckNode(GdlParser.parseString(init).getChild(0)) + " := " + MckFormat.FALSE + ";");
+			//		} else if (ruleSet.getStratum(init) == 0 || (ruleSet.getRule(init) != null && !ruleSet.getRule(init).equals(Collections.emptySet()))) {
+			//			//reset_initial.append(System.lineSeparator() + "  " + MckFormat.formatMckNode(GdlParser.parseString(init).getChild(0)) + " := " + MckFormat.FALSE + ";");
+			//		}
+			//	}
+			//}
+		} else {
 			for (String initial : ATi) {
 				graph.toString();
 				if (graph.getStratum(initial) == 0 || graph.getStratum(MckFormat.TRUE_PREFIX + initial + ")") == 0) {
@@ -561,7 +571,20 @@ public class MckTranslator {
 				}
 			}
 		}*/
-
+		for (String init : ruleSet.generateInitialModel().getModel()) {
+			if (init.length() > GdlRuleSet.NEXT_PREFIX.length() && !init.substring(0, GdlRuleSet.NEXT_PREFIX.length()).equals(GdlRuleSet.NEXT_PREFIX)) {
+				if (init.length() > GdlRuleSet.TRUE_PREFIX.length() && init.substring(0, GdlRuleSet.TRUE_PREFIX.length()).equals(GdlRuleSet.TRUE_PREFIX)) {
+					init = init.substring(GdlRuleSet.TRUE_PREFIX.length(), init.length() - 1);
+				}
+				if (ruleSet.getRule(init) == null && ruleSet.getRule(GdlRuleSet.NEXT_PREFIX + init + ")") == null) {
+					reset_initial.append(System.lineSeparator() + "  " + MckFormat.formatMckNode(GdlParser.parseString(init).getChild(0)) + " := " + MckFormat.FALSE + ";");
+				}
+			}
+		}
+		if (reset_initial.length() > 1 && reset_initial.charAt(reset_initial.length()-1) == ';') {
+			state_trans.append(System.lineSeparator());
+			state_trans.append(reset_initial);
+		}
 		// Conclusion
 		state_trans.deleteCharAt(state_trans.length() - 1); // Remove last ';'
 		state_trans.append(System.lineSeparator() + MckFormat.END);
