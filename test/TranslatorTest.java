@@ -177,4 +177,23 @@ public class TranslatorTest {
 		//System.out.println("Initial Set: " + init.getModel());
 		//System.out.println("Old Set: " + tvdRuleSet.getOldSet().toString());
 	}
+	
+	
+	public static class TranslatorTester extends MckTranslator {
+		TranslatorTester(GdlRuleSet ruleSet, boolean useDefine, boolean debug){
+			super(ruleSet, useDefine, debug);
+		}
+		public String generateEnvironmentVariables(){
+			return super.generateEnvironmentVariables();
+		}
+		public String generateAgents(){
+			return super.generateAgents();
+		}
+		public String generateInitialConditions(){
+			return super.generateInitialConditions(true);
+		}
+		public String generateStateTransitions() throws Exception{
+			return super.generateStateTransitions(true);
+		}
+	}
 }
