@@ -211,12 +211,17 @@ public class Main {
 				printTimeDiff(startTime, System.nanoTime());
 			}
 
+			int dnfRuleSetSize=0, dnfRuleSetSizeAfterReduction=0;
 			if (useProverSwitch) {
 				System.out.print("Minimizing game ... ");
 				try {
 					if (ruleSet == null) {
 						ruleSet = new GdlRuleSet((Gdl)root, debugSwitch);
+						dnfRuleSetSize = ruleSet.getRuleSet().size();
+						ruleSet.cullVariables(false);
+						dnfRuleSetSizeAfterReduction = ruleSet.getRuleSet().size();
 						ruleSet.cullVariables(true);
+						System.out.println("Number of removed contradictions: " + (dnfRuleSetSizeAfterReduction - ruleSet.getRuleSet().size()));
 					}
 				} catch (GDLSyntaxException e) {
 					useProverSwitch = false;
@@ -273,6 +278,10 @@ public class Main {
 					translator = new MckTranslator(ruleSet, useDefineSwitch, debugSwitch);
 					//translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
 				}
+				
+				translator.setOutputHeader("Number of rules in RuleSet" + dnfRuleSetSize + System.lineSeparator()
+						+ "Number of rules in RuleSet after minimization" + dnfRuleSetSizeAfterReduction);
+				
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {
 					outputDir.mkdir();

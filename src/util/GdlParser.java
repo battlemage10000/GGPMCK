@@ -403,7 +403,7 @@ public class GdlParser {
 		graph.addEdge(GdlNode.INPUT, 1, GdlNode.DOES, 1);
 		graph.addEdge(GdlNode.INPUT, 2, GdlNode.DOES, 2);
 		
-		int totalRules = 0;
+		long totalRules = 0;
 		for (GdlNode clause : root.getChildren()) {
 			int resultingRules = 1;
 			for (GdlNode variable : variablesInTree(clause)) {

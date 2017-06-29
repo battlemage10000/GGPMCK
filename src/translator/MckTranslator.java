@@ -25,6 +25,8 @@ import util.graph.DependencyGraph;
  * @author Darrel Sadanand
  */
 public class MckTranslator {
+	private String outputHeader="";
+	
 	// Variables
 	private Set<String> AT;
 	// Variables found in true and/or next
@@ -55,9 +57,8 @@ public class MckTranslator {
 	private boolean ONE_LINE_TRANSITIONS = true;
 	private boolean SHOW_PRUNED_VARS = true;
 	private boolean SYNCHRONIZED_COLLECTIONS = false;
-	private boolean ASSIGNMENT_IN_ACTION = false; // assign did_role in protocol
-													// instead of as a state
-													// transition
+	// assign did_role in protocol instead of as a state transition
+	private boolean ASSIGNMENT_IN_ACTION = false; 
 	private boolean DERIVE_INITIAL_CONDITIONS = true;
 	private boolean TRANSITIONS_WITH_DEFINE = false;
 	private boolean USE_PROVER = false;
@@ -186,6 +187,25 @@ public class MckTranslator {
 	}
 
 	/**
+	 * This text will be commented and added to the output. It is a place for declaring additional information to the output. Get the current header text.
+	 * @return outputHeader
+	 */
+	public String getOutputHeader(){
+		return outputHeader;
+	}
+	
+	/**
+	 * Overwrite the current header text.
+	 * @param headerText
+	 */
+	public void setOutputHeader(String headerText){
+		if (headerText != null) {
+			this.outputHeader = headerText;
+		}
+	}
+	
+	
+	/**
 	 * Compile all sections of mck to output
 	 * 
 	 * @return
@@ -227,8 +247,14 @@ public class MckTranslator {
 		mck.append(System.lineSeparator() + "-- DERIVE_INITIAL_CONDITIONS: " + DERIVE_INITIAL_CONDITIONS);
 		mck.append(System.lineSeparator() + "-- TRANSITIONS_WITH_DEFINE: " + TRANSITIONS_WITH_DEFINE);
 		mck.append(System.lineSeparator() + "-- USE_PROVER: " + USE_PROVER);
-
 		mck.append(System.lineSeparator());
+
+		if (!outputHeader.isEmpty()) {
+			outputHeader.replace(System.lineSeparator(), System.lineSeparator() + "-- ");
+			mck.append(System.lineSeparator() + outputHeader);
+			mck.append(System.lineSeparator());
+		}
+		
 		mck.append(System.lineSeparator() + "-- Environment Variables");
 		mck.append(System.lineSeparator() + generateEnvironmentVariables());
 		mck.append(System.lineSeparator());
