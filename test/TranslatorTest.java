@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import prover.GdlRuleSet;
 import prover.Model;
+import translator.Main;
 import translator.MckFormat;
 import translator.MckTranslator;
 import util.GdlParser;
@@ -178,6 +179,16 @@ public class TranslatorTest {
 		//System.out.println("Old Set: " + tvdRuleSet.getOldSet().toString());
 	}
 	
+	@Test
+	public void mainTest(){
+		System.out.println(System.lineSeparator()+"montyhall");
+		Main.main(new String[]{"-i", "res/gdlii/MontyHall.gdl", "-o", "montyHallMain.mck", "--use-prover"});
+		System.out.println(System.lineSeparator()+"kttt");
+		Main.main(new String[]{"-i", "res/gdlii/kriegtictactoe.gdl", "-o", "ktttMain.mck", "--use-prover"});
+		System.out.println(System.lineSeparator()+"guess6");
+		Main.main(new String[]{"-i", "res/gdlii/guess6.gdl", "-o", "g6Main.mck", "--use-prover"});
+		System.out.println(System.lineSeparator());
+	}
 	
 	public static class TranslatorTester extends MckTranslator {
 		TranslatorTester(GdlRuleSet ruleSet, boolean useDefine, boolean debug){
