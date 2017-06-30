@@ -250,7 +250,6 @@ public class MckTranslator {
 		mck.append(System.lineSeparator());
 
 		if (!outputHeader.isEmpty()) {
-			outputHeader.replace(System.lineSeparator(), System.lineSeparator() + "-- ");
 			mck.append(System.lineSeparator() + outputHeader);
 			mck.append(System.lineSeparator());
 		}

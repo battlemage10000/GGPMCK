@@ -286,7 +286,7 @@ public class GdlRuleSet {
 		if (stack.contains(headNode)) {
 			if (!oldSet.contains(headNode)) {
 				oldSet.add(headNode);
-				System.out.println("Oldify " + headNode);
+				//System.out.println("Oldify " + headNode);
 			}
 			return 0;
 		}
