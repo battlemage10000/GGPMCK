@@ -132,8 +132,13 @@ public class Main {
 			// Scan and parse gdl
 			List<String> tokens;
 			GdlNode root = GdlNodeFactory.createGdl();
-			// Initialize prover
 			GdlRuleSet ruleSet = null;
+			File outputDir = new File(new File(inputFilePath).getName() + ".out");
+			int dnfRuleSetSize = 0;
+			int minDnfRuleSetSize = 0;
+			long groundedRuleSetSize = 0;
+			
+			// Initialize prover
 			try {
 				System.out.print("Parsing ... ");
 				if (inputFilePath.equals("")) {
@@ -151,15 +156,27 @@ public class Main {
 				e.printStackTrace();
 			}
 
-			File outputDir = new File(new File(inputFilePath).getName() + ".out");
-			int dnfRuleSetSize=0;
 
 			// Use internal grounder
 			if (!noGroundSwitch) {
 				System.out.print("Grounding ... ");
 				//System.out.print("construct domain graph ... ");
-				DomainGraph domain = GdlParser.constructDomainGraph(root);
+				final DomainGraph domain = GdlParser.constructDomainGraph(root);
 				System.out.print("constructed domain graph ... ");
+				
+				// Estimate size of grounded game
+				for (GdlNode clause : root.getChildren()) {
+					int resultingRules = 1;
+					if (GdlParser.isVariableInTree(clause)) {
+						for (GdlNode variable : GdlParser.variablesInTree(clause)) {
+							resultingRules *= GdlParser.getVariableDomain(variable.getAtom(), clause, domain).size();
+						}
+					}
+					groundedRuleSetSize += resultingRules;
+				}
+				//System.out.println("Ground from " + root.getChildren().size() + " -> " + totalRules);
+				
+				
 				if (outputDotSwitch) {
 					outputDir.mkdir();
 					GdlParser.saveFile(domain.dotEncodedGraph(), outputDir.getName() + "/domain.dot");
@@ -170,6 +187,7 @@ public class Main {
 						ruleSet = GdlParser.groundGdlToRuleSet(root, domain);
 						dnfRuleSetSize = ruleSet.getRuleSet().size();
 						ruleSet.cullVariables(true);
+						minDnfRuleSetSize = ruleSet.getRuleSet().size();
 					} else {
 						root = GdlParser.groundGdl(root, domain);
 					}
@@ -178,7 +196,7 @@ public class Main {
 					e.printStackTrace();
 				}
 
-				System.out.println("finished");
+				System.out.println("gounding finished");
 				printTimeDiff(startTime, System.nanoTime());
 			}
 			
@@ -277,7 +295,9 @@ public class Main {
 					//translator = new MckTranslator(root, useDefineSwitch, debugSwitch, ruleSet);
 				}
 				
-				translator.setOutputHeader("-- Number of rules in RuleSet: " + dnfRuleSetSize + System.lineSeparator());
+				translator.setOutputHeader("-- Number of clauses after Grounding: " + groundedRuleSetSize + System.lineSeparator() 
+						+ "-- Number of rules in RuleSet: " + dnfRuleSetSize + System.lineSeparator() 
+						+ "-- Number of rules in RuleSet after Minimization: " + minDnfRuleSetSize + System.lineSeparator());
 				
 				System.out.print("Generating mck ... ");
 				if (outputFileSwitch) {

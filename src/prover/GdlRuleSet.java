@@ -28,7 +28,7 @@ public class GdlRuleSet {
 	public static String FALSE = "?FALSE";
 	public static String TRUE = "?TRUE";
 
-	private Set<String> literalSet; // L
+	private Set<String> predicateSet; // L
 	private Set<String> initialSet; // I
 	private Set<String> tautologySet; // T
 	private Set<String> contradictionSet; // C
@@ -37,13 +37,16 @@ public class GdlRuleSet {
 	private Set<String> oldSet;
 
 	public boolean debug;
+	public int numRulesUncompressed = 0;
+	public int numRulesCompressed = 0;
+	public int numRulesMinimized = 0;
 	//public boolean CULL_NULL_RULES; // Remove [headNode -> null] rules from
 									// ruleset
 
 	public GdlRuleSet() {
 		debug = true;
 		oldSet = new HashSet<String>();
-		literalSet = new HashSet<String>();
+		predicateSet = new HashSet<String>();
 		initialSet = new HashSet<String>();
 		tautologySet = new HashSet<String>();
 		contradictionSet = new HashSet<String>();
@@ -61,6 +64,9 @@ public class GdlRuleSet {
 	}
 
 	public void joinRuleSet(Gdl game) throws GDLSyntaxException {
+		
+		numRulesUncompressed+=game.getChildren().size();
+		
 		for (GdlNode node : game.getChildren()) {
 			if (node instanceof GdlLiteral) {
 				// These are facts
@@ -70,19 +76,20 @@ public class GdlRuleSet {
 					if (!initialSet.contains(node.getChild(0).toString())) {
 						initialSet.add((node.getChild(0).toString()).intern());
 					}
-					if (!literalSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
-						literalSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
-					}
+					//TODO: Confirm if commenting this transformation breaks anything
+					//if (!predicateSet.contains(TRUE_PREFIX + node.getChild(0).toString() + ")")) {
+					//	predicateSet.add((TRUE_PREFIX + node.getChild(0).toString() + ")").intern());
+					//}
 					//ruleSet.put(node.toString(), new HashSet<Set<String>>());
 				} else {
 					// Non-init facts added to tautology set and rule set as
 					// empty body clauses
 					ruleSet.put(node.toString(), new HashSet<Set<String>>());
 
-					if (!literalSet.contains(node.toString())) {
-						literalSet.add(node.toString().intern());
-					}
 				}
+				//if (!predicateSet.contains(node.toString())) {
+					predicateSet.add(node.toString().intern());
+				//}
 
 			} else if (node instanceof GdlRule) {
 				// These are clauses
@@ -106,9 +113,9 @@ public class GdlRuleSet {
 					}
 
 					// Add striped literal to vocab set
-					if (!literalSet.contains(literal.toString())) {
-						literalSet.add(literal.toString().intern());
-					}
+					//if (!predicateSet.contains(literal.toString())) {
+						predicateSet.add(literal.toString().intern());
+					//}
 
 					// Evaluate distinct but don't remove yet
 					if (literal.getAtom().equals(GdlNode.DISTINCT)) {
@@ -117,10 +124,16 @@ public class GdlRuleSet {
 						}
 					}
 				}
+				
+				//if (!predicateSet.contains(node.getChild(0).toString())) {
+					predicateSet.add(headNode.toString().intern());
+				//}
+				
 				ruleSet.get(headNode.toString()).add(clauseLiteralSet);
 			} else {
 				throw new GDLSyntaxException();
 			}
+			numRulesCompressed = ruleSet.size();
 		}
 	}
 	
@@ -632,8 +645,8 @@ public class GdlRuleSet {
 		return contradictionSet;
 	}
 
-	public Set<String> getLiteralSet() {
-		return literalSet;
+	public Set<String> getPredicateSet() {
+		return predicateSet;
 	}
 
 	public String toGdl() {
@@ -708,8 +721,8 @@ public class GdlRuleSet {
 
 	public String debug() {
 		StringBuilder debug = new StringBuilder();
-		debug.append(System.lineSeparator() + "Literals: " + literalSet.toString());
-		for (String literal : literalSet) {
+		debug.append(System.lineSeparator() + "Literals: " + predicateSet.toString());
+		for (String literal : predicateSet) {
 			if (ruleSet.get(literal) == null) {
 				if (!contradictionSet.contains(literal)) {
 					contradictionSet.add(literal);

@@ -160,20 +160,48 @@ public class MckTranslator {
 		}
 		
 		// getLiteralSet is non-negative only
-		for (String literal : ruleSet.getLiteralSet()) {
-			GdlNode literalNode = GdlParser.parseString(literal).getChild(0);
-			if (ruleSet.getRuleSet().get(literal) == null) {
-				if (literalNode.getAtom().equals(GdlNode.TRUE)) {
-					ATf.add(MckFormat.formatMckNode(literalNode));
-				} else if (!literalNode.getAtom().equals(GdlNode.DOES)) {
-					ATc.add(MckFormat.formatMckNode(literalNode));
+		for (String predicate : ruleSet.getPredicateSet()) {
+			GdlNode predicateNode = GdlParser.parseString(predicate).getChild(0);
+			if (ruleSet.getRuleSet().get(predicate) == null) {
+				if (predicateNode.getAtom().equals(GdlNode.TRUE)) {
+					ATf.add(MckFormat.formatMckNode(predicateNode));
+				} else if (!predicateNode.getAtom().equals(GdlNode.DOES)) {
+					ATc.add(MckFormat.formatMckNode(predicateNode));
 				}
-			} else if (ruleSet.getRuleSet().get(literal).isEmpty()) {
-				if (!literalNode.getAtom().equals(GdlNode.TRUE) && !literalNode.getAtom().equals(GdlNode.DOES)) {
-					ATt.add(MckFormat.formatMckNode(literalNode));
+			} else if (ruleSet.getRuleSet().get(predicate).isEmpty()) {
+				if (!predicateNode.getAtom().equals(GdlNode.TRUE) && !predicateNode.getAtom().equals(GdlNode.DOES)) {
+					ATt.add(MckFormat.formatMckNode(predicateNode));
 				}
 			} else {
-				ATh.add(MckFormat.formatMckNode(literalNode));
+				ATh.add(MckFormat.formatMckNode(predicateNode));
+			}
+		}
+		
+		//if (!DEBUG) {
+			// Filter out tautologies and contradictions
+			for (String tautology : ATt) {
+				if (tautology.length() >= 4 && tautology.substring(0, 4).equals(GdlNode.SEES)) {
+					continue;
+				} else if (tautology.length() >= 5 && tautology.substring(0, 5).equals(GdlNode.LEGAL)) {
+					continue;
+				}
+				if (!ATi.contains(tautology)) {
+					ATi.add(tautology);
+				}
+				if (AT.contains(tautology)) {
+					AT.remove(tautology);
+				}
+			}
+		//}
+
+		for (String contradiction : ATc) {
+			if (contradiction.length() >= 4 && contradiction.substring(0, 4).equals(GdlNode.SEES)) {
+				continue;
+			} else if (contradiction.length() >= 5 && contradiction.substring(0, 5).equals(GdlNode.LEGAL)) {
+				continue;
+			}
+			if (AT.contains(contradiction)) {
+				AT.remove(contradiction);
 			}
 		}
 		
