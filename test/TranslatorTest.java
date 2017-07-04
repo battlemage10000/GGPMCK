@@ -187,6 +187,8 @@ public class TranslatorTest {
 		Main.main(new String[]{"-i", "res/gdlii/kriegtictactoe.gdl", "-o", "ktttMain.mck", "--use-prover"});
 		System.out.println(System.lineSeparator()+"guess6");
 		Main.main(new String[]{"-i", "res/gdlii/guess6.gdl", "-o", "g6Main.mck", "--use-prover"});
+		System.out.println(System.lineSeparator()+"transit");
+		Main.main(new String[]{"-i", "res/gdlii/transit.gdl", "-o", "transMain.mck", "--use-prover"});
 		System.out.println(System.lineSeparator());
 	}
 	

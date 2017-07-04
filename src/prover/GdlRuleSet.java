@@ -282,16 +282,22 @@ public class GdlRuleSet {
 		for (String next : nextSet) {
 			if (!stratumMap.containsKey(next)) {
 				int stratum = computeStratum(next, new ArrayDeque<String>(), new HashSet<String>());
-				if (stratum > stratumMap.get(next)) {
+				if (stratumMap.get(next) == null || stratum > stratumMap.get(next)) {
 					stratumMap.put(next, stratum);
 				}
 			}
 		}
 		
-		//System.out.println(nextSet);
 		return stratumMap;
 	}
 	
+	/**
+	 * Computes the stratum of a predicate by evaluating max stratum of body plus one. If body literal stratum not known then recursively compute it's stratum as well.
+	 * @param headNode
+	 * @param stack
+	 * @param nextSet
+	 * @return
+	 */
 	public int computeStratum(String headNode, Deque<String> stack, Set<String> nextSet) {
 		if (headNode == null || (headNode.length() > INIT_PREFIX.length() && headNode.substring(0, INIT_PREFIX.length()).equals(INIT_PREFIX))) {
 			return -2; // Null parameter
@@ -320,12 +326,7 @@ public class GdlRuleSet {
 							&& predicate.substring(0, NOT_PREFIX.length()).equals(NOT_PREFIX)) {
 						predicate = predicate.substring(NOT_PREFIX.length(), predicate.length() - 1);
 					}
-					//if (stratumMap.containsKey(literal)) {
-						// If stratum known
-					//	if (stratumMap.get(literal) > max) {
-					//		max = stratumMap.get(literal);
-					//	}
-					//} else 
+					
 					if (nextSet.contains(predicate)) {
 						if (!nextSet.contains(headNode)) {
 							nextSet.add(headNode);
@@ -385,18 +386,25 @@ public class GdlRuleSet {
 				}
 			}
 			
+			// Each true in body is assigned corresponding next value
 			for (String trueP : trueSet) {
 				String nextP = NEXT_PREFIX + trueP.substring(TRUE_PREFIX.length());
-				if (stratumMap.containsKey(nextP) && stratumMap.get(nextP) <= max + 1) {
-					stratumMap.put(nextP, max + 2);
+				int literalStratum = -3;
+				if (stratumMap.containsKey(nextP)) {
+					if (stratumMap.get(nextP) <= max + 1) {
+						stratumMap.put(nextP, max + 2);
+					}
+				} else {
+					stack.push(headNode);
+					literalStratum = computeStratum(nextP, stack, nextSet);
+					stack.pop(); // pop head node
+					stratumMap.put(nextP, literalStratum);
 				}
-						stack.push(headNode);
-						int literalStratum = computeStratum(nextP, stack, nextSet);
-						stack.pop(); // pop head node
 
-						if (literalStratum > max) {
-							max = literalStratum;
-						}
+				
+				if (literalStratum > max) {
+					max = literalStratum;
+				}
 			}
 			
 			return max + 1;
@@ -487,6 +495,7 @@ public class GdlRuleSet {
 		return new Model(trueLiterals);
 	}
 	
+	/*
 	@Deprecated
 	public Model generateInitialModel(boolean thing) {
 		Set<String> trueLiterals = new HashSet<String>();
@@ -610,6 +619,7 @@ public class GdlRuleSet {
 		}
 		return false;
 	}
+	*/
 
 	public PriorityQueue<String> getOrderedSet(){
 		if (stratumMap == null ||  stratumMap.isEmpty()) {
