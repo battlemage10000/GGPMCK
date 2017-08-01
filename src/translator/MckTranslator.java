@@ -657,7 +657,10 @@ public class MckTranslator {
 
 		// Specification
 		for (String role : ATd.keySet()) {
-		spec.append(System.lineSeparator() + "--spec_obs = AG(");
+			if (role.equals("random")) {
+				continue;
+			}
+			spec.append(System.lineSeparator() + "--spec_obs = AG(");
 			for (String move : ATd.get(role)) {
 				spec.append("(legal_" + role + "_" + move + " => Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role
 						+ "_" + move + ")");
