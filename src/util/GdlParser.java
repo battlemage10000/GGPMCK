@@ -494,6 +494,8 @@ public class GdlParser {
 		for (GdlNode clause : root.getChildren()) {
 			if (!isVariableInTree(clause)) { // Variable-free so already ground
 				groundedRoot.getChildren().add(clause);
+				groundedRuleSet.joinRuleSet(groundedRoot);
+				groundedRoot = GdlNodeFactory.createGdl();
 			} else {
 				variableDomainMap = new HashMap<String, Set<String>>();
 				for (GdlNode variable : variablesInTree(clause)) {
@@ -510,9 +512,7 @@ public class GdlParser {
 				}
 			}
 		}
-		// Add all variable-free clauses
-		groundedRuleSet.joinRuleSet(groundedRoot);
-
+		
 		return groundedRuleSet;
 	}
 	
@@ -561,15 +561,15 @@ public class GdlParser {
 		Set<String> variableDomainSet = new HashSet<String>();
 		for (GdlNode node : clause) {
 			if (node.getType() == GdlType.VARIABLE && node.getAtom().equals(variable)) {
-				boolean hasMultiVarInstance = !variableDomainSet.isEmpty();
+				//boolean hasMultiVarInstance = !variableDomainSet.isEmpty();
 				
 				for (DomainGraph.Term term : graph.getDomain(node.getParent().getAtom(),
 						node.getParent().getChildren().indexOf(node) + 1)) {
-					if (hasMultiVarInstance && !term.getTerm().equals(GdlNode.DISTINCT)
-							&& !variableDomainSet.contains(term.getTerm())) {
-						System.out.println("InconsistentDomainException: Const: " + term.getTerm()
-								+ " not in domain of var: " + node.getAtom());
-					}
+					//if (hasMultiVarInstance && !term.getTerm().equals(GdlNode.DISTINCT)
+					//		&& !variableDomainSet.contains(term.getTerm())) {
+						//System.out.println("InconsistentDomainException: Const: " + term.getTerm()
+						//		+ " not in domain of var: " + node.getAtom());
+					//}
 					variableDomainSet.add(term.getTerm());
 				}
 				if (!clause.toString().contains(GdlNode.DISTINCT)) {
