@@ -21,6 +21,7 @@ public class MckFormat {
 	public static String OLD_SUFFIX = "_old";
 	public static String AND = " /\\ ";
 	public static String OR = " \\/ ";
+	public static String IMPL = " => ";
 	public static String UNDERSCORE = "_";
 	public static String TRUE = "True".intern();
 	public static String FALSE = "False".intern();

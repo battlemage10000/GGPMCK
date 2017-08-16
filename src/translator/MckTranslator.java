@@ -657,24 +657,38 @@ public class MckTranslator {
 
 		// Specification
 		spec.append(System.lineSeparator() + "-- GDL Spec");
+		
 		// Terminal
 		spec.append(System.lineSeparator() + "--spec_obs = AF terminal");
 		
 		// Playability stop -> terminal == -terminal -> -stop == -terminal -> legal in Legali
-		spec.append(System.lineSeparator() + "--spec_obs = AG(");
+		//spec.append(System.lineSeparator() + "--spec_obs = AG(");
+		//for (String role : ATd.keySet()) {
+		//	spec.append("((" + MckFormat.DOES_PREFIX + role + " == " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
+		//			+ role + ") => terminal)");
+		//	spec.append(MckFormat.AND);
+		//}
+		//spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
+		//spec.append(")");
 		for (String role : ATd.keySet()) {
-			spec.append("((" + MckFormat.DOES_PREFIX + role + " == " + MckFormat.MOVE_PREFIX + MckFormat.STOP + "_"
-					+ role + ") => terminal)");
-			spec.append(MckFormat.AND);
+			if (ATd.get(role).isEmpty()){
+				continue;
+			}
+			spec.append(System.lineSeparator() + "--spec_obs = G (neg terminal" + MckFormat.IMPL + "(");
+			for (String legal : ATd.get(role)) {
+				spec.append(GdlNode.LEGAL + MckFormat.UNDERSCORE + role + MckFormat.UNDERSCORE+ legal);
+				spec.append(MckFormat.AND);
+			}
+			spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
+			spec.append("))");
 		}
-		spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
 		
 		// Fairness
 		for (String role : ATd.keySet()) {
-			if (role.equals("random")) {
+			if (role.equals(GdlNode.RANDOM)) {
 				continue;
 			}
-			spec.append(System.lineSeparator() + "--spec_obs = neg AG(");
+			spec.append(System.lineSeparator() + "--spec_obs = neg AG (");
 			spec.append("neg goal_" + role + "_100");
 			spec.append(")");
 		}
@@ -683,44 +697,47 @@ public class MckTranslator {
 		spec.append(System.lineSeparator() + "-- GDL-II Spec");
 		// Knows terminal
 		for (String role : ATd.keySet()) {
-			if (role.equals("random")) {
+			if (role.equals(GdlNode.RANDOM)) {
 				continue;
 			}
-			spec.append(System.lineSeparator() + "--spec_obs = G(");
+			spec.append(System.lineSeparator() + "--spec_obs = G (");
 			spec.append("terminal => Knows " + MckFormat.ROLE_PREFIX + role + " terminal");
 			spec.append(")");
 		}
 
 		// Knows legal moves
 		for (String role : ATd.keySet()) {
-			if (role.equals("random")) {
+			if (role.equals(GdlNode.RANDOM)) {
 				continue;
 			}
-			spec.append(System.lineSeparator() + "--spec_obs = AG(neg terminal => ");
+			spec.append(System.lineSeparator() + "--spec_obs = G (neg terminal" + MckFormat.IMPL + "(");
 			for (String move : ATd.get(role)) {
-				spec.append("(legal_" + role + "_" + move + " => Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role
-						+ "_" + move + ")");
+				spec.append("(Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role + "_" + move + MckFormat.OR);
+				spec.append("neg Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role + "_" + move + ")");
+				//spec.append("(legal_" + role + "_" + move + " => Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role
+				//		+ "_" + move + ")");
 				spec.append(MckFormat.AND);
 			}
 			if (spec.length() > MckFormat.AND.length()) {
 				spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
 			}
-			spec.append(")");
+			spec.append("))");
 		}
 		
 		// Knows goal value
 		for (String role : ATd.keySet()) {
-			if (role.equals("random")) {
+			if (role.equals(GdlNode.RANDOM)) {
 				continue;
 			}
-			spec.append(System.lineSeparator() + "--spec_obs = AG(terminal => ");
-			for (String goal : ruleSet.getPredicateSet()) {
+			spec.append(System.lineSeparator() + "--spec_obs = G (terminal" + MckFormat.IMPL + "");
+			for (String goal : ruleSet.getRuleSet().keySet()) {
 				//spec.append("(legal_" + role + "_" + move + " => Knows " + MckFormat.ROLE_PREFIX + role + " legal_" + role
 				//		+ "_" + move + ")");
 				//spec.append(MckFormat.AND);
-				String goalPrefix = "(" + GdlNode.GOAL + "_" + role;
+				String goalPrefix = "(" + GdlNode.GOAL + " " + role + " ";
 				if (goal.length() > goalPrefix.length() && goal.substring(0, goalPrefix.length()).equals(goalPrefix)) {
-					spec.append("Knows " + MckFormat.ROLE_PREFIX + role + " " + goal);
+					spec.append("(Knows " + MckFormat.ROLE_PREFIX + role + " " + GdlNode.GOAL +"_"+ role +"_"+ goal.substring(goalPrefix.length(), goal.length()-1) + MckFormat.OR);
+					spec.append("neg Knows " + MckFormat.ROLE_PREFIX + role + " " + GdlNode.GOAL +"_"+ role +"_"+ goal.substring(goalPrefix.length(), goal.length()-1) + ")");
 					spec.append(MckFormat.AND);
 				}
 			}
@@ -738,7 +755,7 @@ public class MckTranslator {
 		//	spec.append(MckFormat.AND);
 		//}
 		//spec.delete(spec.length() - MckFormat.AND.length(), spec.length());
-		spec.append(")");
+		//spec.append(")");
 		spec.append(System.lineSeparator());
 		spec.append(System.lineSeparator());
 

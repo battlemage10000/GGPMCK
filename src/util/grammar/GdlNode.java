@@ -17,6 +17,7 @@ public interface GdlNode extends Iterable<GdlNode> {
 	public static final String INPUT = "input";
 	public static final String DISTINCT = "distinct";
 	public static final String GOAL = "goal";
+	public static final String RANDOM = "random";
 
 	public String getAtom();
 
